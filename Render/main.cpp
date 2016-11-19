@@ -20,7 +20,7 @@
 #endif
 
 #include <stdlib.h>
-
+#include "lxMath.h"
 static int slices = 16;
 static int stacks = 16;
 

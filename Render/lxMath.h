@@ -1,5 +1,6 @@
 #ifndef LXMATH_H_INCLUDED
 #define LXMATH_H_INCLUDED
+#include <string.h>
 
 typedef struct VECTOR2D_TYP
 {
@@ -228,18 +229,18 @@ inline void VECTOR4D_ZERO(VECTOR4D_PTR v)
     (v)->x = (v)->y = (v)->z =0.0;
     (v)->w = 1.0;
 }
-inline void VECTOR2D_INITXY(VECTOR2D v, float x, float y)
+inline void VECTOR2D_INITXY(VECTOR2D_PTR v, float x, float y)
 {
     (v)->x = (x);
     (v)->y = (y);
 }
-inline void VECTOR3D_INITXY(VECTOR3D v, float x, float y, float z)
+inline void VECTOR3D_INITXYZ(VECTOR3D_PTR v, float x, float y, float z)
 {
     (v)->x = (x);
     (v)->y = (y);
     (v)->z = (z);
 }
-inline void VECTOR4D_INITXY(VECTOR3D v, float x, float y, float z)
+inline void VECTOR4D_INITXYZ(VECTOR4D_PTR v, float x, float y, float z)
 {
     (v)->x = (x);
     (v)->y = (y);
@@ -331,7 +332,7 @@ inline void POINT4D_COPY(POINT4D_PTR vdst, POINT4D_PTR vsrc)
 #define MAT_IDENTITY_2X2(m){memcpy((void*)(m),(void*)&IMAT_2X2,sizeof(MATRIX2X2));}
 #define MAT_IDENTITY_3X3(m){memcpy((void*)(m),(void*)&IMAT_3X3,sizeof(MATRIX3X3));}
 #define MAT_IDENTITY_4X4(m){memcpy((void*)(m),(void*)&IMAT_4X4,sizeof(MATRIX4X4));}
-#define MAT_IDENTITY_4X4(m){memcpy((void*)(m),(void*)&IMAT_4X3,sizeof(MATRIX4X3));}
+#define MAT_IDENTITY_4X3(m){memcpy((void*)(m),(void*)&IMAT_4X3,sizeof(MATRIX4X3));}
 
 #define MAT_COPY_2X2(src_mat, dest_mat){memcpy((void*)(dest_mat),(void*)(src_mat),sizeof(MATRIX2X2));}
 #define MAT_COPY_3X3(src_mat, dest_mat){memcpy((void*)(dest_mat),(void*)(src_mat),sizeof(MATRIX3X3));}
@@ -344,7 +345,7 @@ inline void MAT_TRANSPOSE_3X3(MATRIX3X3_PTR m)
     mt.M00 = m->M00; mt.M01 = m->M10;  mt.M02 = m->M20;
     mt.M10 = m->M01; mt.M11 = m->M11;  mt.M12 = m->M21;
     mt.M20 = m->M02; mt.M21 = m->M12;  mt.M22 = m->M22;
-    memccpy((void*)m, (void*)&mt, sizeof(MATRIX3X3));
+    memcpy((void*)m, (void*)&mt, sizeof(MATRIX3X3));
 }
 inline void MAT_TRANSPOSE_4X4(MATRIX4X4_PTR m)
 {
@@ -353,20 +354,20 @@ inline void MAT_TRANSPOSE_4X4(MATRIX4X4_PTR m)
     mt.M10 = m->M01; mt.M11 = m->M11;  mt.M12 = m->M21; mt.M13 = m->M31;
     mt.M20 = m->M02; mt.M21 = m->M12;  mt.M22 = m->M22; mt.M23 = m->M32;
     mt.M30 = m->M03; mt.M31 = m->M13;  mt.M32 = m->M23; mt.M33 = m->M33;
-    memccpy((void*)m, (void*)&mt, sizeof(MATRIX4X4));
+    memcpy((void*)m, (void*)&mt, sizeof(MATRIX4X4));
 }
 inline void MAT_TRANSPOSE_3X3(MATRIX3X3_PTR m, MATRIX3X3_PTR mt)
 {
-    mt.M00 = m->M00; mt.M01 = m->M10;  mt.M02 = m->M20;
-    mt.M10 = m->M01; mt.M11 = m->M11;  mt.M12 = m->M21;
-    mt.M20 = m->M02; mt.M21 = m->M12;  mt.M22 = m->M22;
+    mt->M00 = m->M00; mt->M01 = m->M10;  mt->M02 = m->M20;
+    mt->M10 = m->M01; mt->M11 = m->M11;  mt->M12 = m->M21;
+    mt->M20 = m->M02; mt->M21 = m->M12;  mt->M22 = m->M22;
 }
-inline void MAT_TRANSPOSE_4X4(MATRIX4X4_PTR m£¬ MATRIX4X4_PTR mt)
+inline void MAT_TRANSPOSE_4X4(MATRIX4X4_PTR m, MATRIX4X4_PTR mt)
 {
-    mt.M00 = m->M00; mt.M01 = m->M10;  mt.M02 = m->M20; mt.M03 = m->M30;
-    mt.M10 = m->M01; mt.M11 = m->M11;  mt.M12 = m->M21; mt.M13 = m->M31;
-    mt.M20 = m->M02; mt.M21 = m->M12;  mt.M22 = m->M22; mt.M23 = m->M32;
-    mt.M30 = m->M03; mt.M31 = m->M13;  mt.M32 = m->M23; mt.M33 = m->M33;
+    mt->M00 = m->M00; mt->M01 = m->M10;  mt->M02 = m->M20; mt->M03 = m->M30;
+    mt->M10 = m->M01; mt->M11 = m->M11;  mt->M12 = m->M21; mt->M13 = m->M31;
+    mt->M20 = m->M02; mt->M21 = m->M12;  mt->M22 = m->M22; mt->M23 = m->M32;
+    mt->M30 = m->M03; mt->M31 = m->M13;  mt->M32 = m->M23; mt->M33 = m->M33;
 }
 
 inline void MAT_COLUMN_SWAP_2X2(MATRIX2X2_PTR m, int c, MATRIX1X2_PTR v)
