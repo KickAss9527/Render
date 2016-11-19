@@ -304,3 +304,9 @@
 	<GL/glut.h>
 	<stdlib.h>
 
+1479133175 source:c:\users\administrator\desktop\git\render\render\main.cpp
+	<GLUT/glut.h>
+	<windows.h>
+	<GL/glut.h>
+	<stdlib.h>
+
