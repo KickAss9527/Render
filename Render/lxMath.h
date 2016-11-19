@@ -435,6 +435,8 @@ inline void QUAT_COPY(QUAT_PTR qdst, QUAT_PTR qsrc)
 #define FLOAT_TO_FIXP16(f)  (((float)(f) * (float)FIXP16_MAG+0.5))
 #define FIXP16_TO_FLOAT(fp) (((float)fp)/FIXP16_MAG)
 
+
+
 float Fast_Sin(float theta);
 float Fast_Cos(float theta);
 
