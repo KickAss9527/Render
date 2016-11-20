@@ -151,6 +151,16 @@ typedef struct CAM4DV1_TYP{
 #define TRANSFORM_TRANS_ONLY    1
 #define TRANSFORM_LOCAL_TO_TRANS    2
 
+#define CAM_ROT_SEQ_XYZ 0
+#define CAM_ROT_SEQ_YXZ 1
+#define CAM_ROT_SEQ_XZY 2
+#define CAM_ROT_SEQ_YZX 3
+#define CAM_ROT_SEQ_ZYX 4
+#define CAM_ROT_SEQ_ZXY 5
+
+#define UVN_MODE_SIMPLE            0
+#define UVN_MODE_SPHERICAL         1
+
 int Load_OBJECT4DV1_PLG(OBJECT4DV1_PTR obj, char *filename, VECTOR4D_PTR scale, VECTOR4D_PTR pos, VECTOR4D_PTR rot);
 void RESET_RENDERLIST4DV1(RENDERLIST4DV1_PTR rend_list);
 

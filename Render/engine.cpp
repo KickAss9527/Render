@@ -309,6 +309,111 @@ void Model_To_World_RENDERLIST4DV1(RENDERLIST4DV1_PTR rend_list, POINT4D_PTR wor
     }
 }
 
+
+void Build_CAM4DV1_Matrix_Euler(CAM4DV1_PTR cam, int cam_rot_seq)
+{
+    MATRIX4X4 mt_inv, mx_inv, my_inv, mz_inv, mrot, mtmp;
+    Mat_Init_4X4(&mt_inv, 1, 0, 0, 0,
+                          0, 1, 0, 0,
+                          0, 0, 1, 0,
+                          -cam->pos.x, -cam->pos.y, -cam->pos.z, 1);
+    float theta_x = cam->dir.x;
+    float theta_y = cam->dir.y;
+    float theta_z = cam->dir.z;
+
+    float cos_theta = Fast_Cos(theta_x);
+    float sin_theta = -Fast_Sin(theta_x);
+    Mat_Init_4X4(&mx_inv, 1, 0, 0, 0,
+                          0, cos_theta, sin_theta, 0,
+                          0, -sin_theta, cos_theta, 0,
+                          0, 0, 0, 1);
+
+    cos_theta = Fast_Cos(theta_y);
+    sin_theta = -Fast_Sin(theta_y);
+    Mat_Init_4X4(&my_inv, cos_theta, 0, -sin_theta, 0,
+                          0, 1, 0, 0,
+                          sin_theta, 0, cos_theta, 0,
+                          0, 0, 0, 1);
+
+    cos_theta = Fast_Cos(theta_z);
+    sin_theta = -Fast_Sin(theta_z);
+    Mat_Init_4X4(&mz_inv, cos_theta, sin_theta, 0, 0,
+                          -sin_theta, cos_theta, 0, 0,
+                          0, 0, 1, 0,
+                          0, 0, 0, 1);
+
+    switch(cam_rot_seq)
+    {
+        case CAM_ROT_SEQ_XYZ:
+        {
+            Mat_Mul_4X4(&mx_inv, &my_inv, &mtmp);
+            Mat_Mul_4X4(&mtmp, &mz_inv, &mrot);
+        }break;
+        case CAM_ROT_SEQ_YXZ:
+        {
+            Mat_Mul_4X4(&my_inv, &mx_inv, &mtmp);
+            Mat_Mul_4X4(&mtmp, &mz_inv, &mrot);
+        }break;
+        case CAM_ROT_SEQ_XZY:
+        {
+            Mat_Mul_4X4(&mx_inv, &mz_inv, &mtmp);
+            Mat_Mul_4X4(&mtmp, &my_inv, &mrot);
+        }break;
+        case CAM_ROT_SEQ_YZX:
+        {
+            Mat_Mul_4X4(&my_inv, &mz_inv, &mtmp);
+            Mat_Mul_4X4(&mtmp, &mx_inv, &mrot);
+        }break;
+        case CAM_ROT_SEQ_ZYX:
+        {
+            Mat_Mul_4X4(&mz_inv, &my_inv, &mtmp);
+            Mat_Mul_4X4(&mtmp, &mx_inv, &mrot);
+        }break;
+        case CAM_ROT_SEQ_ZXY:
+        {
+            Mat_Mul_4X4(&mz_inv, &mx_inv, &mtmp);
+            Mat_Mul_4X4(&mtmp, &my_inv, &mrot);
+        }break;
+        default: break;
+    }
+    Mat_Mul_4X4(&mt_inv, &mrot, &cam->mcam);
+}
+
+void Build_CAM4DV1_Matrix_UVN(CAM4DV1_PTR cam, int mode)
+{
+    MATRIX4X4 mt_inv, mt_uvn, mtmp;
+    Mat_Init_4X4(&mt_inv, 1, 0, 0, 0,
+                          0, 1, 0, 0,
+                          0, 0, 1, 0,
+                          -cam->pos.x, -cam->pos.y, -cam->pos.z, 1);
+    if (mode == UVN_MODE_SPHERICAL)
+    {
+        float phi = cam->dir.x;
+        float theta = cam->dir.y;
+
+        float sin_phi = Fast_Sin(phi);
+        float cos_phi = Fast_Cos(phi);
+
+        float sin_theta = Fast_Sin(theta);
+        float cos_theta = Fast_Cos(theta);
+
+        cam->target.x = -sin_phi*sin_theta;
+        cam->target.y = cos_phi;
+        cam->target.z = sin_phi*cos_theta;
+    }
+    VECTOR4D_Build(&cam->pos, &cam->target, &cam->n);
+    VECTOR4D_INITXYZ(&cam->v, 0, 1, 0);
+    VECTOR4D_Cross(&cam->v, &cam->n, &cam->u);
+    VECTOR4D_Cross(&cam->n, &cam->u, &cam->v);
+
+    VECTOR4D_Normalize(&cam->u);
+    VECTOR4D_Normalize(&cam->n);
+    VECTOR4D_Normalize(&cam->v);
+
+    Mat_Mul_4X4(&mt_inv, &mt_uvn, &cam->mcam);
+
+}
+
 void Init_CAM4DV1(CAM4DV1_PTR cam,
                   int cam_attr,
                   POINT4D_PTR cam_pos,
@@ -348,16 +453,16 @@ void Init_CAM4DV1(CAM4DV1_PTR cam,
         VECTOR3D_INITXYZ(&pt_origin, 0,0,0);
         VECTOR3D vn;
 
-        VECTOR3D_INIT(&vn, 1,0,-1);
+        VECTOR3D_INITXYZ(&vn, 1,0,-1);
         PLANE3D_Init(&cam->rt_clip_plane, &pt_origin, &vn, 1);
 
-        VECTOR3D_INIT(&vn, -1,0,-1);
+        VECTOR3D_INITXYZ(&vn, -1,0,-1);
         PLANE3D_Init(&cam->lt_clip_plane, &pt_origin, &vn, 1);
 
-        VECTOR3D_INIT(&vn, 0,1,-1);
+        VECTOR3D_INITXYZ(&vn, 0,1,-1);
         PLANE3D_Init(&cam->tp_clip_plane, &pt_origin, &vn, 1);
 
-        VECTOR3D_INIT(&vn, 0,-1,-1);
+        VECTOR3D_INITXYZ(&vn, 0,-1,-1);
         PLANE3D_Init(&cam->bt_clip_plane, &pt_origin, &vn, 1);
     }
     else
@@ -366,16 +471,16 @@ void Init_CAM4DV1(CAM4DV1_PTR cam,
         VECTOR3D_INITXYZ(&pt_origin, 0, 0, 0);
         VECTOR3D vn;
 
-        VECTOR3D_INIT(&vn, cam->view_dist,0,-cam->viewplane_width*0.5);
+        VECTOR3D_INITXYZ(&vn, cam->view_dist,0,-cam->viewplane_width*0.5);
         PLANE3D_Init(&cam->rt_clip_plane, &pt_origin, &vn, 1);
 
-        VECTOR3D_INIT(&vn, -cam->view_dist,0,-cam->viewplane_width*0.5);
+        VECTOR3D_INITXYZ(&vn, -cam->view_dist,0,-cam->viewplane_width*0.5);
         PLANE3D_Init(&cam->lt_clip_plane, &pt_origin, &vn, 1);
 
-        VECTOR3D_INIT(&vn, 0,cam->view_dist,-cam->viewplane_width*0.5);
+        VECTOR3D_INITXYZ(&vn, 0,cam->view_dist,-cam->viewplane_width*0.5);
         PLANE3D_Init(&cam->tp_clip_plane, &pt_origin, &vn, 1);
 
-        VECTOR3D_INIT(&vn, 0,-cam->view_dist,-cam->viewplane_width*0.5);
+        VECTOR3D_INITXYZ(&vn, 0,-cam->view_dist,-cam->viewplane_width*0.5);
         PLANE3D_Init(&cam->bt_clip_plane, &pt_origin, &vn, 1);
     }
 
@@ -385,5 +490,4 @@ void Init_CAM4DV1(CAM4DV1_PTR cam,
     cam->viewplane_width = 2/cam->aspect_ratio;
     float tan_fov_div2 = tan(DEG_TO_RAD(fov/2));
     cam->view_dist = 0.5*cam->viewplane_width*tan_fov_div2;
-
 }

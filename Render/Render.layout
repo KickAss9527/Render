@@ -4,37 +4,33 @@
 	<ActiveTarget name="Debug" />
 	<File name="engine.cpp" open="1" top="1" tabpos="3" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
-			<Cursor1 position="12270" topLine="38" />
+			<Cursor1 position="14421" topLine="269" />
 		</Cursor>
 		<Folding>
 			<Collapse line="8" />
 			<Collapse line="13" />
 			<Collapse line="29" />
 			<Collapse line="43" />
-			<Collapse line="150" />
-			<Collapse line="213" />
-			<Collapse line="258" />
-			<Collapse line="276" />
 		</Folding>
-	</File>
-	<File name="lxMath.h" open="1" top="0" tabpos="4" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
-		<Cursor>
-			<Cursor1 position="7837" topLine="318" />
-		</Cursor>
 	</File>
 	<File name="main.cpp" open="1" top="0" tabpos="1" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
-			<Cursor1 position="353" topLine="29" />
-		</Cursor>
-	</File>
-	<File name="lxMath.cpp" open="1" top="0" tabpos="5" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
-		<Cursor>
-			<Cursor1 position="45706" topLine="1693" />
+			<Cursor1 position="691" topLine="29" />
 		</Cursor>
 	</File>
 	<File name="engine.h" open="1" top="0" tabpos="2" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
 		<Cursor>
-			<Cursor1 position="2573" topLine="75" />
+			<Cursor1 position="4906" topLine="72" />
+		</Cursor>
+	</File>
+	<File name="lxMath.h" open="1" top="0" tabpos="4" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="5255" topLine="239" />
+		</Cursor>
+	</File>
+	<File name="lxMath.cpp" open="1" top="0" tabpos="5" split="0" active="1" splitpos="0" zoom_1="0" zoom_2="0">
+		<Cursor>
+			<Cursor1 position="51214" topLine="1859" />
 		</Cursor>
 	</File>
 </CodeBlocks_layout_file>
