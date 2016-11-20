@@ -6,6 +6,7 @@ typedef struct POLY4DV1_TYP{
     int attr;
     int color;
     POINT4D_PTR vlist;
+    POINT4D_PTR tvlist;
     int vert[3];
 } POLY4DV1, *POLY4DV1_PTR;
 
@@ -66,6 +67,37 @@ typedef struct RENDERLIST4DV1_TYP{
     int num_polys;
 } RENDERLIST4DV1, *RENDERLIST4DV1_PTR;
 
+typedef struct CAM4DV1_TYP{
+    int state;
+    int attr;
+    POINT4D pos;
+    VECTOR4D dir;
+    VECTOR4D u;
+    VECTOR4D v;
+    VECTOR4D n;
+    POINT4D target;
+    float view_dist;
+    float view_dist_h;
+    float view_dist_v;
+    float fov;
+    float near_clip_z;
+    float far_clip_z;
+    PLANE3D rt_clip_plane;
+    PLANE3D lt_clip_plane;
+    PLANE3D tp_clip_plane;
+    PLANE3D bt_clip_plane;
+    float viewplane_width;
+    float viewplane_height;
+    float viewport_width;
+    float viewport_height;
+    float viewport_center_x;
+    float viewport_center_y;
+    float aspect_ratio;
+    MATRIX4X4 mcam;
+    MATRIX4X4 mper;
+    MATRIX4X4 mscr;
+} CAM4DV1, *CAM4DV1_PTR;
+
 #define PLX_RGB_MASK    0x8000
 #define PLX_SHADE_MODE_MASK     0x6000
 #define PLX_2SIDED_MASK 0x1000
@@ -115,6 +147,11 @@ typedef struct RENDERLIST4DV1_TYP{
 #define POLY4DV2_STATE_BACKFACE      0x0004
 #define POLY4DV2_STATE_LIT        0x0008
 
+#define TRANSFORM_LOCAL_ONLY    0
+#define TRANSFORM_TRANS_ONLY    1
+#define TRANSFORM_LOCAL_TO_TRANS    2
+
+int Load_OBJECT4DV1_PLG(OBJECT4DV1_PTR obj, char *filename, VECTOR4D_PTR scale, VECTOR4D_PTR pos, VECTOR4D_PTR rot);
 void RESET_RENDERLIST4DV1(RENDERLIST4DV1_PTR rend_list);
 
 #endif // ENGINE_H_INCLUDED

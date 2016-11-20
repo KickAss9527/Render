@@ -42,6 +42,7 @@
 			<Add library="gdi32" />
 			<Add directory="C:/MinGW/lib" />
 		</Linker>
+		<Unit filename="cube1.plg" />
 		<Unit filename="engine.cpp" />
 		<Unit filename="engine.h" />
 		<Unit filename="lxMath.cpp" />

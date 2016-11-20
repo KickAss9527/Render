@@ -22,6 +22,10 @@
 #include <stdlib.h>
 #include "lxMath.h"
 #include "engine.h"
+#include <iostream>
+#include <string.h>
+#include <stdio.h>
+#include <stdlib.h>
 static int slices = 16;
 static int stacks = 16;
 
@@ -40,6 +44,10 @@ glFlush();//要加上,不然会很慢的,作用是,保证前面的OpenGL命令立即执行,而不是在缓冲
 
 int main(int argc, char *argv[])
 {
+    OBJECT4DV1 obj;
+    VECTOR4D scale = {1,1,1,1}, pos = {2,1,3,1}, rot = {0,0,0,1};
+    Load_OBJECT4DV1_PLG(&obj,"C:\\Users\\Administrator\\Desktop\\git\\Render\\Render\\cube1.plg", &scale, &pos, &rot);
+
 glutInit(&argc, argv);//初始化,必须在调用其他GLUT函数前调用一下
 glutInitDisplayMode (GLUT_RGBA | GLUT_SINGLE);//设定模式,RGBA色彩,和单缓冲区
 glutInitWindowPosition (100, 100);//设置窗口位置,如果设-1,-1就是默认位置
