@@ -27,7 +27,7 @@ FIXP16 FIXP16_MUL(FIXP16 fp1, FIXP16 fp2)
 // this function computes the product fp_prod = fp1*fp2
 // using 64 bit math, so as not to loose precission
 
-
+    return 0;
 } // end FIXP16_MUL
 
 ///////////////////////////////////////////////////////////////
@@ -36,7 +36,7 @@ FIXP16 FIXP16_DIV(FIXP16 fp1, FIXP16 fp2)
 {
 // this function computes the quotient fp1/fp2 using
 // 64 bit math, so as not to loose precision
-
+return 0;
 
 } // end FIXP16_DIV
 
@@ -1081,6 +1081,14 @@ float VECTOR4D_Dot(VECTOR4D_PTR va, VECTOR4D_PTR vb)
 // computes the dot product between va and vb
 return( (va->x * vb->x) + (va->y * vb->y) + (va->z * vb->z) );
 } // end VECTOR4D_DOT
+
+void VECTOR4D_DIV_BY_W(VECTOR4D_PTR va)//juri
+{
+    va->x /= va->w;
+    va->y /= va->w;
+    va->z /= va->w;
+    va->w = 1;
+}
 
 /////////////////////////////////////////////////////////////
 
