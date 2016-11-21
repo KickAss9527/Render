@@ -270,7 +270,7 @@ void Transform_OBJECT4DV1(OBJECT4DV1_PTR obj, MATRIX4X4_PTR mt, int coord_select
     }
 }
 
-void Model_To_World_OBJECT4DV1(OBJECT4DV1_PTR obj, int coord_select = TRANSFORM_LOCAL_TO_TRANS)
+void Model_To_World_OBJECT4DV1(OBJECT4DV1_PTR obj, int coord_select)
 {
     if (coord_select == TRANSFORM_LOCAL_TO_TRANS)
     {
@@ -451,7 +451,7 @@ void World_To_Camera_RENDERLIST4DV1(RENDERLIST4DV1_PTR rend_list, CAM4DV1_PTR ca
         {
             continue;
         }
-        
+
         for (int vertex=0; vertex<3; vertex++)
         {
             POINT4D presult;
@@ -465,7 +465,7 @@ int Cull_OBJECT4DV1(OBJECT4DV1_PTR obj, CAM4DV1_PTR cam, int cull_flags)
 {
     POINT4D sphere_pos;
     Mat_Mul_VECTOR4D_4X4(&obj->world_pos, &cam->mcam, &sphere_pos);
-    
+
     if (cull_flags & CULL_OBJECT_Z_PLANE)
     {
         if((sphere_pos.z - obj->max_radius > cam->far_clip_z) ||
@@ -505,29 +505,33 @@ void Remove_Backfaces_OBJECT4DV1(OBJECT4DV1_PTR obj, CAM4DV1_PTR cam)
     for (int poly=0; poly<obj->num_polys; poly++)
     {
         POLY4DV1_PTR curr_poly = &obj->plist[poly];
+
         if(!(curr_poly->state & POLY4DV1_STATE_ACTIVE) ||
            (curr_poly->state & POLY4DV1_STATE_CLIPPED) ||
-           (curr_poly->state & POLY4DV1_ATTR_2SIDED) ||
+           (curr_poly->attr & POLY4DV1_ATTR_2SIDED) ||
            (curr_poly->state & POLY4DV1_STATE_BACKFACE))
         {
             continue;
         }
-        
+
         int vindex_0 = curr_poly->vert[0];
         int vindex_1 = curr_poly->vert[1];
         int vindex_2 = curr_poly->vert[2];
-        
+
         VECTOR4D u,v,n;
         VECTOR4D_Build(&obj->vlist_trans[vindex_0], &obj->vlist_trans[vindex_1], &u);
         VECTOR4D_Build(&obj->vlist_trans[vindex_0], &obj->vlist_trans[vindex_2], &v);
-        
+
         VECTOR4D_Cross(&u, &v, &n);
         VECTOR4D view;
         VECTOR4D_Build(&obj->vlist_trans[vindex_0], &cam->pos, &view);
-        
+
         float dp = VECTOR4D_Dot(&n, &view);
+        printf("%f, ", dp);
         if(dp <= 0)
-            SET_BIT(obj->state, POLY4DV1_STATE_BACKFACE);
+        {
+            SET_BIT(curr_poly->state, POLY4DV1_STATE_BACKFACE);
+        }
     }
 }
 
@@ -548,11 +552,11 @@ void Remove_Backfaces_RENDERLIST4DV1(RENDERLIST4DV1_PTR rend_list, CAM4DV1_PTR c
         VECTOR4D u,v,n;
         VECTOR4D_Build(&curr_poly->tvlist[0], &curr_poly->tvlist[1], &u);
         VECTOR4D_Build(&curr_poly->tvlist[0], &curr_poly->tvlist[2], &v);
-        
+
         VECTOR4D_Cross(&u, &v, &n);
         VECTOR4D view;
         VECTOR4D_Build(&curr_poly->tvlist[0], &cam->pos, &view);
-        
+
         float dp = VECTOR4D_Dot(&n, &view);
         if(dp <= 0)
             SET_BIT(curr_poly->state, POLY4DV1_STATE_BACKFACE);
@@ -564,8 +568,8 @@ void Camera_To_Perspective_OBJECT4DV1(OBJECT4DV1_PTR obj, CAM4DV1_PTR cam)
     for (int vertex=0; vertex<obj->num_vertices; vertex++)
     {
         float z = obj->vlist_trans[vertex].z;
-        obj->vlist_trans[vertex].x = cam->view_dist_h*obj->vlist_trans[vertex].x/z;
-        obj->vlist_trans[vertex].y = cam->view_dist_v*obj->vlist_trans[vertex].y*cam->aspect_ratio/z;
+        obj->vlist_trans[vertex].x = cam->view_dist*obj->vlist_trans[vertex].x/z;
+        obj->vlist_trans[vertex].y = cam->view_dist*obj->vlist_trans[vertex].y*cam->aspect_ratio/z;
     }
 }
 
@@ -629,7 +633,7 @@ void Perspective_To_Screen_OBJECT4DV1(OBJECT4DV1_PTR obj, CAM4DV1_PTR cam)
 {
     float alpha = 0.5*cam->viewport_width-0.5;
     float beta = 0.5*cam->viewport_height-0.5;
-    
+
     for (int vertex=0; vertex<obj->num_vertices; vertex++)
     {
         obj->vlist_trans[vertex].x = alpha + alpha*obj->vlist_trans[vertex].x;
@@ -719,17 +723,17 @@ void Build_Perspective_To_Screen_MATRIX4X4(CAM4DV1_PTR cam, MATRIX4X4_PTR m)
 }
 
 void Init_CAM4DV1(CAM4DV1_PTR cam,
-                  int cam_attr,
+                 // int cam_attr,
                   POINT4D_PTR cam_pos,
                   VECTOR4D_PTR cam_dir,
-                  POINT4D_PTR cam_target,
+                //  POINT4D_PTR cam_target,
                   float near_clip_z,
                   float far_clip_z,
                   float fov,
                   float viewport_width,
                   float viewport_height)
 {
-    cam->attr = cam_attr;
+    //cam->attr = cam_attr;
     VECTOR4D_COPY(&cam->pos, cam_pos);
     VECTOR4D_COPY(&cam->dir, cam_dir);
 
@@ -737,9 +741,9 @@ void Init_CAM4DV1(CAM4DV1_PTR cam,
     VECTOR4D_INITXYZ(&cam->u, 0,1,0);
     VECTOR4D_INITXYZ(&cam->u, 0,0,1);
 
-    if(cam_target!=NULL)
-        VECTOR4D_COPY(&cam->target, cam_target);
-    else
+//    if(cam_target!=NULL)
+//        VECTOR4D_COPY(&cam->target, cam_target);
+//    else
         VECTOR4D_ZERO(&cam->target);
 
     cam->near_clip_z = near_clip_z;

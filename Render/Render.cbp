@@ -43,11 +43,15 @@
 			<Add directory="C:/MinGW/lib" />
 		</Linker>
 		<Unit filename="cube1.plg" />
+		<Unit filename="cube2.plg" />
 		<Unit filename="engine.cpp" />
 		<Unit filename="engine.h" />
 		<Unit filename="lxMath.cpp" />
 		<Unit filename="lxMath.h" />
 		<Unit filename="main.cpp" />
+		<Unit filename="tank1.plg" />
+		<Unit filename="tank2.plg" />
+		<Unit filename="tower1.plg" />
 		<Extensions>
 			<code_completion />
 			<envvars />

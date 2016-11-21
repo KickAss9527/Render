@@ -1082,12 +1082,11 @@ float VECTOR4D_Dot(VECTOR4D_PTR va, VECTOR4D_PTR vb)
 return( (va->x * vb->x) + (va->y * vb->y) + (va->z * vb->z) );
 } // end VECTOR4D_DOT
 
-void VECTOR4D_DIV_BY_W(VECTOR4D_PTR va)//juri
+void VECTOR4D_DIV_BY_W(VECTOR4D_PTR va)
 {
     va->x /= va->w;
     va->y /= va->w;
     va->z /= va->w;
-    va->w = 1;
 }
 
 /////////////////////////////////////////////////////////////
