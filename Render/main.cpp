@@ -39,8 +39,11 @@ void myDisplay ()
     CAM4DV1 cam;
     OBJECT4DV1 obj;
     Init_CAM4DV1(&cam, &cam_pos, &cam_dir, 50,500,90, 500,500);
-
+#ifdef __APPLE__
+    Load_OBJECT4DV1_PLG(&obj,"/MyFiles/Work/GitProject/Render/Render/tower1.plg", &vscale, &vpos, &vrot);
+#else
     Load_OBJECT4DV1_PLG(&obj,"C:\\Users\\Administrator\\Desktop\\git\\Render\\Render\\tower1.plg", &vscale, &vpos, &vrot);
+#endif
     obj.world_pos.z=60;
 
     Model_To_World_OBJECT4DV1(&obj);
