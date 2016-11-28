@@ -75,19 +75,39 @@ void myDisplay ()
                obj.vlist_trans[vindex_2].x,obj.vlist_trans[vindex_2].y);
         int w = 250;
         glBegin (GL_LINES);
-        glVertex2f((obj.vlist_trans[vindex_0].x-w)/w, (w-obj.vlist_trans[vindex_0].y)/w);
-        glVertex2f((obj.vlist_trans[vindex_1].x-w)/w, (w-obj.vlist_trans[vindex_1].y)/w);
+        POINT2D p0 = {(obj.vlist_trans[vindex_0].x-w)/w, (w-obj.vlist_trans[vindex_0].y)/w};
+        POINT2D p1 = {(obj.vlist_trans[vindex_1].x-w)/w, (w-obj.vlist_trans[vindex_1].y)/w};
+        POINT2D p2 = {(obj.vlist_trans[vindex_2].x-w)/w, (w-obj.vlist_trans[vindex_2].y)/w};
+
+        glVertex2f(p0.x, p0.y);
+        glVertex2f(p1.x, p1.y);
         glEnd ();
 
         glBegin (GL_LINES);
-        glVertex2f((obj.vlist_trans[vindex_2].x-w)/w, (w-obj.vlist_trans[vindex_2].y)/w);
-        glVertex2f((obj.vlist_trans[vindex_1].x-w)/w, (w-obj.vlist_trans[vindex_1].y)/w);
+        glVertex2f(p2.x, p2.y);
+        glVertex2f(p1.x, p1.y);
         glEnd ();
 
         glBegin (GL_LINES);
-        glVertex2f((obj.vlist_trans[vindex_2].x-w)/w, (w-obj.vlist_trans[vindex_2].y)/w);
-        glVertex2f((obj.vlist_trans[vindex_0].x-w)/w, (w-obj.vlist_trans[vindex_0].y)/w);
+        glVertex2f(p2.x, p2.y);
+        glVertex2f(p0.x, p0.y);
         glEnd ();
+
+        float dl = (p2.x-p0.x)/(p2.y-p0.y);
+        float dr = (p2.x-p1.x)/(p2.y-p1.y);
+        float xs = p0.x;
+        float xe = p1.x;
+
+        for(int y=p0.y; y<p2.y; y++)
+        {
+            glBegin (GL_LINES);
+            glVertex2f(int(xs+0.5), y);
+            glVertex2f(int(xe+0.5), y);
+            glEnd ();
+            xs += dl;
+            xe += dr;
+            printf("ff");
+        }
 
     }
 

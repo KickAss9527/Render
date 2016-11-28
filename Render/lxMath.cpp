@@ -1,6 +1,7 @@
 #include <math.h>
 #include <iostream>
 #include "lxMath.h"
+
 float Fast_Sin(float theta)
 {
     return sin(DEG_TO_RAD(theta));
