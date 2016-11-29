@@ -28,7 +28,7 @@
 
 /* Begin PBXFileReference section */
 		052FE6661DD94EF200A5E04F /* Render */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = Render; sourceTree = BUILT_PRODUCTS_DIR; };
-		052FE6691DD94EF200A5E04F /* main.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = main.cpp; sourceTree = "<group>"; };
+		052FE6691DD94EF200A5E04F /* main.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = main.cpp; sourceTree = "<group>"; };
 		052FE6711DD94F1900A5E04F /* OpenGL.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenGL.framework; path = System/Library/Frameworks/OpenGL.framework; sourceTree = SDKROOT; };
 		052FE6731DD94F1D00A5E04F /* GLUT.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = GLUT.framework; path = System/Library/Frameworks/GLUT.framework; sourceTree = SDKROOT; };
 		0553A3BB1DE52AE500E557A1 /* tower1.plg */ = {isa = PBXFileReference; lastKnownFileType = text; path = tower1.plg; sourceTree = "<group>"; };
