@@ -47,10 +47,9 @@ void drawTrangleBottomPlane(POINT4D_PTR pt, POINT4D_PTR pl, POINT4D_PTR pr)
     float xl=pt->x, xr=pt->x;
     for (int y=pt->y; y<=pl->y; y++)
     {
-        glBegin(GL_LINES);
-        glVertex2f(xl+0.5, y);
-        glVertex2f(xr+0.5, y);
-        glEnd();
+        POINT4D p0 = {static_cast<float>(xl+0.5), static_cast<float>(y)};
+        POINT4D p1 = {static_cast<float>(xr+0.5), static_cast<float>(y)};
+        drawLine(&p0, &p1);
         xl += dl;
         xr += dr;
     }
@@ -63,10 +62,9 @@ void drawTrangleTopPlane(POINT4D_PTR pb, POINT4D_PTR pl, POINT4D_PTR pr)
     float xl=pl->x, xr=pr->x;
     for (int y=pl->y; y<=pb->y; y++)
     {
-        glBegin(GL_LINES);
-        glVertex2f(xl+0.5, y);
-        glVertex2f(xr+0.5, y);
-        glEnd();
+        POINT4D p0 = {static_cast<float>(xl+0.5), static_cast<float>(y)};
+        POINT4D p1 = {static_cast<float>(xr+0.5), static_cast<float>(y)};
+        drawLine(&p0, &p1);
         xl += dl;
         xr += dr;
     }
@@ -116,7 +114,7 @@ void drawTrangle(POINT4D_PTR p0, POINT4D_PTR p1, POINT4D_PTR p2)
             pm = p1;
             pb = p2;
         }
-        else if(p0->y < p1->y && p2->y < p1->y)
+        else if(p0->y < p2->y && p2->y < p1->y)
         {
             pt = p0;
             pm = p2;
@@ -149,14 +147,16 @@ void drawTrangle(POINT4D_PTR p0, POINT4D_PTR p1, POINT4D_PTR p2)
         
         int xline = (pm->y - pt->y)*(pb->x - pt->x)/(pb->y - pt->y);
         xline += pt->x + 0.5;
-        POINT4D pTmp = {static_cast<float>(xline), pm->y,1,1};
+        
         if(xline < pm->x)//left tra
         {
+            POINT4D pTmp = {static_cast<float>(xline), pm->y,1,1};
             drawTrangleBottomPlane(pt, pm, &pTmp);
             drawTrangleTopPlane(pb, pm, &pTmp);
         }
         else//right tra
         {
+            POINT4D pTmp = {static_cast<float>(xline), pm->y,1,1};
             drawTrangleBottomPlane(pt, pm, &pTmp);
             drawTrangleTopPlane(pb, pm, &pTmp);
         }
@@ -187,7 +187,7 @@ void myDisplay ()
     Perspective_To_Screen_OBJECT4DV1(&obj, &cam);
     
     glClear (GL_COLOR_BUFFER_BIT);//«Âø’∆¡ƒª…œµƒ—’…´
-    glColor3f (1.0, 1.0, 0.0);//…Ë÷√µ±«∞ª≠± —’…´
+    
     
     
     
@@ -209,12 +209,13 @@ void myDisplay ()
                obj.vlist_trans[vindex_0].x,obj.vlist_trans[vindex_0].y,
                obj.vlist_trans[vindex_1].x,obj.vlist_trans[vindex_1].y,
                obj.vlist_trans[vindex_2].x,obj.vlist_trans[vindex_2].y);
-        
- 
+        glColor3f (0.3, 0.3, 0.3);//…Ë÷√µ±«∞ª≠± —’…´
+        drawTrangle(&obj.vlist_trans[vindex_0],&obj.vlist_trans[vindex_1],&obj.vlist_trans[vindex_2]);
+        glColor3f (1.0, 1.0, 0.0);//…Ë÷√µ±«∞ª≠± —’…´
         drawLine(&obj.vlist_trans[vindex_0], &obj.vlist_trans[vindex_1]);
         drawLine(&obj.vlist_trans[vindex_2], &obj.vlist_trans[vindex_1]);
         drawLine(&obj.vlist_trans[vindex_2], &obj.vlist_trans[vindex_0]);
-        drawTrangle(&obj.vlist_trans[vindex_0],&obj.vlist_trans[vindex_1],&obj.vlist_trans[vindex_2]);
+
         
     }
     
