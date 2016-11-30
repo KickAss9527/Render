@@ -1,4 +1,4 @@
-/*
+ï»¿/*
  * GLUT Shapes Demo
  *
  * Written by Nigel Stewart November 2003
@@ -29,18 +29,145 @@
 static int slices = 16;
 static int stacks = 16;
 
+void drawLine(POINT4D_PTR p0, POINT4D_PTR p1)
+{
+    int w = 250;
+    POINT2D np0 = {(p0->x-w)/w, (w-p0->y)/w};
+    POINT2D np1 = {(p1->x-w)/w, (w-p1->y)/w};
+    glBegin (GL_LINES);
+    glVertex2f(np0.x, np0.y);
+    glVertex2f(np1.x, np1.y);
+    glEnd ();
+}
 /* GLUT callback Handlers */
+void drawTrangleBottomPlane(POINT4D_PTR pt, POINT4D_PTR pl, POINT4D_PTR pr)
+{
+    float dl = (pl->x - pt->x)/(pl->y - pt->y);
+    float dr = (pr->x - pt->x)/(pr->y - pt->y);
+    float xl=pt->x, xr=pt->x;
+    for (int y=pt->y; y<=pl->y; y++)
+    {
+        POINT4D p0 = {static_cast<float>(xl+0.5), static_cast<float>(y)};
+        POINT4D p1 = {static_cast<float>(xr+0.5), static_cast<float>(y)};
+        drawLine(&p0, &p1);
+        xl += dl;
+        xr += dr;
+    }
+}
+
+void drawTrangleTopPlane(POINT4D_PTR pb, POINT4D_PTR pl, POINT4D_PTR pr)
+{
+    float dl = (pb->x - pl->x)/(pb->y - pl->y);
+    float dr = (pb->x - pr->x)/(pb->y - pr->y);
+    float xl=pl->x, xr=pr->x;
+    for (int y=pl->y; y<=pb->y; y++)
+    {
+        POINT4D p0 = {static_cast<float>(xl+0.5), static_cast<float>(y)};
+        POINT4D p1 = {static_cast<float>(xr+0.5), static_cast<float>(y)};
+        drawLine(&p0, &p1);
+        xl += dl;
+        xr += dr;
+    }
+}
+
+void drawTrangle(POINT4D_PTR p0, POINT4D_PTR p1, POINT4D_PTR p2)
+{
+    if (p0->y == p1->y)
+    {
+        if (p2->y >= p0->y)//top plane
+        {
+            drawTrangleTopPlane(p2, p0, p1);
+        }
+        else//
+        {
+            drawTrangleBottomPlane(p2, p0, p1);
+        }
+    }
+    else if (p0->y == p2->y)
+    {
+        if (p1->y >= p0->y)//
+        {
+            drawTrangleTopPlane(p1, p0, p2);
+        }
+        else//
+        {
+            drawTrangleBottomPlane(p1, p0, p2);
+        }
+    }
+    else if (p2->y == p1->y)
+    {
+        if (p0->y >= p2->y)//
+        {
+            drawTrangleTopPlane(p0, p2, p1);
+        }
+        else//
+        {
+            drawTrangleBottomPlane(p0, p2, p1);
+        }
+    }
+    else
+    {
+        POINT4D_PTR pt, pm, pb;
+        if(p0->y < p1->y && p1->y < p2->y)
+        {
+            pt = p0;
+            pm = p1;
+            pb = p2;
+        }
+        else if(p0->y < p2->y && p2->y < p1->y)
+        {
+            pt = p0;
+            pm = p2;
+            pb = p1;
+        }
+        else if(p1->y < p0->y && p0->y < p2->y)
+        {
+            pt = p1;
+            pm = p0;
+            pb = p2;
+        }
+        else if(p1->y < p2->y && p2->y < p0->y)
+        {
+            pt = p1;
+            pm = p2;
+            pb = p0;
+        }
+        else if(p2->y < p0->y && p0->y < p1->y)
+        {
+            pt = p2;
+            pm = p0;
+            pb = p1;
+        }
+        else if(p2->y < p1->y && p1->y < p0->y)
+        {
+            pt = p2;
+            pm = p1;
+            pb = p0;
+        }
+
+        int xline = (pm->y - pt->y)*(pb->x - pt->x)/(pb->y - pt->y);
+        xline += pt->x + 0.5;
+
+        POINT4D pTmp = {static_cast<float>(xline), pm->y,1,1};
+        drawTrangleBottomPlane(pt, pm, &pTmp);
+        drawTrangleTopPlane(pb, pm, &pTmp);
+    }
+}
+
 
 void myDisplay ()
 {
-    POINT4D cam_pos = {25,33,0,1};
+    POINT4D cam_pos = {31,31,0,1};
     VECTOR4D cam_dir = {0,0,0,1};
     VECTOR4D vscale = {1,1,1,1}, vpos = {0,0,0,1}, vrot = {0,0,0,1};
     CAM4DV1 cam;
     OBJECT4DV1 obj;
     Init_CAM4DV1(&cam, &cam_pos, &cam_dir, 50,500,90, 500,500);
-
+#ifdef __APPLE__
+    Load_OBJECT4DV1_PLG(&obj,"/MyFiles/Work/GitProject/Render/Render/tower1.plg", &vscale, &vpos, &vrot);
+#else
     Load_OBJECT4DV1_PLG(&obj,"C:\\Users\\Administrator\\Desktop\\git\\Render\\Render\\tower1.plg", &vscale, &vpos, &vrot);
+#endif
     obj.world_pos.z=60;
 
     Model_To_World_OBJECT4DV1(&obj);
@@ -50,8 +177,8 @@ void myDisplay ()
     Camera_To_Perspective_OBJECT4DV1(&obj, &cam);
     Perspective_To_Screen_OBJECT4DV1(&obj, &cam);
 
-    glClear (GL_COLOR_BUFFER_BIT);//Çå¿ÕÆÁÄ»ÉÏµÄÑÕÉ«
-    glColor3f (1.0, 1.0, 0.0);//ÉèÖÃµ±Ç°»­±ÊÑÕÉ«
+    glClear (GL_COLOR_BUFFER_BIT);//Â«Ã‚Ã¸â€™âˆ†Â¡Æ’Âªâ€¦Å“ÂµÆ’â€”â€™â€¦Â´
+
 
 
 
@@ -73,58 +200,32 @@ void myDisplay ()
                obj.vlist_trans[vindex_0].x,obj.vlist_trans[vindex_0].y,
                obj.vlist_trans[vindex_1].x,obj.vlist_trans[vindex_1].y,
                obj.vlist_trans[vindex_2].x,obj.vlist_trans[vindex_2].y);
-        int w = 250;
-        glBegin (GL_LINES);
-        POINT2D p0 = {(obj.vlist_trans[vindex_0].x-w)/w, (w-obj.vlist_trans[vindex_0].y)/w};
-        POINT2D p1 = {(obj.vlist_trans[vindex_1].x-w)/w, (w-obj.vlist_trans[vindex_1].y)/w};
-        POINT2D p2 = {(obj.vlist_trans[vindex_2].x-w)/w, (w-obj.vlist_trans[vindex_2].y)/w};
 
-        glVertex2f(p0.x, p0.y);
-        glVertex2f(p1.x, p1.y);
-        glEnd ();
-
-        glBegin (GL_LINES);
-        glVertex2f(p2.x, p2.y);
-        glVertex2f(p1.x, p1.y);
-        glEnd ();
-
-        glBegin (GL_LINES);
-        glVertex2f(p2.x, p2.y);
-        glVertex2f(p0.x, p0.y);
-        glEnd ();
-
-        float dl = (p2.x-p0.x)/(p2.y-p0.y);
-        float dr = (p2.x-p1.x)/(p2.y-p1.y);
-        float xs = p0.x;
-        float xe = p1.x;
-
-        for(int y=p0.y; y<p2.y; y++)
-        {
-            glBegin (GL_LINES);
-            glVertex2f(int(xs+0.5), y);
-            glVertex2f(int(xe+0.5), y);
-            glEnd ();
-            xs += dl;
-            xe += dr;
-            printf("ff");
-        }
-
+        glColor3f (0.3, 0.3, 0.3);//â€¦Ã‹Ã·âˆšÂµÂ±Â«âˆžÂªâ‰ Â±Â â€”â€™â€¦Â´
+        drawTrangle(&obj.vlist_trans[vindex_0],&obj.vlist_trans[vindex_1],&obj.vlist_trans[vindex_2]);
+        glColor3f (1.0, 1.0, 0.0);//â€¦Ã‹Ã·âˆšÂµÂ±Â«âˆžÂªâ‰ Â±Â â€”â€™â€¦Â´
+        drawLine(&obj.vlist_trans[vindex_0], &obj.vlist_trans[vindex_1]);
+        drawLine(&obj.vlist_trans[vindex_2], &obj.vlist_trans[vindex_1]);
+        drawLine(&obj.vlist_trans[vindex_2], &obj.vlist_trans[vindex_0]);
     }
 
-glFlush();//Òª¼ÓÉÏ,²»È»»áºÜÂýµÄ,×÷ÓÃÊÇ,±£Ö¤Ç°ÃæµÄOpenGLÃüÁîÁ¢¼´Ö´ÐÐ,¶ø²»ÊÇÔÚ»º³åÇøÖÐµÈ×Å
+    glFlush();//â€œâ„¢Âºâ€â€¦Å“,â‰¤ÂªÂ»ÂªÂªÂ·âˆ«â€¹Â¬ËÂµÆ’,â—ŠËœâ€âˆšÂ Â«,Â±Â£Ã·Â§Â«âˆžâˆšÃŠÂµÆ’OpenGLâˆšÂ¸Â¡Ã“Â¡Â¢ÂºÂ¥Ã·Â¥â€“â€“,âˆ‚Â¯â‰¤ÂªÂ Â«â€˜â„Âªâˆ«â‰¥Ã‚Â«Â¯Ã·â€“ÂµÂ»â—Šâ‰ˆ
 }
+
+
+
 
 int main(int argc, char *argv[])
 {
 
 
 
-glutInit(&argc, argv);//³õÊ¼»¯,±ØÐëÔÚµ÷ÓÃÆäËûGLUTº¯ÊýÇ°µ÷ÓÃÒ»ÏÂ
-glutInitDisplayMode (GLUT_RGBA | GLUT_SINGLE);//Éè¶¨Ä£Ê½,RGBAÉ«²Ê,ºÍµ¥»º³åÇø
-glutInitWindowPosition (100, 100);//ÉèÖÃ´°¿ÚÎ»ÖÃ,Èç¹ûÉè-1,-1¾ÍÊÇÄ¬ÈÏÎ»ÖÃ
-glutInitWindowSize (500, 500);//ÉèÖÃ´°¿Ú´óÐ¡
-glutCreateWindow ("hello word!");//´´½¨Ãû³ÆÎª"hello word!"µÄ´°¿Ú,´°¿Ú´´½¨ºó²»»áÁ¢¼´ÏÔÊ¾µ½ÆÁÄ»ÉÏ,Òªµ÷ÓÃºóÃæµÄglutMainLoop()²Å»áÏÔÊ¾
-glutDisplayFunc(myDisplay);//µ÷ÓÃ»æÖÆº¯ÊýÊ¹ËüÏÔÊ¾ÔÚ¸Õ´´½¨µÄ´°¿ÚÉÏ
-glutMainLoop();//ÏûÏ¢Ñ­»·,´°¿Ú¹Ø±Õ²Å»á·µ»Ø
-return 0;
+    glutInit(&argc, argv);//â‰¥Ä±Â ÂºÂªÃ˜,Â±Ã¿â€“ÃŽâ€˜â„ÂµËœâ€âˆšâˆ†â€°Ã€ËšGLUTâˆ«Ã˜Â ËÂ«âˆžÂµËœâ€âˆšâ€œÂªÅ“Â¬
+    glutInitDisplayMode (GLUT_RGBA | GLUT_SINGLE);//â€¦Ã‹âˆ‚Â®Æ’Â£Â Î©,RGBAâ€¦Â´â‰¤Â ,âˆ«Ã•Âµâ€¢Âªâˆ«â‰¥Ã‚Â«Â¯
+    glutInitWindowPosition (100, 100);//â€¦Ã‹Ã·âˆšÂ¥âˆžÃ¸â„Å’ÂªÃ·âˆš,Â»ÃÏ€Ëšâ€¦Ã‹-1,-1Ã¦Ã•Â Â«Æ’Â¨Â»Å“Å’ÂªÃ·âˆš
+    glutInitWindowSize (500, 500);//â€¦Ã‹Ã·âˆšÂ¥âˆžÃ¸â„Â¥Ã›â€“Â°
+    glutCreateWindow ("hello word!");//Â¥Â¥Î©Â®âˆšËšâ‰¥âˆ†Å’â„¢"hello word!"ÂµÆ’Â¥âˆžÃ¸â„,Â¥âˆžÃ¸â„Â¥Â¥Î©Â®âˆ«Ã›â‰¤ÂªÂªÂ·Â¡Â¢ÂºÂ¥Å“â€˜Â Ã¦ÂµÎ©âˆ†Â¡Æ’Âªâ€¦Å“,â€œâ„¢ÂµËœâ€âˆšâˆ«Ã›âˆšÃŠÂµÆ’glutMainLoop()â‰¤â‰ˆÂªÂ·Å“â€˜Â Ã¦
+    glutDisplayFunc(myDisplay);//ÂµËœâ€âˆšÂªÃŠÃ·âˆ†âˆ«Ã˜Â ËÂ Ï€Ã€Â¸Å“â€˜Â Ã¦â€˜â„âˆâ€™Â¥Â¥Î©Â®ÂµÆ’Â¥âˆžÃ¸â„â€¦Å“
+    glutMainLoop();//Å“ËšÅ“Â¢â€”â‰ Âªâˆ‘,Â¥âˆžÃ¸â„Ï€Ã¿Â±â€™â‰¤â‰ˆÂªÂ·âˆ‘ÂµÂªÃ¿
+    return 0;
 }
