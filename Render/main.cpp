@@ -148,18 +148,9 @@ void drawTrangle(POINT4D_PTR p0, POINT4D_PTR p1, POINT4D_PTR p2)
         int xline = (pm->y - pt->y)*(pb->x - pt->x)/(pb->y - pt->y);
         xline += pt->x + 0.5;
         
-        if(xline < pm->x)//left tra
-        {
-            POINT4D pTmp = {static_cast<float>(xline), pm->y,1,1};
-            drawTrangleBottomPlane(pt, pm, &pTmp);
-            drawTrangleTopPlane(pb, pm, &pTmp);
-        }
-        else//right tra
-        {
-            POINT4D pTmp = {static_cast<float>(xline), pm->y,1,1};
-            drawTrangleBottomPlane(pt, pm, &pTmp);
-            drawTrangleTopPlane(pb, pm, &pTmp);
-        }
+        POINT4D pTmp = {static_cast<float>(xline), pm->y,1,1};
+        drawTrangleBottomPlane(pt, pm, &pTmp);
+        drawTrangleTopPlane(pb, pm, &pTmp);
     }
 }
 
