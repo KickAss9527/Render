@@ -28,6 +28,8 @@
 #include <stdlib.h>
 static int slices = 16;
 static int stacks = 16;
+int sSize = 800;
+
 
 void drawLine(POINT4D_PTR p0, POINT4D_PTR p1)
 {
@@ -162,13 +164,13 @@ void myDisplay ()
     VECTOR4D vscale = {1,1,1,1}, vpos = {0,0,0,1}, vrot = {0,0,0,1};
     CAM4DV1 cam;
     OBJECT4DV1 obj;
-    Init_CAM4DV1(&cam, &cam_pos, &cam_dir, 50,500,90, 500,500);
+    Init_CAM4DV1(&cam, &cam_pos, &cam_dir, 50,sSize,90, sSize,sSize);
 #ifdef __APPLE__
     Load_OBJECT4DV1_PLG(&obj,"/MyFiles/Work/GitProject/Render/Render/tower1.plg", &vscale, &vpos, &vrot);
 #else
     Load_OBJECT4DV1_PLG(&obj,"C:\\Users\\Administrator\\Desktop\\git\\Render\\Render\\tower1.plg", &vscale, &vpos, &vrot);
 #endif
-    obj.world_pos.z=60;
+    obj.world_pos.z=160;
 
     Model_To_World_OBJECT4DV1(&obj);
     Build_CAM4DV1_Matrix_Euler(&cam, CAM_ROT_SEQ_ZYX);
@@ -217,13 +219,24 @@ void myDisplay ()
 
 int main(int argc, char *argv[])
 {
-
-
+    VECTOR4D sun_pos = {0, 10000, 0, 0};
+    RGBAV1 c0 = {0};
+    RGBAV1 c1;
+    c1.r = 255;
+    c1.g = 255;
+    RGBAV1 c2 = {0};
+    int sun_light = Init_Light_LIGHTV1(1,
+                                       LIGHTV1_STATE_ON,
+                                       LIGHTV1_ATTR_POINT,
+                                       c0, c1, c2,
+                                       &sun_pos, NULL,
+                                       0, 1, 0,
+                                       0, 0, 0);
 
     glutInit(&argc, argv);//≥ı ºªØ,±ÿ–Î‘⁄µ˜”√∆‰À˚GLUT∫Ø ˝«∞µ˜”√“ªœ¬
     glutInitDisplayMode (GLUT_RGBA | GLUT_SINGLE);//…Ë∂®ƒ£ Ω,RGBA…´≤ ,∫Õµ•ª∫≥Â«¯
     glutInitWindowPosition (100, 100);//…Ë÷√¥∞ø⁄Œª÷√,»Áπ˚…Ë-1,-1æÕ «ƒ¨»œŒª÷√
-    glutInitWindowSize (500, 500);//…Ë÷√¥∞ø⁄¥Û–°
+    glutInitWindowSize (sSize, sSize);//…Ë÷√¥∞ø⁄¥Û–°
     glutCreateWindow ("hello word!");//¥¥Ω®√˚≥∆Œ™"hello word!"µƒ¥∞ø⁄,¥∞ø⁄¥¥Ω®∫Û≤ªª·¡¢º¥œ‘ æµΩ∆¡ƒª…œ,“™µ˜”√∫Û√ÊµƒglutMainLoop()≤≈ª·œ‘ æ
     glutDisplayFunc(myDisplay);//µ˜”√ªÊ÷∆∫Ø ˝ πÀ¸œ‘ æ‘⁄∏’¥¥Ω®µƒ¥∞ø⁄…œ
     glutMainLoop();//œ˚œ¢—≠ª∑,¥∞ø⁄πÿ±’≤≈ª·∑µªÿ

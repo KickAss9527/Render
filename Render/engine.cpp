@@ -5,6 +5,147 @@
 #include <stdlib.h>
 #include <math.h>
 
+LIGHTV1 lights[MAX_LIGHTS];
+int num_lights;
+
+int Reset_Lights_LIGHTV1(void)
+{
+    static int first_time = 1;
+    memset(lights, 0, MAX_LIGHTS*sizeof(LIGHTV1));
+    num_lights = 0;
+    first_time = 0;
+    return 1;
+}
+
+int Init_Light_LIGHTV1(int index,
+                       int _state,
+                       int _attr,
+                       RGBAV1 _c_ambient,
+                       RGBAV1 _c_diffuse,
+                       RGBAV1 _c_specular,
+                       POINT4D_PTR _pos,
+                       VECTOR4D_PTR _dir,
+                       float _kc,
+                       float _kl,
+                       float _kq,
+                       float _spot_inner,
+                       float _spot_outer,
+                       float _pf)
+{
+    if (index<0 || index>=MAX_LIGHTS) return 0;
+
+    lights[index].state = _state;
+    lights[index].id = index;
+    lights[index].attr = _attr;
+    lights[index].c_ambient = _c_ambient;
+    lights[index].c_diffuse = _c_diffuse;
+    lights[index].c_specular = _c_specular;
+    lights[index].kc = _kc;
+    lights[index].kl = _kl;
+    lights[index].kq = _kq;
+
+    if(_pos)
+    {
+        VECTOR4D_COPY(&lights[index].pos, _pos);
+    }
+    if(_dir)
+    {
+        VECTOR4D_COPY(&lights[index].dir, _dir);
+        VECTOR4D_Normalize(&lights[index].dir);
+    }
+    lights[index].spot_inner = _spot_inner;
+    lights[index].spot_outer = _spot_outer;
+    lights[index].pf = _pf;
+    return index;
+}
+
+int Insert_POLY4DV1_RENDERLIST4DV1(RENDERLIST4DV1_PTR rend_list, POLY4DV1_PTR poly)
+{
+    if (rend_list->num_polys >= RENDERLIST4DV1_MAX_POLYS) return 0;
+
+    rend_list->poly_ptrs[rend_list->num_polys] = &rend_list->poly_data[rend_list->num_polys];
+    rend_list->poly_data[rend_list->num_polys].state = poly->state;
+    rend_list->poly_data[rend_list->num_polys].attr = poly->attr;
+    rend_list->poly_data[rend_list->num_polys].color = poly->color;
+
+    VECTOR4D_COPY(&rend_list->poly_data[rend_list->num_polys].tvlist[0],
+                  &poly->vlist[poly->vert[0]]);
+    VECTOR4D_COPY(&rend_list->poly_data[rend_list->num_polys].tvlist[1],
+                  &poly->vlist[poly->vert[1]]);
+    VECTOR4D_COPY(&rend_list->poly_data[rend_list->num_polys].tvlist[2],
+                  &poly->vlist[poly->vert[2]]);
+    VECTOR4D_COPY(&rend_list->poly_data[rend_list->num_polys].vlist[0],
+                  &poly->vlist[poly->vert[0]]);
+    VECTOR4D_COPY(&rend_list->poly_data[rend_list->num_polys].vlist[1],
+                  &poly->vlist[poly->vert[1]]);
+    VECTOR4D_COPY(&rend_list->poly_data[rend_list->num_polys].vlist[2],
+                  &poly->vlist[poly->vert[2]]);
+
+    if(rend_list->num_polys == 0)
+    {
+        rend_list->poly_data[0].next = NULL;
+        rend_list->poly_data[0].prev = NULL;
+    }
+    else
+    {
+        rend_list->poly_data[0].next = NULL;
+        rend_list->poly_data[rend_list->num_polys].prev = &rend_list->poly_data[rend_list->num_polys-1];
+        rend_list->poly_data[rend_list->num_polys-1].next = &rend_list->poly_data[rend_list->num_polys];
+    }
+    rend_list->num_polys++;
+    return 1;
+}
+
+int Insert_OBJECT4DV1_RENDERLIST4DV2(RENDERLIST4DV1_PTR rend_list,
+                                     OBJECT4DV1_PTR obj,
+                                     int insert_local=0,
+                                     int lighting_on=0)
+{
+    if(!(obj->state & OBJECT4DV1_STATE_ACTIVE) ||
+       obj->state & OBJECT4DV1_STATE_CULLED ||
+       obj->state & OBJECT4DV1_STATE_VISIBLE)
+    {
+        return 0;
+    }
+
+    for (int poly=0; poly < obj->num_polys; poly++)
+    {
+        POLY4DV1_PTR curr_poly = &obj->plist[poly];
+        if(!(curr_poly->state & POLY4DV1_STATE_ACTIVE) ||
+           curr_poly->state & POLY4DV1_STATE_CLIPPED ||
+           curr_poly->state & POLY4DV1_STATE_BACKFACE)
+        {
+            continue;
+        }
+        POINT4D_PTR vlist_old = curr_poly->vlist;
+        if(insert_local)
+            curr_poly->vlist = obj->vlist_local;
+        else
+            curr_poly->vlist = obj->vlist_trans;
+
+        unsigned int base_color;
+        if(lighting_on)
+        {
+            base_color = (unsigned int)curr_poly->color;
+            curr_poly->color = (int)(base_color>>16);
+        }
+
+        if(!Insert_POLY4DV1_RENDERLIST4DV1(rend_list, curr_poly))
+        {
+            curr_poly->vlist = vlist_old;
+            return 0;
+        }
+
+        if (lighting_on)
+        {
+            curr_poly->color = (int)base_color;
+        }
+        curr_poly->vlist = vlist_old;
+
+    }
+    return 1;
+}
+
 void RESET_RENDERLIST4DV1(RENDERLIST4DV1_PTR rend_list)
 {
     rend_list->num_polys = 0;
@@ -170,7 +311,7 @@ void Transform_RENDERLIST4DV1(RENDERLIST4DV1_PTR rend_list, MATRIX4X4_PTR mt, in
         {
             for(int poly=0; poly<rend_list->num_polys; poly++)
             {
-                POLY4DV1_PTR curr_poly = rend_list->poly_ptrs[poly];
+                POLYF4DV1_PTR curr_poly = rend_list->poly_ptrs[poly];
                 if((curr_poly==NULL) ||
                    !(curr_poly->state & POLY4DV1_STATE_ACTIVE) ||
                    (curr_poly->state & POLY4DV1_STATE_CLIPPED) ||
@@ -189,7 +330,7 @@ void Transform_RENDERLIST4DV1(RENDERLIST4DV1_PTR rend_list, MATRIX4X4_PTR mt, in
         {
             for(int poly=0; poly<rend_list->num_polys; poly++)
             {
-                POLY4DV1_PTR curr_poly = rend_list->poly_ptrs[poly];
+                POLYF4DV1_PTR curr_poly = rend_list->poly_ptrs[poly];
                 if((curr_poly==NULL) ||
                    !(curr_poly->state & POLY4DV1_STATE_ACTIVE) ||
                    (curr_poly->state & POLY4DV1_STATE_CLIPPED) ||
@@ -208,7 +349,7 @@ void Transform_RENDERLIST4DV1(RENDERLIST4DV1_PTR rend_list, MATRIX4X4_PTR mt, in
         {
             for(int poly=0; poly<rend_list->num_polys; poly++)
             {
-                POLY4DV1_PTR curr_poly = rend_list->poly_ptrs[poly];
+                POLYF4DV1_PTR curr_poly = rend_list->poly_ptrs[poly];
                 if((curr_poly==NULL) ||
                    !(curr_poly->state & POLY4DV1_STATE_ACTIVE) ||
                    (curr_poly->state & POLY4DV1_STATE_CLIPPED) ||
@@ -294,7 +435,7 @@ void Model_To_World_RENDERLIST4DV1(RENDERLIST4DV1_PTR rend_list, POINT4D_PTR wor
     {
         for (int poly=0; poly<rend_list->num_polys; poly++)
         {
-            POLY4DV1_PTR curr_poly = rend_list->poly_ptrs[poly];
+            POLYF4DV1_PTR curr_poly = rend_list->poly_ptrs[poly];
             if ((curr_poly==NULL) ||
                 !(curr_poly->state & POLY4DV1_STATE_ACTIVE) ||
                 (curr_poly->state & POLY4DV1_STATE_BACKFACE) ||
@@ -310,7 +451,7 @@ void Model_To_World_RENDERLIST4DV1(RENDERLIST4DV1_PTR rend_list, POINT4D_PTR wor
     {
         for (int poly=0; poly<rend_list->num_polys; poly++)
         {
-            POLY4DV1_PTR curr_poly = rend_list->poly_ptrs[poly];
+            POLYF4DV1_PTR curr_poly = rend_list->poly_ptrs[poly];
             if ((curr_poly==NULL) ||
                 !(curr_poly->state & POLY4DV1_STATE_ACTIVE) ||
                 (curr_poly->state & POLY4DV1_STATE_BACKFACE) ||
@@ -443,7 +584,7 @@ void World_To_Camera_RENDERLIST4DV1(RENDERLIST4DV1_PTR rend_list, CAM4DV1_PTR ca
 {
     for (int poly=0; poly<rend_list->num_polys; poly++)
     {
-        POLY4DV1_PTR curr_poly = rend_list->poly_ptrs[poly];
+        POLYF4DV1_PTR curr_poly = rend_list->poly_ptrs[poly];
         if (curr_poly==NULL ||
             !(curr_poly->state & POLY4DV1_STATE_ACTIVE) ||
             curr_poly->state & POLY4DV1_STATE_CLIPPED ||
@@ -539,7 +680,7 @@ void Remove_Backfaces_RENDERLIST4DV1(RENDERLIST4DV1_PTR rend_list, CAM4DV1_PTR c
 {
     for (int poly=0; poly<rend_list->num_polys; poly++)
     {
-        POLY4DV1_PTR curr_poly = rend_list->poly_ptrs[poly];
+        POLYF4DV1_PTR curr_poly = rend_list->poly_ptrs[poly];
         if((curr_poly == NULL) ||
            !(curr_poly->state & POLY4DV1_STATE_ACTIVE) ||
            (curr_poly->state & POLY4DV1_STATE_CLIPPED) ||
@@ -593,7 +734,7 @@ void Camera_To_Perspective_RENDERLIST4DV1(RENDERLIST4DV1_PTR rend_list, CAM4DV1_
 {
     for (int poly=0; poly<rend_list->num_polys; poly++)
     {
-        POLY4DV1_PTR curr_poly = rend_list->poly_ptrs[poly];
+        POLYF4DV1_PTR curr_poly = rend_list->poly_ptrs[poly];
         if ((curr_poly==NULL) ||
             !(curr_poly->state & POLY4DV1_STATE_ACTIVE) ||
             (curr_poly->state & POLY4DV1_STATE_BACKFACE) ||
@@ -614,7 +755,7 @@ void Convert_From_Homogeneous4D_RENDERLIST4DV1(RENDERLIST4DV1_PTR rend_list)
 {
     for (int poly=0; poly<rend_list->num_polys; poly++)
     {
-        POLY4DV1_PTR curr_poly = rend_list->poly_ptrs[poly];
+        POLYF4DV1_PTR curr_poly = rend_list->poly_ptrs[poly];
         if ((curr_poly==NULL) ||
             !(curr_poly->state & POLY4DV1_STATE_ACTIVE) ||
             (curr_poly->state & POLY4DV1_STATE_BACKFACE) ||
@@ -645,7 +786,7 @@ void Perspective_To_Screen_RENDERLIST4DV1(RENDERLIST4DV1_PTR rend_list, CAM4DV1_
 {
     for (int poly=0; poly<rend_list->num_polys; poly++)
     {
-        POLY4DV1_PTR curr_poly = rend_list->poly_ptrs[poly];
+        POLYF4DV1_PTR curr_poly = rend_list->poly_ptrs[poly];
         if ((curr_poly==NULL) ||
             !(curr_poly->state & POLY4DV1_STATE_ACTIVE) ||
             (curr_poly->state & POLY4DV1_STATE_BACKFACE) ||
@@ -681,7 +822,7 @@ void Camera_To_Perspective_Screen_RENDERLIST4DV1(RENDERLIST4DV1_PTR rend_list, C
 {
     for (int poly=0; poly<rend_list->num_polys; poly++)
     {
-        POLY4DV1_PTR curr_poly = rend_list->poly_ptrs[poly];
+        POLYF4DV1_PTR curr_poly = rend_list->poly_ptrs[poly];
         if ((curr_poly==NULL) ||
             !(curr_poly->state & POLY4DV1_STATE_ACTIVE) ||
             (curr_poly->state & POLY4DV1_STATE_BACKFACE) ||

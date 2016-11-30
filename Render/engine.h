@@ -1,6 +1,14 @@
 #ifndef ENGINE_H_INCLUDED
 #define ENGINE_H_INCLUDED
 #include "lxMath.h"
+
+typedef unsigned short USHORT;
+typedef unsigned short WORD;
+typedef unsigned char UCHAR;
+typedef unsigned char BYTE;
+typedef unsigned int  QUAD;
+typedef unsigned int  UINT;
+
 typedef struct POLY4DV1_TYP{
     int state;
     int attr;
@@ -16,8 +24,8 @@ typedef struct POLYF4DV1_TYP{
     int color;
     POINT4D vlist[3];
     POINT4D tvlist[3];
-    POLY4DV1_TYP *next;
-    POLY4DV1_TYP *prev;
+    POLYF4DV1_TYP *next;
+    POLYF4DV1_TYP *prev;
 } POLYF4DV1, *POLYF4DV1_PTR;
 
 #define OBJECT4DV1_STATE_ACTIVE      0x0001
@@ -42,6 +50,78 @@ typedef struct POLYF4DV1_TYP{
 #define OBJECT4DV1_MAX_POLYS       128
 #define RENDERLIST4DV1_MAX_POLYS   OBJECT4DV1_MAX_POLYS
 
+#define MATV1_ATTR_2SIDE    0x0001
+#define MATV1_ATTR_TRANSPARENT    0x0002
+#define MATV1_ATTR_8BITCOLOR    0x0004
+#define MATV1_ATTR_RGB16    0x0008
+#define MATV1_ATTR_RGB24    0x0010
+#define MATV1_ATTR_SHADE_MODE_CONSTANT    0x020
+#define MATV1_ATTR_SHADE_MODE_EMMISIVE    0x020
+#define MATV1_ATTR_SHADE_MODE_FLAT    0x0040
+#define MATV1_ATTR_SHADE_MODE_GOURAUD    0x0080
+#define MATV1_ATTR_SHADE_MODE_FASTPHONG    0x0100
+#define MATV1_ATTR_SHADE_MODE_TEXTURE    0x0200
+
+#define MATV1_STATE_ACTIVE    0x0001
+#define MATV1_MATERIALS    256
+
+typedef struct RGBAV1_TYP{
+    union{
+        int rgba;
+        UCHAR rgba_M[4];
+        struct{UCHAR a, b, g, r;};
+    };
+} RGBAV1, *RGBAV1_PTR;
+
+typedef struct BITMAP_IMAGE_TYP{
+    int state;
+    int attr;
+    int x,y;
+    int width,height;
+    int num_bytes;
+    int bpp;
+    UCHAR *buffer;
+}BITMAP_IMAGE, *BITMAP_IMAGE_PTR;
+
+typedef struct MATV1_TYP{
+    int state;
+    int id;
+    char name[64];
+    int attr;
+    RGBAV1 color;
+    float ka, kd, ks, power;
+    RGBAV1 ra, rd, rs;
+    char texture_file[80];
+    BITMAP_IMAGE texture;
+}MATV1, *MATV1_PTR;
+
+#define LIGHTV1_ATTR_AMBIENT    0x001
+#define LIGHTV1_ATTR_INFINITE    0x002
+#define LIGHTV1_ATTR_POINT    0x004
+#define LIGHTV1_ATTR_SPOTLIGHT1    0x008
+#define LIGHTV1_ATTR_SPOTLIGHT2    0x010
+#define LIGHTV1_STATE_ON    1
+#define LIGHTV1_STATE_OFF    0
+#define MAX_LIGHTS    8
+
+
+
+typedef struct LIGHTV1_TYP
+{
+    int state;
+    int id;
+    int attr;
+    RGBAV1 c_ambient;
+    RGBAV1 c_diffuse;
+    RGBAV1 c_specular;
+    POINT4D pos;
+    VECTOR4D dir;
+    float kc, kl, kq;
+    float spot_inner;
+    float spot_outer;
+    float pf;
+}LIGHTV1, *LIGHTV1_PTR;
+
 typedef struct OBJECT4DV1_TYP{
     int id;
     char name[64];
@@ -62,8 +142,8 @@ typedef struct OBJECT4DV1_TYP{
 typedef struct RENDERLIST4DV1_TYP{
     int state;
     int attr;
-    POLY4DV1_PTR poly_ptrs[RENDERLIST4DV1_MAX_POLYS];
-    POLY4DV1 poly_data[RENDERLIST4DV1_MAX_POLYS];
+    POLYF4DV1_PTR poly_ptrs[RENDERLIST4DV1_MAX_POLYS];
+    POLYF4DV1 poly_data[RENDERLIST4DV1_MAX_POLYS];
     int num_polys;
 } RENDERLIST4DV1, *RENDERLIST4DV1_PTR;
 
@@ -182,4 +262,19 @@ void Model_To_World_OBJECT4DV1(OBJECT4DV1_PTR obj, int coord_select = TRANSFORM_
 void World_To_Camera_OBJECT4DV1(CAM4DV1_PTR cam, OBJECT4DV1_PTR obj);
 void Camera_To_Perspective_OBJECT4DV1(OBJECT4DV1_PTR obj, CAM4DV1_PTR cam);
 void Perspective_To_Screen_OBJECT4DV1(OBJECT4DV1_PTR obj, CAM4DV1_PTR cam);
+int Init_Light_LIGHTV1(int index,
+                       int _state,
+                       int _attr,
+                       RGBAV1 _c_ambient,
+                       RGBAV1 _c_diffuse,
+                       RGBAV1 _c_specular,
+                       POINT4D_PTR _pos,
+                       VECTOR4D_PTR _dir,
+                       float _kc,
+                       float _kl,
+                       float _kq,
+                       float _spot_inner,
+                       float _spot_outer,
+                       float _pf);
+
 #endif // ENGINE_H_INCLUDED
