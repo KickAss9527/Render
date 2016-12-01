@@ -171,10 +171,18 @@ void myDisplay ()
     Load_OBJECT4DV1_PLG(&obj,"C:\\Users\\Administrator\\Desktop\\git\\Render\\Render\\tower1.plg", &vscale, &vpos, &vrot);
 #endif
     obj.world_pos.z=160;
-
+    
+    RENDERLIST4DV1 rend_list;
+    RESET_RENDERLIST4DV1(&rend_list);
+    
     Model_To_World_OBJECT4DV1(&obj);
     Build_CAM4DV1_Matrix_Euler(&cam, CAM_ROT_SEQ_ZYX);
-    Remove_Backfaces_OBJECT4DV1(&obj, &cam);
+    
+//    Insert_OBJECT4DV1_RENDERLIST4DV1(rend_list, &obj, 0, 0);
+    Insert_OBJECT4DV1_RENDERLIST4DV1(&rend_list, &obj, 0, 0);
+    
+//    Remove_Backfaces_OBJECT4DV1(&obj, &cam);
+    Remove_Backfaces_RENDERLIST4DV1(&rend_list, &cam);
     
     Reset_Lights_LIGHTV1();
     VECTOR4D sun_pos = {0, 1000, 0, 0};
@@ -189,42 +197,46 @@ void myDisplay ()
                                        NULL, NULL,
                                        0, 0, 0,
                                        0, 0, 0);
-    Light_OBJECT4DV1_World16(&obj, &cam, GetLightList(), 1);
+//    Light_OBJECT4DV1_World16(&obj, &cam, GetLightList(), 1);
+    Light_RENDERLIST4DV1_World16(&rend_list, &cam, GetLightList(), 1);
     
-    World_To_Camera_OBJECT4DV1(&cam, &obj);
-    Camera_To_Perspective_OBJECT4DV1(&obj, &cam);
-    Perspective_To_Screen_OBJECT4DV1(&obj, &cam);
+//    World_To_Camera_OBJECT4DV1(&cam, &obj);
+//    Camera_To_Perspective_OBJECT4DV1(&obj, &cam);
+//    Perspective_To_Screen_OBJECT4DV1(&obj, &cam);
+    World_To_Camera_RENDERLIST4DV1(&rend_list, &cam);
+    Camera_To_Perspective_RENDERLIST4DV1(&rend_list, &cam);
+    Perspective_To_Screen_RENDERLIST4DV1(&rend_list, &cam);
 
     glClear (GL_COLOR_BUFFER_BIT);//«Âø’∆¡ƒª…œµƒ—’…´
     printf("after render/n");
-    for(int poly=0; poly<obj.num_polys; poly++)
+    for(int poly=0; poly<rend_list.num_polys; poly++)
     {
-
-        if(!(obj.plist[poly].state & POLY4DV1_STATE_ACTIVE) ||
-           (obj.plist[poly].state & POLY4DV1_STATE_CLIPPED) ||
-           (obj.plist[poly].state & POLY4DV1_STATE_BACKFACE))
+        POLYF4DV1 curr_poly = rend_list.poly_data[poly];
+        if(!(curr_poly.state & POLY4DV1_STATE_ACTIVE) ||
+           (curr_poly.state & POLY4DV1_STATE_CLIPPED) ||
+           (curr_poly.state & POLY4DV1_STATE_BACKFACE))
         {
             continue;
         }
 
-        int vindex_0 = obj.plist[poly].vert[0];
-        int vindex_1 = obj.plist[poly].vert[1];
-        int vindex_2 = obj.plist[poly].vert[2];
+//        int vindex_0 = obj.plist[poly].vert[0];
+//        int vindex_1 = obj.plist[poly].vert[1];
+//        int vindex_2 = obj.plist[poly].vert[2];
 //        printf("(%f,%f), (%f,%f),(%f,%f)\n",
-//               obj.vlist_trans[vindex_0].x,obj.vlist_trans[vindex_0].y,
-//               obj.vlist_trans[vindex_1].x,obj.vlist_trans[vindex_1].y,
-//               obj.vlist_trans[vindex_2].x,obj.vlist_trans[vindex_2].y);
+//               curr_poly.tvlist[0].x,curr_poly.tvlist[0].y,
+//               curr_poly.tvlist[1].x,curr_poly.tvlist[1].y,
+//               curr_poly.tvlist[2].x,curr_poly.tvlist[2].y);
         unsigned int r, g, b;
-        int color = obj.plist[poly].lcolor;
+        int color = curr_poly.lcolor;
         RGB888FROM24BIT(color, &r, &g, &b);
 
-//        printf("(%d, %d, %d)\n", r, g, b);
+        printf("(%d, %d, %d)\n", r, g, b);
         glColor3f (r/255.0, g/255.0, b/255.0);//…Ë÷√µ±«∞ª≠± —’…´
-        drawTrangle(&obj.vlist_trans[vindex_0],&obj.vlist_trans[vindex_1],&obj.vlist_trans[vindex_2]);
+        drawTrangle(&curr_poly.tvlist[0],&curr_poly.tvlist[1],&curr_poly.tvlist[2]);
         glColor3f (1.0, 1.0, 0.0);//…Ë÷√µ±«∞ª≠± —’…´
-        drawLine(&obj.vlist_trans[vindex_0], &obj.vlist_trans[vindex_1]);
-        drawLine(&obj.vlist_trans[vindex_2], &obj.vlist_trans[vindex_1]);
-        drawLine(&obj.vlist_trans[vindex_2], &obj.vlist_trans[vindex_0]);
+        drawLine(&curr_poly.tvlist[0], &curr_poly.tvlist[1]);
+        drawLine(&curr_poly.tvlist[2], &curr_poly.tvlist[1]);
+        drawLine(&curr_poly.tvlist[2], &curr_poly.tvlist[0]);
     }
 
     glFlush();//“™º”…œ,≤ª»ªª·∫‹¬˝µƒ,◊˜”√ «,±£÷§«∞√ÊµƒOpenGL√¸¡Ó¡¢º¥÷¥––,∂¯≤ª «‘⁄ª∫≥Â«¯÷–µ»◊≈

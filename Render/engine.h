@@ -23,6 +23,7 @@ typedef struct POLYF4DV1_TYP{
     int state;
     int attr;
     int color;
+    int lcolor;
     POINT4D vlist[3];
     POINT4D tvlist[3];
     POLYF4DV1_TYP *next;
@@ -260,6 +261,10 @@ typedef struct CAM4DV1_TYP{
 
 int Load_OBJECT4DV1_PLG(OBJECT4DV1_PTR obj, char *filename, VECTOR4D_PTR scale, VECTOR4D_PTR pos, VECTOR4D_PTR rot);
 void RESET_RENDERLIST4DV1(RENDERLIST4DV1_PTR rend_list);
+int Insert_OBJECT4DV1_RENDERLIST4DV1(RENDERLIST4DV1_PTR rend_list,
+                                     OBJECT4DV1_PTR obj,
+                                     int insert_local,
+                                     int lighting_on);
 void Init_CAM4DV1(CAM4DV1_PTR cam,
                   //int cam_attr,
                   POINT4D_PTR cam_pos,
@@ -270,12 +275,24 @@ void Init_CAM4DV1(CAM4DV1_PTR cam,
                   float fov,
                   float viewport_width,
                   float viewport_height);
+
 void Remove_Backfaces_OBJECT4DV1(OBJECT4DV1_PTR obj, CAM4DV1_PTR cam);
+void Remove_Backfaces_RENDERLIST4DV1(RENDERLIST4DV1_PTR rend_list, CAM4DV1_PTR cam);
+
 void Build_CAM4DV1_Matrix_Euler(CAM4DV1_PTR cam, int cam_rot_seq);
+
 void Model_To_World_OBJECT4DV1(OBJECT4DV1_PTR obj, int coord_select = TRANSFORM_LOCAL_TO_TRANS);
+void Model_To_World_RENDERLIST4DV1(RENDERLIST4DV1_PTR rend_list, POINT4D_PTR world_pos, int coord_select = TRANSFORM_LOCAL_TO_TRANS);
+
 void World_To_Camera_OBJECT4DV1(CAM4DV1_PTR cam, OBJECT4DV1_PTR obj);
+void World_To_Camera_RENDERLIST4DV1(RENDERLIST4DV1_PTR rend_list, CAM4DV1_PTR cam);
+
 void Camera_To_Perspective_OBJECT4DV1(OBJECT4DV1_PTR obj, CAM4DV1_PTR cam);
+void Camera_To_Perspective_RENDERLIST4DV1(RENDERLIST4DV1_PTR rend_list, CAM4DV1_PTR cam);
+
 void Perspective_To_Screen_OBJECT4DV1(OBJECT4DV1_PTR obj, CAM4DV1_PTR cam);
+void Perspective_To_Screen_RENDERLIST4DV1(RENDERLIST4DV1_PTR rend_list, CAM4DV1_PTR cam);
+
 int Init_Light_LIGHTV1(int index,
                        int _state,
                        int _attr,
@@ -294,6 +311,10 @@ int Light_OBJECT4DV1_World16(OBJECT4DV1_PTR obj,
                              CAM4DV1_PTR cam,
                              LIGHTV1_PTR lights,
                              int max_lights);
+int Light_RENDERLIST4DV1_World16(RENDERLIST4DV1_PTR rend_list,
+                                 CAM4DV1_PTR cam,
+                                 LIGHTV1_PTR lights,
+                                 int max_lights);
 LIGHTV1_PTR GetLightList(void);
 int Reset_Lights_LIGHTV1(void);
 
