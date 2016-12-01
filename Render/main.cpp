@@ -33,7 +33,7 @@ int sSize = 800;
 
 void drawLine(POINT4D_PTR p0, POINT4D_PTR p1)
 {
-    int w = 250;
+    int w = sSize*0.5;
     POINT2D np0 = {(p0->x-w)/w, (w-p0->y)/w};
     POINT2D np1 = {(p1->x-w)/w, (w-p1->y)/w};
     glBegin (GL_LINES);
@@ -181,10 +181,6 @@ void myDisplay ()
 
     glClear (GL_COLOR_BUFFER_BIT);//«Âø’∆¡ƒª…œµƒ—’…´
 
-
-
-
-
     for(int poly=0; poly<obj.num_polys; poly++)
     {
 
@@ -202,8 +198,9 @@ void myDisplay ()
                obj.vlist_trans[vindex_0].x,obj.vlist_trans[vindex_0].y,
                obj.vlist_trans[vindex_1].x,obj.vlist_trans[vindex_1].y,
                obj.vlist_trans[vindex_2].x,obj.vlist_trans[vindex_2].y);
-
-        glColor3f (0.3, 0.3, 0.3);//…Ë÷√µ±«∞ª≠± —’…´
+        unsigned int r, g, b;
+        _RGB565FROM16BIT(obj.plist[poly].color, &r, &g, &b);
+        glColor3f (r/255.0, g/255.0, b/255.0);//…Ë÷√µ±«∞ª≠± —’…´
         drawTrangle(&obj.vlist_trans[vindex_0],&obj.vlist_trans[vindex_1],&obj.vlist_trans[vindex_2]);
         glColor3f (1.0, 1.0, 0.0);//…Ë÷√µ±«∞ª≠± —’…´
         drawLine(&obj.vlist_trans[vindex_0], &obj.vlist_trans[vindex_1]);

@@ -7,6 +7,7 @@
 
 LIGHTV1 lights[MAX_LIGHTS];
 int num_lights;
+int dd_pixel_format;
 
 int Reset_Lights_LIGHTV1(void)
 {
@@ -939,4 +940,168 @@ void Init_CAM4DV1(CAM4DV1_PTR cam,
     cam->viewplane_width = 2/cam->aspect_ratio;
     float tan_fov_div2 = tan(DEG_TO_RAD(fov/2));
     cam->view_dist = 0.5*cam->viewplane_width*tan_fov_div2;
+}
+
+int Light_OBEJCT4DV1_World16(OBJECT4DV1_PTR obj,
+                             CAM4DV1_PTR cam,
+                             LIGHTV1_PTR lights,
+                             int max_lights)
+{
+    unsigned int r_base, g_base, b_base, r_sum, g_sum, b_sum, shared_color;
+    float dp, dist, i, nl, atten;
+    
+    if (!(obj->state & OBJECT4DV1_STATE_ACTIVE) ||
+        obj->state & OBJECT4DV1_STATE_CULLED ||
+        obj->state & OBJECT4DV1_STATE_VISIBLE)
+    {
+        return 0;
+    }
+    
+    for (int poly=0; poly<obj->num_polys; poly++)
+    {
+        POLY4DV1_PTR curr_poly = &obj->plist[poly];
+        if(!(curr_poly->state & POLY4DV2_STATE_ACTIVE) ||
+           curr_poly->state & POLY4DV2_STATE_CLIPPED ||
+           curr_poly->state & POLY4DV2_STATE_BACKFACE)
+        {
+            continue;
+        }
+        
+        int vindex_0 = curr_poly->vert[0];
+        int vindex_1 = curr_poly->vert[1];
+        int vindex_2 = curr_poly->vert[2];
+        
+        if (curr_poly->attr & POLY4DV1_ATTR_SHADE_MODE_FLAT ||
+            curr_poly->attr & POLY4DV1_ATTR_SHADE_MODE_GOURAUD)
+        {
+            if(dd_pixel_format == DD_PIXEL_FORMAT565)
+            {
+                
+                _RGB565FROM16BIT(curr_poly->color, &r_base, &g_base, &b_base);
+                r_base <<= 3;
+                g_base <<= 2;
+                b_base <<= 3;
+            }
+            else
+            {
+                _RGB565FROM16BIT(curr_poly->color, &r_base, &g_base, &b_base);
+                r_base <<= 3;
+                g_base <<= 3;
+                b_base <<= 3;
+            }
+            r_sum = g_sum = b_sum = 0;
+            
+            for (int curr_light=0; curr_light<max_lights; curr_light++)
+            {
+                if (!lights[curr_light].state)
+                {
+                    continue;
+                }
+                
+                if (lights[curr_light].attr & LIGHTV1_ATTR_POINT)
+                {
+                    VECTOR4D u, v, n, l;
+                    VECTOR4D_Build(&obj->vlist_trans[vindex_0],
+                                   &obj->vlist_trans[vindex_1], &u);
+                    VECTOR4D_Build(&obj->vlist_trans[vindex_0],
+                                   &obj->vlist_trans[vindex_2], &v);
+                    VECTOR4D_Cross(&u, &v, &n);
+                    nl = VECTOR4D_Length(&n);
+                    VECTOR4D_Build(&obj->vlist_trans[vindex_0],
+                                   &lights[curr_light].pos, &l);
+                    dist = VECTOR4D_Length(&l);
+                    dp = VECTOR4D_Dot(&n, &l);
+                    if (dp > 0)
+                    {
+                        atten = (lights[curr_light].kc + lights[curr_light].kl*dist + lights[curr_light].kq*dist*dist);
+                        i = 128*(nl*dist*atten);
+                        r_sum += (lights[curr_light].c_diffuse.r * r_base * i)/(256*128);
+                        g_sum += (lights[curr_light].c_diffuse.g * r_base * i)/(256*128);
+                        b_sum += (lights[curr_light].c_diffuse.b * r_base * i)/(256*128);
+                    }
+                    
+                }
+                else if (lights[curr_light].attr & LIGHTV1_ATTR_AMBIENT)
+                {
+                    r_sum += ((lights[curr_light].c_ambient.r * r_base)/256);
+                    g_sum += ((lights[curr_light].c_ambient.g * g_base)/256);
+                    b_sum += ((lights[curr_light].c_ambient.b * b_base)/256);
+                }
+                else if (lights[curr_light].attr & LIGHTV1_ATTR_INFINITE) {
+                    VECTOR4D u, v, n;
+                    VECTOR4D_Build(&obj->vlist_trans[vindex_0], &obj->vlist_trans[vindex_1], &u);
+                    VECTOR4D_Build(&obj->vlist_trans[vindex_0], &obj->vlist_trans[vindex_2], &v);
+                    VECTOR4D_Cross(&u, &v, &n);
+                    nl = VECTOR4D_Length(&n);
+                    dp = VECTOR4D_Dot(&n, &lights[curr_light].dir);
+                    if (dp > 0)
+                    {
+                        i = 128*dp/nl;
+                        r_sum += (lights[curr_light].c_diffuse.r * r_base * i)/(256*128);
+                        g_sum += (lights[curr_light].c_diffuse.g * g_base * i)/(256*128);
+                        b_sum += (lights[curr_light].c_diffuse.b * b_base * i)/(256*128);
+                    }
+                }
+                else if (lights[curr_light].attr & LIGHTV1_ATTR_SPOTLIGHT1)
+                {
+                    VECTOR4D u, v, n, l;
+                    VECTOR4D_Build(&obj->vlist_trans[vindex_0], &obj->vlist_trans[vindex_1], &u);
+                    VECTOR4D_Build(&obj->vlist_trans[vindex_0], &obj->vlist_trans[vindex_2], &v);
+                    VECTOR4D_Cross(&u, &v, &n);
+                    nl = VECTOR4D_Length(&n);
+                    VECTOR4D_Build(&obj->vlist_trans[vindex_0],
+                                   &lights[curr_light].pos, &l);
+                    dist = VECTOR4D_Length(&l);
+                    dp = VECTOR4D_Dot(&n, &lights[curr_light].dir);
+                    if (dp > 0)
+                    {
+                        atten = (lights[curr_light].kc + lights[curr_light].kl*dist + lights[curr_light].kq*dist*dist);
+                        i = 128*(nl*dist*atten);
+                        r_sum += (lights[curr_light].c_diffuse.r * r_base * i)/(256*128);
+                        g_sum += (lights[curr_light].c_diffuse.g * r_base * i)/(256*128);
+                        b_sum += (lights[curr_light].c_diffuse.b * r_base * i)/(256*128);
+                    }
+                }
+                else if (lights[curr_light].attr & LIGHTV1_ATTR_SPOTLIGHT2)
+                {
+                    VECTOR4D u, v, n, d, s;
+                    VECTOR4D_Build(&obj->vlist_trans[vindex_0], &obj->vlist_trans[vindex_1], &u);
+                    VECTOR4D_Build(&obj->vlist_trans[vindex_0], &obj->vlist_trans[vindex_2], &v);
+                    VECTOR4D_Cross(&u, &v, &n);
+                    nl = VECTOR4D_Length(&n);
+                    dp = VECTOR4D_Dot(&n, &lights[curr_light].dir);
+                    if (dp > 0)
+                    {
+                        VECTOR4D_Build(&lights[curr_light].pos, &obj->vlist_trans[vindex_0], &s);
+                        dist = VECTOR4D_Length(&s);
+                        float dpsl = VECTOR4D_Dot(&s, &lights[curr_light].dir)/dist;
+                        if (dist > 0)
+                        {
+                            atten = (lights[curr_light].kc + lights[curr_light].kl*dist + lights[curr_light].kq*dist*dist);
+                            float dpsl_exp = dpsl;
+                            for (int e_index=1; e_index < (int)lights[curr_light].pf; e_index++)
+                            {
+                                dpsl_exp*=dpsl;
+                            }
+                            i = 128*dpsl_exp/(nl*atten);
+                            r_sum += (lights[curr_light].c_diffuse.r * r_base * i)/(256*128);
+                            g_sum += (lights[curr_light].c_diffuse.g * g_base * i)/(256*128);
+                            b_sum += (lights[curr_light].c_diffuse.b * b_base * i)/(256*128);
+                        }
+                    }
+                }
+            }
+            r_sum = MIN(255, r_sum);
+            g_sum = MIN(255, g_sum);
+            b_sum = MIN(255, b_sum);
+            shared_color = RGB16BIT(r_sum, g_sum, b_sum);
+            curr_poly->color = (int)((shared_color<<16) | curr_poly->color);
+        }
+        else//POLY4DV1_ATTR_SHADE_MODE_CONSTANT
+        {
+            curr_poly->color = (int)((curr_poly->color<<16) | curr_poly->color);
+        }
+    }
+
+    return 1;
 }

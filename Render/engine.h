@@ -39,6 +39,7 @@ typedef struct POLYF4DV1_TYP{
 #define POLY4DV1_ATTR_RGB24    0x0010
 
 #define POLY4DV1_ATTR_SHADE_MODE_PURE   0x0020
+#define POLY4DV1_ATTR_SHADE_MODE_CONSTANT   0x0020
 #define POLY4DV1_ATTR_SHADE_MODE_FLAT   0x0040
 #define POLY4DV1_ATTR_SHADE_MODE_GOURAUD    0x0080
 #define POLY4DV1_ATTR_SHADE_MODE_PHONG  0x0100
@@ -50,6 +51,11 @@ typedef struct POLYF4DV1_TYP{
 #define OBJECT4DV1_MAX_POLYS       128
 #define RENDERLIST4DV1_MAX_POLYS   OBJECT4DV1_MAX_POLYS
 
+#define DD_PIXEL_FORMAT8 8
+#define DD_PIXEL_FORMAT555 15
+#define DD_PIXEL_FORMAT565 16 
+#define DD_PIXEL_FORMAT888 24 
+#define DD_PIXEL_FORMATALPHA888 32
 #define MATV1_ATTR_2SIDE    0x0001
 #define MATV1_ATTR_TRANSPARENT    0x0002
 #define MATV1_ATTR_8BITCOLOR    0x0004
@@ -190,6 +196,9 @@ typedef struct CAM4DV1_TYP{
 #define PLX_SHADE_MODE_FLAT_FLAG    0x2000
 #define PLX_SHADE_MODE_GOURAUD_FLAG    0x4000
 #define PLX_SHADE_MODE_PHONG_FLAG    0x6000
+#define _RGB565FROM16BIT(RGB, r,g,b) { *r = ( ((RGB) >> 11) & 0x1f); *g = (((RGB) >> 5) & 0x3f); *b = ((RGB) & 0x1f); }
+#define _RGB555FROM16BIT(RGB, r,g,b) { *r = ( ((RGB) >> 10) & 0x1f); *g = (((RGB) >> 5) & 0x1f); *b = ( (RGB) & 0x1f); }
+
 #define RGB16BIT555(r,g,b) ((b & 31) + ((g & 31) << 5) + ((r & 31) << 10))
 // this builds a 16 bit color value in 5.6.5 format (green dominate mode)
 #define RGB16BIT565(r,g,b) ((b & 31) + ((g & 63) << 5) + ((r & 31) << 11))// this builds a 24 bit color value in 8.8.8 format
@@ -276,5 +285,9 @@ int Init_Light_LIGHTV1(int index,
                        float _spot_inner,
                        float _spot_outer,
                        float _pf);
+int Light_OBEJCT4DV1_World16(OBJECT4DV1_PTR obj,
+                             CAM4DV1_PTR cam,
+                             LIGHTV1_PTR lights,
+                             int max_lights);
 
 #endif // ENGINE_H_INCLUDED
