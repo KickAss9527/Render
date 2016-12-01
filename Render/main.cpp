@@ -175,12 +175,29 @@ void myDisplay ()
     Model_To_World_OBJECT4DV1(&obj);
     Build_CAM4DV1_Matrix_Euler(&cam, CAM_ROT_SEQ_ZYX);
     Remove_Backfaces_OBJECT4DV1(&obj, &cam);
+    
+    Reset_Lights_LIGHTV1();
+    VECTOR4D sun_pos = {0, 100, 0, 0};
+    RGBAV1 c0 = {0};
+    RGBAV1 c1;
+    c1.r = 255;
+    c1.g = 255;
+    RGBAV1 c2 = {0};
+    int sun_light = Init_Light_LIGHTV1(0,
+                                       LIGHTV1_STATE_ON,
+                                       LIGHTV1_ATTR_POINT,
+                                       c0, c1, c2,
+                                       &sun_pos, NULL,
+                                       0, 1, 0,
+                                       0, 0, 0);
+    Light_OBJECT4DV1_World16(&obj, &cam, GetLightList(), 1);
+    
     World_To_Camera_OBJECT4DV1(&cam, &obj);
     Camera_To_Perspective_OBJECT4DV1(&obj, &cam);
     Perspective_To_Screen_OBJECT4DV1(&obj, &cam);
 
     glClear (GL_COLOR_BUFFER_BIT);//«Âø’∆¡ƒª…œµƒ—’…´
-
+    printf("after render/n");
     for(int poly=0; poly<obj.num_polys; poly++)
     {
 
@@ -194,12 +211,15 @@ void myDisplay ()
         int vindex_0 = obj.plist[poly].vert[0];
         int vindex_1 = obj.plist[poly].vert[1];
         int vindex_2 = obj.plist[poly].vert[2];
-        printf("(%f,%f), (%f,%f),(%f,%f)\n",
-               obj.vlist_trans[vindex_0].x,obj.vlist_trans[vindex_0].y,
-               obj.vlist_trans[vindex_1].x,obj.vlist_trans[vindex_1].y,
-               obj.vlist_trans[vindex_2].x,obj.vlist_trans[vindex_2].y);
+//        printf("(%f,%f), (%f,%f),(%f,%f)\n",
+//               obj.vlist_trans[vindex_0].x,obj.vlist_trans[vindex_0].y,
+//               obj.vlist_trans[vindex_1].x,obj.vlist_trans[vindex_1].y,
+//               obj.vlist_trans[vindex_2].x,obj.vlist_trans[vindex_2].y);
         unsigned int r, g, b;
-        _RGB565FROM16BIT(obj.plist[poly].color, &r, &g, &b);
+        int color = obj.plist[poly].lcolor;
+        RGB888FROM24BIT(color, &r, &g, &b);
+
+//        printf("(%d, %d, %d)\n", r, g, b);
         glColor3f (r/255.0, g/255.0, b/255.0);//…Ë÷√µ±«∞ª≠± —’…´
         drawTrangle(&obj.vlist_trans[vindex_0],&obj.vlist_trans[vindex_1],&obj.vlist_trans[vindex_2]);
         glColor3f (1.0, 1.0, 0.0);//…Ë÷√µ±«∞ª≠± —’…´
@@ -216,19 +236,8 @@ void myDisplay ()
 
 int main(int argc, char *argv[])
 {
-    VECTOR4D sun_pos = {0, 10000, 0, 0};
-    RGBAV1 c0 = {0};
-    RGBAV1 c1;
-    c1.r = 255;
-    c1.g = 255;
-    RGBAV1 c2 = {0};
-    int sun_light = Init_Light_LIGHTV1(1,
-                                       LIGHTV1_STATE_ON,
-                                       LIGHTV1_ATTR_POINT,
-                                       c0, c1, c2,
-                                       &sun_pos, NULL,
-                                       0, 1, 0,
-                                       0, 0, 0);
+
+
 
     glutInit(&argc, argv);//≥ı ºªØ,±ÿ–Î‘⁄µ˜”√∆‰À˚GLUT∫Ø ˝«∞µ˜”√“ªœ¬
     glutInitDisplayMode (GLUT_RGBA | GLUT_SINGLE);//…Ë∂®ƒ£ Ω,RGBA…´≤ ,∫Õµ•ª∫≥Â«¯

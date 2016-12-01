@@ -13,6 +13,7 @@ typedef struct POLY4DV1_TYP{
     int state;
     int attr;
     int color;
+    int lcolor;
     POINT4D_PTR vlist;
     POINT4D_PTR tvlist;
     int vert[3];
@@ -185,17 +186,18 @@ typedef struct CAM4DV1_TYP{
 } CAM4DV1, *CAM4DV1_PTR;
 
 #define PLX_RGB_MASK    0x8000
-#define PLX_SHADE_MODE_MASK     0x6000
+#define PLX_SHADE_MODE_MASK     0x6000000
 #define PLX_2SIDED_MASK 0x1000
 #define PLX_COLOR_MASK  0x0fff
-#define PLX_COLOR_MODE_RGB_FLAG 0x8000
+#define PLX_COLOR_MODE_RGB_FLAG 0x8000000
 #define PLX_COLOR_MODE_INDEXED_FLAG 0x0000
 #define PLX_2SIDED_FLAG     0x1000
 #define PLX_1SIDE_FLAG      0x0000
-#define PLX_SHADE_MODE_PURE_FLAG    0x0000
-#define PLX_SHADE_MODE_FLAT_FLAG    0x2000
-#define PLX_SHADE_MODE_GOURAUD_FLAG    0x4000
-#define PLX_SHADE_MODE_PHONG_FLAG    0x6000
+#define PLX_SHADE_MODE_PURE_FLAG    0x0000000
+#define PLX_SHADE_MODE_FLAT_FLAG    0x2000000
+#define PLX_SHADE_MODE_GOURAUD_FLAG    0x4000000
+#define PLX_SHADE_MODE_PHONG_FLAG    0x6000000
+#define RGB888FROM24BIT(RGB,r,g,b){ *r = ( ((RGB) >> 16) & 0xff); *g = (((RGB) >> 8) & 0xff); *b = ( (RGB) & 0xff); }
 #define _RGB565FROM16BIT(RGB, r,g,b) { *r = ( ((RGB) >> 11) & 0x1f); *g = (((RGB) >> 5) & 0x3f); *b = ((RGB) & 0x1f); }
 #define _RGB555FROM16BIT(RGB, r,g,b) { *r = ( ((RGB) >> 10) & 0x1f); *g = (((RGB) >> 5) & 0x1f); *b = ( (RGB) & 0x1f); }
 
@@ -253,6 +255,9 @@ typedef struct CAM4DV1_TYP{
 #define CULL_OBJECT_Y_PLANE 0x0002
 #define CULL_OBJECT_Z_PLANE 0x0004
 #define CULL_OBJECT_XYZ_PLANES (CULL_OBJECT_X_PLANE | CULL_OBJECT_Y_PLANE | CULL_OBJECT_Z_PLANE)
+
+
+
 int Load_OBJECT4DV1_PLG(OBJECT4DV1_PTR obj, char *filename, VECTOR4D_PTR scale, VECTOR4D_PTR pos, VECTOR4D_PTR rot);
 void RESET_RENDERLIST4DV1(RENDERLIST4DV1_PTR rend_list);
 void Init_CAM4DV1(CAM4DV1_PTR cam,
@@ -285,9 +290,11 @@ int Init_Light_LIGHTV1(int index,
                        float _spot_inner,
                        float _spot_outer,
                        float _pf);
-int Light_OBEJCT4DV1_World16(OBJECT4DV1_PTR obj,
+int Light_OBJECT4DV1_World16(OBJECT4DV1_PTR obj,
                              CAM4DV1_PTR cam,
                              LIGHTV1_PTR lights,
                              int max_lights);
+LIGHTV1_PTR GetLightList(void);
+int Reset_Lights_LIGHTV1(void);
 
 #endif // ENGINE_H_INCLUDED

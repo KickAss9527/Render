@@ -5,15 +5,20 @@
 #include <stdlib.h>
 #include <math.h>
 
-LIGHTV1 lights[MAX_LIGHTS];
-int num_lights;
+LIGHTV1 gLights[MAX_LIGHTS];
+int gNum_lights;
 int dd_pixel_format;
 
+LIGHTV1_PTR GetLightList(void)
+{
+    return gLights;
+}
 int Reset_Lights_LIGHTV1(void)
 {
+    dd_pixel_format = DD_PIXEL_FORMAT888;
     static int first_time = 1;
-    memset(lights, 0, MAX_LIGHTS*sizeof(LIGHTV1));
-    num_lights = 0;
+    memset(gLights, 0, MAX_LIGHTS*sizeof(LIGHTV1));
+    gNum_lights = 0;
     first_time = 0;
     return 1;
 }
@@ -35,28 +40,28 @@ int Init_Light_LIGHTV1(int index,
 {
     if (index<0 || index>=MAX_LIGHTS) return 0;
 
-    lights[index].state = _state;
-    lights[index].id = index;
-    lights[index].attr = _attr;
-    lights[index].c_ambient = _c_ambient;
-    lights[index].c_diffuse = _c_diffuse;
-    lights[index].c_specular = _c_specular;
-    lights[index].kc = _kc;
-    lights[index].kl = _kl;
-    lights[index].kq = _kq;
+    gLights[index].state = _state;
+    gLights[index].id = index;
+    gLights[index].attr = _attr;
+    gLights[index].c_ambient = _c_ambient;
+    gLights[index].c_diffuse = _c_diffuse;
+    gLights[index].c_specular = _c_specular;
+    gLights[index].kc = _kc;
+    gLights[index].kl = _kl;
+    gLights[index].kq = _kq;
 
     if(_pos)
     {
-        VECTOR4D_COPY(&lights[index].pos, _pos);
+        VECTOR4D_COPY(&gLights[index].pos, _pos);
     }
     if(_dir)
     {
-        VECTOR4D_COPY(&lights[index].dir, _dir);
-        VECTOR4D_Normalize(&lights[index].dir);
+        VECTOR4D_COPY(&gLights[index].dir, _dir);
+        VECTOR4D_Normalize(&gLights[index].dir);
     }
-    lights[index].spot_inner = _spot_inner;
-    lights[index].spot_outer = _spot_outer;
-    lights[index].pf = _pf;
+    gLights[index].spot_inner = _spot_inner;
+    gLights[index].spot_outer = _spot_outer;
+    gLights[index].pf = _pf;
     return index;
 }
 
@@ -266,20 +271,28 @@ int Load_OBJECT4DV1_PLG(OBJECT4DV1_PTR obj, char *filename, VECTOR4D_PTR scale, 
         {
             //one side
         }
+        //1000,0000,0000,0000    PLX_COLOR_MODE_RGB_FLAG
+        //1010,1111,1111,1111    poly_surface_desc
+        //1111,0000,0000,0000    f00
+        //0000,1111,0000,0000    f0
+        //0000,0000,1111,0000    f  
         if(poly_surface_desc & PLX_COLOR_MODE_RGB_FLAG)
         {
-            SET_BIT(obj->plist[poly].attr, POLY4DV1_ATTR_RGB16);
-            int red = ((poly_surface_desc & 0x0f00) >> 8);
-            int green = ((poly_surface_desc & 0x00f0) >> 4);
-            int blue = (poly_surface_desc & 0x000f);
-            obj->plist[poly].color = RGB16BIT(red*16, green*16, blue*16);
+            SET_BIT(obj->plist[poly].attr, POLY4DV1_ATTR_RGB24);
+            int red = ((poly_surface_desc & 0xff0000) >> 16);
+            int green = ((poly_surface_desc & 0x00ff00) >> 8);
+            int blue = (poly_surface_desc & 0x000ff);
+            obj->plist[poly].color = RGB24BIT(0,red, green, blue);
         }
         else
         {
             SET_BIT(obj->plist[poly].attr, POLY4DV1_ATTR_8BITCOLOR);
             obj->plist[poly].color = (poly_surface_desc & 0x00ff);
         }
-
+        //110,0000,0000,0000   PLX_SHADE_MODE_MASK
+        //010,0000,0000,0000   PLX_SHADE_MODE_FLAT_FLAG
+        //100,0000,0000,0000   PLX_SHADE_MODE_GOURAUD_FLAG
+        //110,0000,0000,0000   PLX_SHADE_MODE_PHONG_FLAG
         int shade_mode = (poly_surface_desc & PLX_SHADE_MODE_MASK);
         switch(shade_mode)
         {
@@ -942,7 +955,7 @@ void Init_CAM4DV1(CAM4DV1_PTR cam,
     cam->view_dist = 0.5*cam->viewplane_width*tan_fov_div2;
 }
 
-int Light_OBEJCT4DV1_World16(OBJECT4DV1_PTR obj,
+int Light_OBJECT4DV1_World16(OBJECT4DV1_PTR obj,
                              CAM4DV1_PTR cam,
                              LIGHTV1_PTR lights,
                              int max_lights)
@@ -952,7 +965,7 @@ int Light_OBEJCT4DV1_World16(OBJECT4DV1_PTR obj,
     
     if (!(obj->state & OBJECT4DV1_STATE_ACTIVE) ||
         obj->state & OBJECT4DV1_STATE_CULLED ||
-        obj->state & OBJECT4DV1_STATE_VISIBLE)
+        !(obj->state & OBJECT4DV1_STATE_VISIBLE))
     {
         return 0;
     }
@@ -974,9 +987,12 @@ int Light_OBEJCT4DV1_World16(OBJECT4DV1_PTR obj,
         if (curr_poly->attr & POLY4DV1_ATTR_SHADE_MODE_FLAT ||
             curr_poly->attr & POLY4DV1_ATTR_SHADE_MODE_GOURAUD)
         {
-            if(dd_pixel_format == DD_PIXEL_FORMAT565)
+            if (dd_pixel_format == DD_PIXEL_FORMAT888)
             {
-                
+                RGB888FROM24BIT(curr_poly->color, &r_base, &g_base, &b_base);
+            }
+            else if(dd_pixel_format == DD_PIXEL_FORMAT565)
+            {
                 _RGB565FROM16BIT(curr_poly->color, &r_base, &g_base, &b_base);
                 r_base <<= 3;
                 g_base <<= 2;
@@ -990,7 +1006,7 @@ int Light_OBEJCT4DV1_World16(OBJECT4DV1_PTR obj,
                 b_base <<= 3;
             }
             r_sum = g_sum = b_sum = 0;
-            
+            printf("(%d, %d, %d)\n", r_base, g_base, b_base);
             for (int curr_light=0; curr_light<max_lights; curr_light++)
             {
                 if (!lights[curr_light].state)
@@ -1094,12 +1110,13 @@ int Light_OBEJCT4DV1_World16(OBJECT4DV1_PTR obj,
             r_sum = MIN(255, r_sum);
             g_sum = MIN(255, g_sum);
             b_sum = MIN(255, b_sum);
-            shared_color = RGB16BIT(r_sum, g_sum, b_sum);
-            curr_poly->color = (int)((shared_color<<16) | curr_poly->color);
+            shared_color = RGB24BIT(0, r_sum, g_sum, b_sum);
+            curr_poly->lcolor = shared_color;
+            
         }
         else//POLY4DV1_ATTR_SHADE_MODE_CONSTANT
         {
-            curr_poly->color = (int)((curr_poly->color<<16) | curr_poly->color);
+            curr_poly->lcolor = curr_poly->color;
         }
     }
 
