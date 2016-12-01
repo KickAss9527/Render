@@ -38,17 +38,17 @@ tower 16 18
 
 #poly list
 
-0xa104E8B 3 5 4 0
-0xa104E8B 3 1 5 0
+0xac0c0c0 3 5 4 0
+0xac0c0c0 3 1 5 0
 
-0xa104E8B 3 6 5 1
-0xa104E8B 3 2 6 1
+0xac0c0c0 3 6 5 1
+0xac0c0c0 3 2 6 1
 
-0xa104E8B 3 7 6 2
-0xa104E8B 3 3 7 2
+0xac0c0c0 3 7 6 2
+0xac0c0c0 3 3 7 2
 
-0xa104E8B 3 7 3 0
-0xa104E8B 3 4 7 0
+0xac0c0c0 3 7 3 0
+0xac0c0c0 3 4 7 0
 
 0xa008B45 3 13 12 9
 0xa008B45 3 10 13 9

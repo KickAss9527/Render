@@ -177,18 +177,17 @@ void myDisplay ()
     Remove_Backfaces_OBJECT4DV1(&obj, &cam);
     
     Reset_Lights_LIGHTV1();
-    VECTOR4D sun_pos = {0, 100, 0, 0};
+    VECTOR4D sun_pos = {0, 1000, 0, 0};
     RGBAV1 c0 = {0};
     RGBAV1 c1;
-    c1.r = 255;
-    c1.g = 255;
+    c1.r = c1.g = c1.b = 255;
     RGBAV1 c2 = {0};
     int sun_light = Init_Light_LIGHTV1(0,
                                        LIGHTV1_STATE_ON,
-                                       LIGHTV1_ATTR_POINT,
-                                       c0, c1, c2,
-                                       &sun_pos, NULL,
-                                       0, 1, 0,
+                                       LIGHTV1_ATTR_AMBIENT,
+                                       c1, c0, c2,
+                                       NULL, NULL,
+                                       0, 0, 0,
                                        0, 0, 0);
     Light_OBJECT4DV1_World16(&obj, &cam, GetLightList(), 1);
     
