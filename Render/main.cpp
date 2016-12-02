@@ -31,8 +31,12 @@ static int stacks = 16;
 int sSize = 800;
 CAM4DV1 gCam;
 RENDERLIST4DV1 gRend_list;
+OBJECT4DV1 gAllObjects[100];
 bool isDrawWireframe = false;
-
+#define AMBIENT_LIGHT_INDEX   0 // ambient light index
+#define INFINITE_LIGHT_INDEX  1 // infinite light index
+#define POINT_LIGHT_INDEX     2 // point light index
+#define SPOT_LIGHT_INDEX      3 // spot light index
 void drawLine(POINT4D_PTR p0, POINT4D_PTR p1)
 {
     int w = sSize*0.5;
@@ -174,7 +178,7 @@ void drawPoly(RENDERLIST4DV1_PTR rend_list)
         int color = curr_poly.lcolor;
         RGB888FROM24BIT(color, &r, &g, &b);
         
-        printf("(%d, %d, %d)\n", r, g, b);
+//        printf("(%d, %d, %d)\n", r, g, b);
         glColor3f (r/255.0, g/255.0, b/255.0);//…Ë÷√µ±«∞ª≠± —’…´
         drawTrangle(&curr_poly.tvlist[0],&curr_poly.tvlist[1],&curr_poly.tvlist[2]);
         glColor3f (1.0, 1.0, 0.0);//…Ë÷√µ±«∞ª≠± —’…´
@@ -199,7 +203,8 @@ void drawDebugBtn()
     for (int i=0; i<btnCnt; i++)
     {
         glBegin (GL_POLYGON);
-        glColor3f (arc4random()%255/255.0, arc4random()%255/255.0, arc4random()%255/255.0);
+        float cc = (i+1.0)/btnCnt;
+        glColor3f (cc, cc, cc);
         float orign = -1;
         float x = i*tmpBtnS;
         glVertex2f( orign+x, orign );//
@@ -211,10 +216,78 @@ void drawDebugBtn()
 
 }
 
+void loadLights()
+{
+    Reset_Lights_LIGHTV1();
+    
+    RGBAV1 white, gray, black, red, green, blue;
+    
+    white.rgba = RGB32BIT(0,255,255,255);
+    gray.rgba  = RGB32BIT(0,100,100,100);
+    black.rgba = RGB32BIT(0,0,0,0);
+    red.rgba   = RGB32BIT(0,255,0,0);
+    green.rgba = RGB32BIT(0,0,255,0);
+    blue.rgba  = RGB32BIT(0,0,0,255);
+    
+    
+    // ambient light
+    Init_Light_LIGHTV1(AMBIENT_LIGHT_INDEX,
+                       LIGHTV1_STATE_ON,      // turn the light on
+                       LIGHTV1_ATTR_AMBIENT,  // ambient light type
+                       gray, black, black,    // color for ambient term only
+                       NULL, NULL,            // no need for pos or dir
+                       0,0,0,                 // no need for attenuation
+                       0,0,0);                // spotlight info NA
+    
+    
+    VECTOR4D dlight_dir = {-1,0,-1,0};
+    
+    // directional light
+    Init_Light_LIGHTV1(INFINITE_LIGHT_INDEX,
+                       LIGHTV1_STATE_ON,      // turn the light on
+                       LIGHTV1_ATTR_INFINITE, // infinite light type
+                       black, gray, black,    // color for diffuse term only
+                       NULL, &dlight_dir,     // need direction only
+                       0,0,0,                 // no need for attenuation
+                       0,0,0);                // spotlight info NA
+    
+    
+    VECTOR4D plight_pos = {0,200,0,0};
+    
+    // point light
+    Init_Light_LIGHTV1(POINT_LIGHT_INDEX,
+                       LIGHTV1_STATE_ON,      // turn the light on
+                       LIGHTV1_ATTR_POINT,    // pointlight type
+                       black, green, black,   // color for diffuse term only
+                       &plight_pos, NULL,     // need pos only
+                       0,.001,0,              // linear attenuation only
+                       0,0,1);                // spotlight info NA
+    
+    VECTOR4D slight_pos = {0,200,0,0};
+    VECTOR4D slight_dir = {-1,0,-1,0};
+    
+    // spot light
+    Init_Light_LIGHTV1(SPOT_LIGHT_INDEX,
+                       LIGHTV1_STATE_ON,         // turn the light on
+                       LIGHTV1_ATTR_SPOTLIGHT2,  // spot light type 2
+                       black, red, black,      // color for diffuse term only
+                       &slight_pos, &slight_dir, // need pos only
+                       0,.001,0,                 // linear attenuation only
+                       0,0,1);
+}
+
 
 void myDisplay ()
 {
-
+    RESET_RENDERLIST4DV1(&gRend_list);
+    for (int i=0; i<100; i++)
+    {
+        OBJECT4DV1 obj = gAllObjects[i];
+        Model_To_World_OBJECT4DV1(&obj);
+        Insert_OBJECT4DV1_RENDERLIST4DV1(&gRend_list, &obj, 0, 0);
+        Remove_Backfaces_RENDERLIST4DV1(&gRend_list, &gCam);
+    }
+    
     Light_RENDERLIST4DV1_World16(&gRend_list, &gCam, GetLightList(), 1);
     World_To_Camera_RENDERLIST4DV1(&gRend_list, &gCam);
     Sort_RENDERLIST4DV1(&gRend_list, SORT_POLYLIST_AVGZ);
@@ -225,19 +298,32 @@ void myDisplay ()
     drawPoly(&gRend_list);
     drawDebugBtn();
     glFlush();
-    
-    for (int i=0; i<OBJECT4DV1_MAX_POLYS; i++)
-    {
-        POLYF4DV1_PTR p = gRend_list.poly_ptrs[i];
-        if (!p)
-        {
-            break;
-        }
-        float z = p->tvlist[0].z+p->tvlist[1].z+p->tvlist[2].z;
-        printf("idx : %d  z:%.2f \n", p->idx, z);
-    }
+
+//    print zOrder
+//    for (int i=0; i<OBJECT4DV1_MAX_POLYS; i++)
+//    {
+//        POLYF4DV1_PTR p = gRend_list.poly_ptrs[i];
+//        if (!p)
+//        {
+//            break;
+//        }
+//        float z = p->tvlist[0].z+p->tvlist[1].z+p->tvlist[2].z;
+//        printf("idx : %d  z:%.2f \n", p->idx, z);
+//    }
 }
 
+void btnClick(int idx, LIGHTV1_PTR lights)
+{
+    if (idx==0)
+    {
+        LIGHTV1_PTR li = &lights[AMBIENT_LIGHT_INDEX];
+        int c = li->c_ambient.g;
+        RGBAV1 rgb;
+        c+=10;
+        rgb.rgba = RGB32BIT(0, c, c, c);
+        li->c_ambient = rgb;
+    }
+}
 
 void myMouse(int button,int state,int x,int y)
 {
@@ -247,13 +333,12 @@ void myMouse(int button,int state,int x,int y)
         if (sSize - y <= btnSize)
         {
             int idx = x/btnSize;
-            if (idx < btnCnt)
-            {
-                printf("click: %d", idx);
-            }
+            btnClick(idx, GetLightList());
         }
     }
 }
+
+
 
 void onTimer(int value)
 {
@@ -264,7 +349,7 @@ void onTimer(int value)
 int main(int argc, char *argv[])
 {
 
-    RESET_RENDERLIST4DV1(&gRend_list);
+    
     
     POINT4D cam_pos = {0,30,0,1};
     VECTOR4D cam_dir = {0,0,0,1};
@@ -272,7 +357,8 @@ int main(int argc, char *argv[])
     Init_CAM4DV1(&gCam, &cam_pos, &cam_dir, 50,sSize,90, sSize,sSize);
     Build_CAM4DV1_Matrix_Euler(&gCam, CAM_ROT_SEQ_ZYX);
 
-    for ( int tower=0; tower<10; tower++)
+    int towerCnt = 10;
+    for ( int tower=0; tower<towerCnt; tower++)
     {
         OBJECT4DV1 obj;
         float scale = (50 + arc4random()%50)*0.01;
@@ -286,9 +372,8 @@ int main(int argc, char *argv[])
 #else
         Load_OBJECT4DV1_PLG(&obj,"C:\\Users\\Administrator\\Desktop\\git\\Render\\Render\\tower1.plg", &vscale, &vpos, &vrot);
 #endif
-        Model_To_World_OBJECT4DV1(&obj);
-        Insert_OBJECT4DV1_RENDERLIST4DV1(&gRend_list, &obj, 0, 0);
         
+        gAllObjects[tower] = obj;
     }
     
     for (int cube=0; cube < 30; cube++)
@@ -305,21 +390,16 @@ int main(int argc, char *argv[])
 #else
         Load_OBJECT4DV1_PLG(&obj,"C:\\Users\\Administrator\\Desktop\\git\\Render\\Render\\cube1.plg", &vscale, &vpos, &vrot);
 #endif
+        gAllObjects[cube+towerCnt] = obj;
         
-        Model_To_World_OBJECT4DV1(&obj);
-        Insert_OBJECT4DV1_RENDERLIST4DV1(&gRend_list, &obj, 0, 0);
+
     }
     
-    Remove_Backfaces_RENDERLIST4DV1(&gRend_list, &gCam);
+
+
     
-    Reset_Lights_LIGHTV1();
-    VECTOR4D sun_pos = {0, 1000, 0, 0};
-    RGBAV1 c0 = {0};
-    RGBAV1 c1;
-    c1.r = c1.g = c1.b = 255;
-    RGBAV1 c2 = {0};
-    Init_Light_LIGHTV1(0, LIGHTV1_STATE_ON, LIGHTV1_ATTR_AMBIENT, c1, c0, c2, NULL, NULL,
-                       0, 0, 0, 0, 0, 0);
+    loadLights();
+    
     
     for (int i=0; i<OBJECT4DV1_MAX_POLYS; i++)
     {
@@ -337,7 +417,7 @@ int main(int argc, char *argv[])
     glutInitWindowSize (sSize, sSize);//…Ë÷√¥∞ø⁄¥Û–°
     glutCreateWindow ("hello word!");//¥¥Ω®√˚≥∆Œ™"hello word!"µƒ¥∞ø⁄,¥∞ø⁄¥¥Ω®∫Û≤ªª·¡¢º¥œ‘ æµΩ∆¡ƒª…œ,“™µ˜”√∫Û√ÊµƒglutMainLoop()≤≈ª·œ‘ æ
     glutDisplayFunc(myDisplay);//µ˜”√ªÊ÷∆∫Ø ˝ πÀ¸œ‘ æ‘⁄∏’¥¥Ω®µƒ¥∞ø⁄…œ
-//   glutTimerFunc(200, onTimer, 1);
+   glutTimerFunc(200, onTimer, 1);
     
     glutMouseFunc(myMouse);
     glutMainLoop();//œ˚œ¢—≠ª∑,¥∞ø⁄πÿ±’≤≈ª·∑µªÿ

@@ -170,6 +170,10 @@ void Reset_OBJECT4DV1(OBJECT4DV1_PTR obj)
         RESET_BIT(curr_poly->state, POLY4DV1_STATE_CLIPPED);
         RESET_BIT(curr_poly->state, POLY4DV1_STATE_BACKFACE);
     }
+    for(int vertex=0; vertex<obj->num_vertices; vertex++)
+    {
+        obj->vlist_trans[vertex].x = obj->vlist_trans[vertex].y = obj->vlist_trans[vertex].z = 0;
+    }
 }
 
 float Compute_OBJECT4DV1_Radius(OBJECT4DV1_PTR obj)
@@ -683,7 +687,6 @@ void Remove_Backfaces_OBJECT4DV1(OBJECT4DV1_PTR obj, CAM4DV1_PTR cam)
         VECTOR4D_Build(&obj->vlist_trans[vindex_0], &cam->pos, &view);
 
         float dp = VECTOR4D_Dot(&n, &view);
-        printf("%f, ", dp);
         if(dp <= 0)
         {
             SET_BIT(curr_poly->state, POLY4DV1_STATE_BACKFACE);
@@ -996,14 +999,14 @@ int Light_RENDERLIST4DV1_World16(RENDERLIST4DV1_PTR rend_list,
                 b_base <<= 3;
             }
             r_sum = g_sum = b_sum = 0;
-            printf("(%d, %d, %d)\n", r_base, g_base, b_base);
+//            printf("(%d, %d, %d)\n", r_base, g_base, b_base);
             for (int curr_light=0; curr_light<max_lights; curr_light++)
             {
                 if (!lights[curr_light].state)
                 {
                     continue;
                 }
-                
+                                
                 if (lights[curr_light].attr & LIGHTV1_ATTR_POINT)
                 {
                     VECTOR4D u, v, n, l;
