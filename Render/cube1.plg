@@ -27,18 +27,18 @@ tri 8 12
 
 # polygon list
 
-0xd0f0 3 2 1 0 
-0xd0f0 3 3 2 0
-0xd0f0 3 4 7 0 
-0xd0f0 3 7 3 0
-0xd0f0 3 6 7 4 
-0xd0f0 3 5 6 4
-0xd0f0 3 2 6 1 
-0xd0f0 3 6 5 1
-0xd0f0 3 7 6 3 
-0xd0f0 3 6 2 3
-0xd0f0 3 5 4 0 
-0xd0f0 3 1 5 0 
+0xaff6600 3 2 1 0
+0xaff6600 3 3 2 0
+0xaff6600 3 4 7 0
+0xaff6600 3 7 3 0
+0xaff6600 3 6 7 4
+0xaff6600 3 5 6 4
+0xaff6600 3 2 6 1
+0xaff6600 3 6 5 1
+0xaff6600 3 7 6 3
+0xaff6600 3 6 2 3
+0xaff6600 3 5 4 0
+0xaff6600 3 1 5 0 
 
 # end plg/plx file
 

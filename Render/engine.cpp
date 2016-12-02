@@ -312,7 +312,7 @@ int Load_OBJECT4DV1_PLG(OBJECT4DV1_PTR obj, char *filename, VECTOR4D_PTR scale, 
         }
         obj->plist[poly].state = POLY4DV1_STATE_ACTIVE;
     }
-
+    
     fclose(fp);
     return 1;
 }

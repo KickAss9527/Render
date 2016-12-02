@@ -29,7 +29,8 @@
 static int slices = 16;
 static int stacks = 16;
 int sSize = 800;
-
+CAM4DV1 gCam;
+RENDERLIST4DV1 gRend_list;
 
 void drawLine(POINT4D_PTR p0, POINT4D_PTR p1)
 {
@@ -156,80 +157,22 @@ void drawTrangle(POINT4D_PTR p0, POINT4D_PTR p1, POINT4D_PTR p2)
     }
 }
 
-
-void myDisplay ()
+void drawPoly(RENDERLIST4DV1_PTR rend_list)
 {
-    POINT4D cam_pos = {31,31,0,1};
-    VECTOR4D cam_dir = {0,0,0,1};
-    VECTOR4D vscale = {1,1,1,1}, vpos = {0,0,0,1}, vrot = {0,0,0,1};
-    CAM4DV1 cam;
-    OBJECT4DV1 obj;
-    Init_CAM4DV1(&cam, &cam_pos, &cam_dir, 50,sSize,90, sSize,sSize);
-#ifdef __APPLE__
-    Load_OBJECT4DV1_PLG(&obj,"/MyFiles/Work/GitProject/Render/Render/tower1.plg", &vscale, &vpos, &vrot);
-#else
-    Load_OBJECT4DV1_PLG(&obj,"C:\\Users\\Administrator\\Desktop\\git\\Render\\Render\\tower1.plg", &vscale, &vpos, &vrot);
-#endif
-    obj.world_pos.z=160;
-    
-    RENDERLIST4DV1 rend_list;
-    RESET_RENDERLIST4DV1(&rend_list);
-    
-    Model_To_World_OBJECT4DV1(&obj);
-    Build_CAM4DV1_Matrix_Euler(&cam, CAM_ROT_SEQ_ZYX);
-    
-//    Insert_OBJECT4DV1_RENDERLIST4DV1(rend_list, &obj, 0, 0);
-    Insert_OBJECT4DV1_RENDERLIST4DV1(&rend_list, &obj, 0, 0);
-    
-//    Remove_Backfaces_OBJECT4DV1(&obj, &cam);
-    Remove_Backfaces_RENDERLIST4DV1(&rend_list, &cam);
-    
-    Reset_Lights_LIGHTV1();
-    VECTOR4D sun_pos = {0, 1000, 0, 0};
-    RGBAV1 c0 = {0};
-    RGBAV1 c1;
-    c1.r = c1.g = c1.b = 255;
-    RGBAV1 c2 = {0};
-    int sun_light = Init_Light_LIGHTV1(0,
-                                       LIGHTV1_STATE_ON,
-                                       LIGHTV1_ATTR_AMBIENT,
-                                       c1, c0, c2,
-                                       NULL, NULL,
-                                       0, 0, 0,
-                                       0, 0, 0);
-//    Light_OBJECT4DV1_World16(&obj, &cam, GetLightList(), 1);
-    Light_RENDERLIST4DV1_World16(&rend_list, &cam, GetLightList(), 1);
-    
-//    World_To_Camera_OBJECT4DV1(&cam, &obj);
-//    Camera_To_Perspective_OBJECT4DV1(&obj, &cam);
-//    Perspective_To_Screen_OBJECT4DV1(&obj, &cam);
-    World_To_Camera_RENDERLIST4DV1(&rend_list, &cam);
-    Camera_To_Perspective_RENDERLIST4DV1(&rend_list, &cam);
-    Perspective_To_Screen_RENDERLIST4DV1(&rend_list, &cam);
-
-    glClear (GL_COLOR_BUFFER_BIT);//«Âø’∆¡ƒª…œµƒ—’…´
-    printf("after render/n");
-    for(int poly=0; poly<rend_list.num_polys; poly++)
+    for(int poly=0; poly<rend_list->num_polys; poly++)
     {
-        POLYF4DV1 curr_poly = rend_list.poly_data[poly];
+        POLYF4DV1 curr_poly = rend_list->poly_data[poly];
         if(!(curr_poly.state & POLY4DV1_STATE_ACTIVE) ||
            (curr_poly.state & POLY4DV1_STATE_CLIPPED) ||
            (curr_poly.state & POLY4DV1_STATE_BACKFACE))
         {
             continue;
         }
-
-//        int vindex_0 = obj.plist[poly].vert[0];
-//        int vindex_1 = obj.plist[poly].vert[1];
-//        int vindex_2 = obj.plist[poly].vert[2];
-//        printf("(%f,%f), (%f,%f),(%f,%f)\n",
-//               curr_poly.tvlist[0].x,curr_poly.tvlist[0].y,
-//               curr_poly.tvlist[1].x,curr_poly.tvlist[1].y,
-//               curr_poly.tvlist[2].x,curr_poly.tvlist[2].y);
+        
         unsigned int r, g, b;
         int color = curr_poly.lcolor;
         RGB888FROM24BIT(color, &r, &g, &b);
-
+        
         printf("(%d, %d, %d)\n", r, g, b);
         glColor3f (r/255.0, g/255.0, b/255.0);//…Ë÷√µ±«∞ª≠± —’…´
         drawTrangle(&curr_poly.tvlist[0],&curr_poly.tvlist[1],&curr_poly.tvlist[2]);
@@ -238,12 +181,121 @@ void myDisplay ()
         drawLine(&curr_poly.tvlist[2], &curr_poly.tvlist[1]);
         drawLine(&curr_poly.tvlist[2], &curr_poly.tvlist[0]);
     }
+}
 
-    glFlush();//“™º”…œ,≤ª»ªª·∫‹¬˝µƒ,◊˜”√ «,±£÷§«∞√ÊµƒOpenGL√¸¡Ó¡¢º¥÷¥––,∂¯≤ª «‘⁄ª∫≥Â«¯÷–µ»◊≈
+int btnCnt = 6;
+float btnSize = 60.0;
+
+void drawDebugBtn()
+{
+
+    float tmpBtnS = btnSize*2/sSize;
+    for (int i=0; i<btnCnt; i++)
+    {
+        glBegin (GL_POLYGON);
+        glColor3f (arc4random()%255/255.0, arc4random()%255/255.0, arc4random()%255/255.0);
+        float orign = -1;
+        float x = i*tmpBtnS;
+        glVertex2f( orign+x, orign );//
+        glVertex2f( orign+x, orign+tmpBtnS );
+        glVertex2f( orign+x+tmpBtnS, orign+tmpBtnS );
+        glVertex2f( orign+x+tmpBtnS, orign );
+        glEnd ();
+    }
+
 }
 
 
+void myDisplay ()
+{
+    RENDERLIST4DV1 rend_list;
+    RESET_RENDERLIST4DV1(&rend_list);
+    
+    POINT4D cam_pos = {0,30,0,1};
+    VECTOR4D cam_dir = {0,0,0,1};
+    CAM4DV1 cam;
+    Init_CAM4DV1(&cam, &cam_pos, &cam_dir, 50,sSize,90, sSize,sSize);
+    Build_CAM4DV1_Matrix_Euler(&cam, CAM_ROT_SEQ_ZYX);
+    
+    for ( int tower=0; tower<10; tower++)
+    {
+        OBJECT4DV1 obj;
+        float scale = (50 + arc4random()%50)*0.01;
+        int xt = 300;
+        float x = xt*0.5 - arc4random()%xt;
+        float z = 100 + arc4random()%100;
+        VECTOR4D vscale = {scale,scale,scale,scale}, vpos = {x,0,z,1}, vrot = {0,0,0,1};
+#ifdef __APPLE__
+        Load_OBJECT4DV1_PLG(&obj,"/MyFiles/Work/GitProject/Render/Render/tower1.plg", &vscale, &vpos, &vrot);
+#else
+        Load_OBJECT4DV1_PLG(&obj,"C:\\Users\\Administrator\\Desktop\\git\\Render\\Render\\tower1.plg", &vscale, &vpos, &vrot);
+#endif
+        Model_To_World_OBJECT4DV1(&obj);
+        Insert_OBJECT4DV1_RENDERLIST4DV1(&rend_list, &obj, 0, 0);
+    }
+    
+    for (int cube=0; cube < 30; cube++)
+    {
+        OBJECT4DV1 obj;
+        float scale = (50 + arc4random()%50)*0.01;
+        float r = 0.1*(arc4random()%100);
+        int xt = 400;
+        float x = xt*0.5 - arc4random()%xt;
+        float z = 100 + arc4random()%300;
+        VECTOR4D vscale = {scale,scale,scale,scale}, vpos = {x,0,z,1}, vrot = {r,r,r,1};
+#ifdef __APPLE__
+        Load_OBJECT4DV1_PLG(&obj,"/MyFiles/Work/GitProject/Render/Render/cube1.plg", &vscale, &vpos, &vrot);
+#else
+        Load_OBJECT4DV1_PLG(&obj,"C:\\Users\\Administrator\\Desktop\\git\\Render\\Render\\cube1.plg", &vscale, &vpos, &vrot);
+#endif
+        
+        Model_To_World_OBJECT4DV1(&obj);
+        Insert_OBJECT4DV1_RENDERLIST4DV1(&rend_list, &obj, 0, 0);
+    }
+    
+    Remove_Backfaces_RENDERLIST4DV1(&rend_list, &cam);
+    
+    Reset_Lights_LIGHTV1();
+    VECTOR4D sun_pos = {0, 1000, 0, 0};
+    RGBAV1 c0 = {0};
+    RGBAV1 c1;
+    c1.r = c1.g = c1.b = 255;
+    RGBAV1 c2 = {0};
+    Init_Light_LIGHTV1(0, LIGHTV1_STATE_ON, LIGHTV1_ATTR_AMBIENT, c1, c0, c2, NULL, NULL,
+                       0, 0, 0, 0, 0, 0);
+    Light_RENDERLIST4DV1_World16(&rend_list, &cam, GetLightList(), 1);
+    World_To_Camera_RENDERLIST4DV1(&rend_list, &cam);
+    Camera_To_Perspective_RENDERLIST4DV1(&rend_list, &cam);
+    Perspective_To_Screen_RENDERLIST4DV1(&rend_list, &cam);
 
+    glClear (GL_COLOR_BUFFER_BIT);
+    drawPoly(&rend_list);
+    drawDebugBtn();
+    glFlush();
+}
+
+
+void myMouse(int button,int state,int x,int y)
+{
+    if(state==GLUT_DOWN)
+    {
+        
+        if (sSize - y <= btnSize)
+        {
+            int idx = x/btnSize;
+            if (idx < btnCnt)
+            {
+                printf("click: %d", idx);
+            }
+        }
+    }
+}
+
+void onTimer(int value)
+{
+    glutPostRedisplay();
+    glutTimerFunc(200, onTimer, 1);
+}
 
 int main(int argc, char *argv[])
 {
@@ -256,6 +308,14 @@ int main(int argc, char *argv[])
     glutInitWindowSize (sSize, sSize);//…Ë÷√¥∞ø⁄¥Û–°
     glutCreateWindow ("hello word!");//¥¥Ω®√˚≥∆Œ™"hello word!"µƒ¥∞ø⁄,¥∞ø⁄¥¥Ω®∫Û≤ªª·¡¢º¥œ‘ æµΩ∆¡ƒª…œ,“™µ˜”√∫Û√ÊµƒglutMainLoop()≤≈ª·œ‘ æ
     glutDisplayFunc(myDisplay);//µ˜”√ªÊ÷∆∫Ø ˝ πÀ¸œ‘ æ‘⁄∏’¥¥Ω®µƒ¥∞ø⁄…œ
+//   glutTimerFunc(200, onTimer, 1);
+    
+    glutMouseFunc(myMouse);
     glutMainLoop();//œ˚œ¢—≠ª∑,¥∞ø⁄πÿ±’≤≈ª·∑µªÿ
+    
+    
+    
     return 0;
 }
+
+
