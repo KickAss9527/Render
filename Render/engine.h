@@ -28,6 +28,7 @@ typedef struct POLYF4DV1_TYP{
     POINT4D tvlist[3];
     POLYF4DV1_TYP *next;
     POLYF4DV1_TYP *prev;
+    int idx;
 } POLYF4DV1, *POLYF4DV1_PTR;
 
 #define OBJECT4DV1_STATE_ACTIVE      0x0001
@@ -257,7 +258,9 @@ typedef struct CAM4DV1_TYP{
 #define CULL_OBJECT_Z_PLANE 0x0004
 #define CULL_OBJECT_XYZ_PLANES (CULL_OBJECT_X_PLANE | CULL_OBJECT_Y_PLANE | CULL_OBJECT_Z_PLANE)
 
-
+#define SORT_POLYLIST_AVGZ  0
+#define SORT_POLYLIST_NEARZ  1
+#define SORT_POLYLIST_FARZ  2
 
 int Load_OBJECT4DV1_PLG(OBJECT4DV1_PTR obj, char *filename, VECTOR4D_PTR scale, VECTOR4D_PTR pos, VECTOR4D_PTR rot);
 void RESET_RENDERLIST4DV1(RENDERLIST4DV1_PTR rend_list);
@@ -317,5 +320,5 @@ int Light_RENDERLIST4DV1_World16(RENDERLIST4DV1_PTR rend_list,
                                  int max_lights);
 LIGHTV1_PTR GetLightList(void);
 int Reset_Lights_LIGHTV1(void);
-
+void Sort_RENDERLIST4DV1(RENDERLIST4DV1_PTR rend_list, int sort_method);
 #endif // ENGINE_H_INCLUDED

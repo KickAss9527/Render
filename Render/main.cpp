@@ -31,6 +31,7 @@ static int stacks = 16;
 int sSize = 800;
 CAM4DV1 gCam;
 RENDERLIST4DV1 gRend_list;
+bool isDrawWireframe = false;
 
 void drawLine(POINT4D_PTR p0, POINT4D_PTR p1)
 {
@@ -161,7 +162,7 @@ void drawPoly(RENDERLIST4DV1_PTR rend_list)
 {
     for(int poly=0; poly<rend_list->num_polys; poly++)
     {
-        POLYF4DV1 curr_poly = rend_list->poly_data[poly];
+        POLYF4DV1 curr_poly = *rend_list->poly_ptrs[poly];
         if(!(curr_poly.state & POLY4DV1_STATE_ACTIVE) ||
            (curr_poly.state & POLY4DV1_STATE_CLIPPED) ||
            (curr_poly.state & POLY4DV1_STATE_BACKFACE))
@@ -177,9 +178,14 @@ void drawPoly(RENDERLIST4DV1_PTR rend_list)
         glColor3f (r/255.0, g/255.0, b/255.0);//…Ë÷√µ±«∞ª≠± —’…´
         drawTrangle(&curr_poly.tvlist[0],&curr_poly.tvlist[1],&curr_poly.tvlist[2]);
         glColor3f (1.0, 1.0, 0.0);//…Ë÷√µ±«∞ª≠± —’…´
-        drawLine(&curr_poly.tvlist[0], &curr_poly.tvlist[1]);
-        drawLine(&curr_poly.tvlist[2], &curr_poly.tvlist[1]);
-        drawLine(&curr_poly.tvlist[2], &curr_poly.tvlist[0]);
+        
+        if (isDrawWireframe)
+        {
+            drawLine(&curr_poly.tvlist[0], &curr_poly.tvlist[1]);
+            drawLine(&curr_poly.tvlist[2], &curr_poly.tvlist[1]);
+            drawLine(&curr_poly.tvlist[2], &curr_poly.tvlist[0]);
+        }
+
     }
 }
 
@@ -208,70 +214,28 @@ void drawDebugBtn()
 
 void myDisplay ()
 {
-    RENDERLIST4DV1 rend_list;
-    RESET_RENDERLIST4DV1(&rend_list);
-    
-    POINT4D cam_pos = {0,30,0,1};
-    VECTOR4D cam_dir = {0,0,0,1};
-    CAM4DV1 cam;
-    Init_CAM4DV1(&cam, &cam_pos, &cam_dir, 50,sSize,90, sSize,sSize);
-    Build_CAM4DV1_Matrix_Euler(&cam, CAM_ROT_SEQ_ZYX);
-    
-    for ( int tower=0; tower<10; tower++)
-    {
-        OBJECT4DV1 obj;
-        float scale = (50 + arc4random()%50)*0.01;
-        int xt = 300;
-        float x = xt*0.5 - arc4random()%xt;
-        float z = 100 + arc4random()%100;
-        VECTOR4D vscale = {scale,scale,scale,scale}, vpos = {x,0,z,1}, vrot = {0,0,0,1};
-#ifdef __APPLE__
-        Load_OBJECT4DV1_PLG(&obj,"/MyFiles/Work/GitProject/Render/Render/tower1.plg", &vscale, &vpos, &vrot);
-#else
-        Load_OBJECT4DV1_PLG(&obj,"C:\\Users\\Administrator\\Desktop\\git\\Render\\Render\\tower1.plg", &vscale, &vpos, &vrot);
-#endif
-        Model_To_World_OBJECT4DV1(&obj);
-        Insert_OBJECT4DV1_RENDERLIST4DV1(&rend_list, &obj, 0, 0);
-    }
-    
-    for (int cube=0; cube < 30; cube++)
-    {
-        OBJECT4DV1 obj;
-        float scale = (50 + arc4random()%50)*0.01;
-        float r = 0.1*(arc4random()%100);
-        int xt = 400;
-        float x = xt*0.5 - arc4random()%xt;
-        float z = 100 + arc4random()%300;
-        VECTOR4D vscale = {scale,scale,scale,scale}, vpos = {x,0,z,1}, vrot = {r,r,r,1};
-#ifdef __APPLE__
-        Load_OBJECT4DV1_PLG(&obj,"/MyFiles/Work/GitProject/Render/Render/cube1.plg", &vscale, &vpos, &vrot);
-#else
-        Load_OBJECT4DV1_PLG(&obj,"C:\\Users\\Administrator\\Desktop\\git\\Render\\Render\\cube1.plg", &vscale, &vpos, &vrot);
-#endif
-        
-        Model_To_World_OBJECT4DV1(&obj);
-        Insert_OBJECT4DV1_RENDERLIST4DV1(&rend_list, &obj, 0, 0);
-    }
-    
-    Remove_Backfaces_RENDERLIST4DV1(&rend_list, &cam);
-    
-    Reset_Lights_LIGHTV1();
-    VECTOR4D sun_pos = {0, 1000, 0, 0};
-    RGBAV1 c0 = {0};
-    RGBAV1 c1;
-    c1.r = c1.g = c1.b = 255;
-    RGBAV1 c2 = {0};
-    Init_Light_LIGHTV1(0, LIGHTV1_STATE_ON, LIGHTV1_ATTR_AMBIENT, c1, c0, c2, NULL, NULL,
-                       0, 0, 0, 0, 0, 0);
-    Light_RENDERLIST4DV1_World16(&rend_list, &cam, GetLightList(), 1);
-    World_To_Camera_RENDERLIST4DV1(&rend_list, &cam);
-    Camera_To_Perspective_RENDERLIST4DV1(&rend_list, &cam);
-    Perspective_To_Screen_RENDERLIST4DV1(&rend_list, &cam);
+
+    Light_RENDERLIST4DV1_World16(&gRend_list, &gCam, GetLightList(), 1);
+    World_To_Camera_RENDERLIST4DV1(&gRend_list, &gCam);
+    Sort_RENDERLIST4DV1(&gRend_list, SORT_POLYLIST_AVGZ);
+    Camera_To_Perspective_RENDERLIST4DV1(&gRend_list, &gCam);
+    Perspective_To_Screen_RENDERLIST4DV1(&gRend_list, &gCam);
 
     glClear (GL_COLOR_BUFFER_BIT);
-    drawPoly(&rend_list);
+    drawPoly(&gRend_list);
     drawDebugBtn();
     glFlush();
+    
+    for (int i=0; i<OBJECT4DV1_MAX_POLYS; i++)
+    {
+        POLYF4DV1_PTR p = gRend_list.poly_ptrs[i];
+        if (!p)
+        {
+            break;
+        }
+        float z = p->tvlist[0].z+p->tvlist[1].z+p->tvlist[2].z;
+        printf("idx : %d  z:%.2f \n", p->idx, z);
+    }
 }
 
 
@@ -300,8 +264,73 @@ void onTimer(int value)
 int main(int argc, char *argv[])
 {
 
+    RESET_RENDERLIST4DV1(&gRend_list);
+    
+    POINT4D cam_pos = {0,30,0,1};
+    VECTOR4D cam_dir = {0,0,0,1};
+    
+    Init_CAM4DV1(&gCam, &cam_pos, &cam_dir, 50,sSize,90, sSize,sSize);
+    Build_CAM4DV1_Matrix_Euler(&gCam, CAM_ROT_SEQ_ZYX);
 
-
+    for ( int tower=0; tower<10; tower++)
+    {
+        OBJECT4DV1 obj;
+        float scale = (50 + arc4random()%50)*0.01;
+        scale = 0.5;
+        int xt = 300;
+        float x = xt*0.5 - arc4random()%xt;
+        float z = 70 + arc4random()%130;
+        VECTOR4D vscale = {scale,scale,scale,scale}, vpos = {x,0,z,1}, vrot = {0,0,0,1};
+#ifdef __APPLE__
+        Load_OBJECT4DV1_PLG(&obj,"/MyFiles/Work/GitProject/Render/Render/tower1.plg", &vscale, &vpos, &vrot);
+#else
+        Load_OBJECT4DV1_PLG(&obj,"C:\\Users\\Administrator\\Desktop\\git\\Render\\Render\\tower1.plg", &vscale, &vpos, &vrot);
+#endif
+        Model_To_World_OBJECT4DV1(&obj);
+        Insert_OBJECT4DV1_RENDERLIST4DV1(&gRend_list, &obj, 0, 0);
+        
+    }
+    
+    for (int cube=0; cube < 30; cube++)
+    {
+        OBJECT4DV1 obj;
+        float scale = (50 + arc4random()%50)*0.01;
+        float r = 0.1*(arc4random()%100);
+        int xt = 400;
+        float x = xt*0.5 - arc4random()%xt;
+        float z = 100 + arc4random()%300;
+        VECTOR4D vscale = {scale,scale,scale,scale}, vpos = {x,0,z,1}, vrot = {r,r,r,1};
+#ifdef __APPLE__
+        Load_OBJECT4DV1_PLG(&obj,"/MyFiles/Work/GitProject/Render/Render/cube1.plg", &vscale, &vpos, &vrot);
+#else
+        Load_OBJECT4DV1_PLG(&obj,"C:\\Users\\Administrator\\Desktop\\git\\Render\\Render\\cube1.plg", &vscale, &vpos, &vrot);
+#endif
+        
+        Model_To_World_OBJECT4DV1(&obj);
+        Insert_OBJECT4DV1_RENDERLIST4DV1(&gRend_list, &obj, 0, 0);
+    }
+    
+    Remove_Backfaces_RENDERLIST4DV1(&gRend_list, &gCam);
+    
+    Reset_Lights_LIGHTV1();
+    VECTOR4D sun_pos = {0, 1000, 0, 0};
+    RGBAV1 c0 = {0};
+    RGBAV1 c1;
+    c1.r = c1.g = c1.b = 255;
+    RGBAV1 c2 = {0};
+    Init_Light_LIGHTV1(0, LIGHTV1_STATE_ON, LIGHTV1_ATTR_AMBIENT, c1, c0, c2, NULL, NULL,
+                       0, 0, 0, 0, 0, 0);
+    
+    for (int i=0; i<OBJECT4DV1_MAX_POLYS; i++)
+    {
+        POLYF4DV1_PTR p = gRend_list.poly_ptrs[i];
+        if (!p)
+        {
+            break;
+        }
+        p->idx = i;
+    }
+    
     glutInit(&argc, argv);//≥ı ºªØ,±ÿ–Î‘⁄µ˜”√∆‰À˚GLUT∫Ø ˝«∞µ˜”√“ªœ¬
     glutInitDisplayMode (GLUT_RGBA | GLUT_SINGLE);//…Ë∂®ƒ£ Ω,RGBA…´≤ ,∫Õµ•ª∫≥Â«¯
     glutInitWindowPosition (100, 100);//…Ë÷√¥∞ø⁄Œª÷√,»Áπ˚…Ë-1,-1æÕ «ƒ¨»œŒª÷√

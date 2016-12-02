@@ -1280,3 +1280,48 @@ int Light_OBJECT4DV1_World16(OBJECT4DV1_PTR obj,
 
     return 1;
 }
+
+int Compare_AvgZ_POLYF4DV1(const void *arg1,const void *arg2)
+{
+    float z1, z2;
+    POLYF4DV1_PTR poly_1, poly_2;
+    poly_1 = *((POLYF4DV1_PTR*)(arg1));
+    poly_2 = *((POLYF4DV1_PTR*)(arg2));
+    
+    z1 = 0.33333*(poly_1->tvlist[0].z+poly_1->tvlist[1].z+poly_1->tvlist[2].z);
+    z2 = 0.33333*(poly_2->tvlist[0].z+poly_2->tvlist[1].z+poly_2->tvlist[2].z);
+    
+    if (z1 > z2)
+    {
+        return -1;
+    }
+    else if (z1 < z2)
+    {
+        return 1;
+    }
+    
+    return 0;
+}
+
+
+void Sort_RENDERLIST4DV1(RENDERLIST4DV1_PTR rend_list, int sort_method)
+{
+    switch (sort_method)
+    {
+        case SORT_POLYLIST_AVGZ:
+        case SORT_POLYLIST_NEARZ:
+        case SORT_POLYLIST_FARZ:
+        {
+            qsort((void *)rend_list->poly_ptrs,
+                  rend_list->num_polys,
+                  sizeof(POLYF4DV1_PTR),
+                  Compare_AvgZ_POLYF4DV1);
+        }
+            break;
+            
+        default:
+            break;
+    }
+}
+
+
