@@ -26,6 +26,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
+
 static int slices = 16;
 static int stacks = 16;
 int sSize = 800;
@@ -33,10 +34,12 @@ CAM4DV1 gCam;
 RENDERLIST4DV1 gRend_list;
 OBJECT4DV1 gAllObjects[100];
 bool isDrawWireframe = false;
+
 #define AMBIENT_LIGHT_INDEX   0 // ambient light index
 #define INFINITE_LIGHT_INDEX  1 // infinite light index
 #define POINT_LIGHT_INDEX     2 // point light index
 #define SPOT_LIGHT_INDEX      3 // spot light index
+
 void drawLine(POINT4D_PTR p0, POINT4D_PTR p1)
 {
     int w = sSize*0.5;
@@ -154,7 +157,7 @@ void drawTrangle(POINT4D_PTR p0, POINT4D_PTR p1, POINT4D_PTR p2)
         }
 
         int xline = (pm->y - pt->y)*(pb->x - pt->x)/(pb->y - pt->y);
-        xline += pt->x + 0.5;
+        xline += pt->x + 0.5;//get x of mid point
 
         POINT4D pTmp = {static_cast<float>(xline), pm->y,1,1};
         drawTrangleBottomPlane(pt, pm, &pTmp);

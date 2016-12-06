@@ -192,6 +192,22 @@ float Compute_OBJECT4DV1_Radius(OBJECT4DV1_PTR obj)
     return obj->max_radius;
 }
 
+float Compute_OBJECT4DV2_Radius(OBJECT4DV2_PTR obj)
+{
+    obj->avg_radius[obj->curr_frame] = obj->max_radius[obj->curr_frame] = 0;
+    for(int vertex=0; vertex<obj->num_vertices; vertex++)
+    {
+        float dist_to_vertex = sqrtf(obj->vlist_local[vertex].x*obj->vlist_local[vertex].x+
+                                     obj->vlist_local[vertex].y*obj->vlist_local[vertex].y+
+                                     obj->vlist_local[vertex].z*obj->vlist_local[vertex].z);
+        obj->avg_radius[obj->curr_frame] += dist_to_vertex;
+        if(dist_to_vertex > obj->max_radius[obj->curr_frame])
+            obj->max_radius[obj->curr_frame] = dist_to_vertex;
+    }
+    obj->avg_radius[obj->curr_frame]/=obj->num_vertices;
+    return obj->max_radius[0];
+}
+
 char *Get_Line_PLG(char *buffer, int maxlength, FILE *fp)
 {
     int index = 0;
@@ -1327,4 +1343,332 @@ void Sort_RENDERLIST4DV1(RENDERLIST4DV1_PTR rend_list, int sort_method)
     }
 }
 
+#pragma mark -
+#pragma mark texture chapter
+
+int Destroy_OBJECT4DV2(OBJECT4DV2_PTR obj)
+{
+    if (obj->head_vlist_local)
+    {
+        free(obj->head_vlist_local);
+    }
+    if (obj->head_vlist_trans)
+    {
+        free(obj->head_vlist_trans);
+    }
+    if (obj->tlist)
+    {
+        free(obj->tlist);
+    }
+    if (obj->plist)
+    {
+        free(obj->plist);
+    }
+    if (obj->avg_radius)
+    {
+        free(obj->avg_radius);
+    }
+    if (obj->max_radius)
+    {
+        free(obj->max_radius);
+    }
+    memset((void*)obj, 0, sizeof(OBJECT4DV2));
+    return 1;
+}
+
+int Init_OBJECT4DV2(OBJECT4DV2_PTR obj,
+                    int _num_vertices,
+                    int _num_polys,
+                    int _num_frames,
+                    int destroy=0)
+{
+    if (destroy)
+    {
+        Destroy_OBJECT4DV2(obj);
+    }
+    
+    if (!(obj->vlist_local = (VERTEX4DTV1_PTR)malloc(sizeof(VERTEX4DTV1)*_num_vertices*_num_frames)))
+    {
+        return 0;
+    }
+    memset((void*)obj->vlist_local, 0, sizeof(VERTEX4DTV1)*_num_vertices*_num_frames);
+    
+    if (!(obj->vlist_trans = (VERTEX4DTV1_PTR)malloc(sizeof(VERTEX4DTV1)*_num_vertices*_num_frames)))
+    {
+        return 0;
+    }
+    memset((void*)obj->vlist_trans, 0, sizeof(VERTEX4DTV1)*_num_vertices*_num_frames);
+    
+    if (!(obj->tlist = (POINT2D_PTR)malloc(sizeof(POINT2D)*_num_polys*3)))
+    {
+        return 0;
+    }
+    memset((void*)obj->tlist, 0, sizeof(POINT2D)*_num_polys*3);
+    
+    if (!(obj->avg_radius = (float *)malloc(sizeof(float)*_num_frames)))
+    {
+        return 0;
+    }
+    memset((void*)obj->avg_radius, 0, sizeof(float)*_num_frames);
+    
+    if (!(obj->max_radius = (float *)malloc(sizeof(float)*_num_frames)))
+    {
+        return 0;
+    }
+    memset((void*)obj->max_radius, 0, sizeof(float)*_num_frames);
+    
+    if (!(obj->plist = (POLY4DV2_PTR)malloc(sizeof(POLY4DV2)*_num_polys)))
+    {
+        return 0;
+    }
+    memset((void*)obj->plist, 0, sizeof(POLY4DV2)*_num_polys);
+    
+    obj->head_vlist_local = obj->vlist_local;
+    obj->head_vlist_trans = obj->vlist_trans;
+    obj->num_frames = _num_frames;
+    obj->num_vertices = _num_vertices;
+    obj->num_polys = _num_polys;
+    obj->total_vertices = _num_vertices*_num_frames;
+    
+    return 1;
+}
+
+int Compute_OBJECT4DV2_Poly_Normals(OBJECT4DV2_PTR obj)
+{
+    if (!obj) {
+        return 0;
+    }
+    
+    for (int poly=0; poly<obj->num_polys; poly++)
+    {
+        int vindex_0 = obj->plist[poly].vert[0];
+        int vindex_1 = obj->plist[poly].vert[1];
+        int vindex_2 = obj->plist[poly].vert[2];
+        
+        VECTOR4D u, v, n;
+        VECTOR4D_Build(&obj->vlist_local[vindex_0].v, &obj->vlist_local[vindex_1].v, &u);
+        VECTOR4D_Build(&obj->vlist_local[vindex_0].v, &obj->vlist_local[vindex_2].v, &v);
+        VECTOR4D_Cross(&u, &v, &n);
+        obj->plist[poly].nlength = VECTOR4D_Length(&n);
+    }
+    
+    return 1;
+}
+
+int Compute_OBJECT4DV2_Vertex_Normals(OBJECT4DV2_PTR obj)
+{
+    if (!obj)
+    {
+        return 0;
+    }
+    
+    int polys_touch_vertex[OBJECT4DV2_MAX_VERTICES];
+    memset((void*)polys_touch_vertex, 0, sizeof(int)*OBJECT4DV2_MAX_VERTICES);
+    
+    for (int poly=0; poly<obj->num_polys; poly++)
+    {
+        if(obj->plist[poly].attr & POLY4DV2_ATTR_SHADE_MODE_GOURAUD)
+        {
+            int vindex_0 = obj->plist[poly].vert[0];
+            int vindex_1 = obj->plist[poly].vert[1];
+            int vindex_2 = obj->plist[poly].vert[2];
+            
+            VECTOR4D u, v, n;
+            VECTOR4D_Build(&obj->vlist_local[vindex_0].v, &obj->vlist_local[vindex_1].v, &u);
+            VECTOR4D_Build(&obj->vlist_local[vindex_0].v, &obj->vlist_local[vindex_2].v, &v);
+            VECTOR4D_Cross(&u, &v, &n);
+            
+            polys_touch_vertex[vindex_0]++;
+            polys_touch_vertex[vindex_1]++;
+            polys_touch_vertex[vindex_2]++;
+            
+            VECTOR4D_Add(&obj->vlist_local[vindex_0].n, &n, &obj->vlist_local[vindex_0].n);
+            VECTOR4D_Add(&obj->vlist_local[vindex_1].n, &n, &obj->vlist_local[vindex_1].n);
+            VECTOR4D_Add(&obj->vlist_local[vindex_2].n, &n, &obj->vlist_local[vindex_2].n);
+        }
+    }
+    
+    for (int vertex = 0; vertex < obj->num_vertices; vertex++)
+    {
+        if (polys_touch_vertex[vertex] >= 1)
+        {
+            obj->vlist_local[vertex].nx /= polys_touch_vertex[vertex];
+            obj->vlist_local[vertex].ny /= polys_touch_vertex[vertex];
+            obj->vlist_local[vertex].nz /= polys_touch_vertex[vertex];
+            
+            VECTOR4D_Normalize(&obj->vlist_local[vertex].n);
+        }
+    }
+    
+    return 1;
+}
+
+
+int Load_OBEJCT4DV2_PLG(OBJECT4DV2_PTR obj,
+                        char *filename,
+                        VECTOR4D_PTR scale,
+                        VECTOR4D_PTR pos,
+                        VECTOR4D_PTR rot,
+                        int vertex_flags)
+{
+    FILE *fp;
+    char buffer[256];
+    char *token_string;
+    memset(obj, 0, sizeof(OBJECT4DV2));
+    obj->state = OBJECT4DV2_STATE_ACTIVE | OBJECT4DV2_STATE_VISIBLE;
+    obj->world_pos.x = pos->x;
+    obj->world_pos.y = pos->y;
+    obj->world_pos.z = pos->z;
+    obj->world_pos.w = pos->w;
+    obj->num_frames = 1;
+    obj->curr_frame = 0;
+    obj->attr = OBJECT4DV2_ATTR_SINGLE_FRAME;
+    
+    if(!(fp = fopen(filename, "r"))) return 0;
+    if (!(token_string = Get_Line_PLG(buffer, 255, fp))) return 0;
+    sscanf(token_string, "%s %d %d", obj->name, &obj->num_vertices, &obj->num_polys);
+    
+    if (!Init_OBJECT4DV2(obj, obj->num_vertices, obj->num_polys, obj->num_frames))
+    {
+        printf("\nPLG file error with file %s can't allocate memory", filename);
+    }
+    
+    for (int vertex=0; vertex<obj->num_vertices; vertex++)
+    {
+        if (!(token_string = Get_Line_PLG(buffer, 255, fp)))
+        {
+            printf("plg file error with file %s vertex list invalid", filename);
+            return 0;
+        }
+        
+        sscanf(token_string, "%f %f %f", &obj->vlist_local[vertex].x, &obj->vlist_local[vertex].y, &obj->vlist_local[vertex].z);
+        obj->vlist_local[vertex].w = 1;
+        
+        obj->vlist_local[vertex].x *= scale->x;
+        obj->vlist_local[vertex].y *= scale->y;
+        obj->vlist_local[vertex].z *= scale->z;
+        
+        SET_BIT(obj->vlist_local[vertex].attr, VERTEX4DTV1_ATTR_POINT);
+    }
+    
+    Compute_OBJECT4DV2_Radius(obj);
+    
+    int poly_surface_desc = 0;
+    int poly_num_verts = 0;
+    char tmp_string[8];
+    
+    for (int poly=0; poly<obj->num_polys; poly++)
+    {
+        if (!(token_string = Get_Line_PLG(buffer, 255, fp)))
+        {
+            printf("plg file error with file %s polygon descriptor invalid", filename);
+            return 0;
+        }
+        
+        sscanf(token_string, "%s %d %d %d", tmp_string, &poly_num_verts, &obj->plist[poly].vert[0], &obj->plist[poly].vert[1], &obj->plist[poly].vert[2]);
+        if (tmp_string[0] == '0' && toupper(tmp_string[1]) == 'X')
+        {
+            sscanf(tmp_string, "%x", &poly_surface_desc);
+        }
+        else
+        {
+            poly_surface_desc = atoi(tmp_string);
+        }
+        obj->plist[poly].vlist = obj->vlist_local;
+        
+        if((poly_surface_desc & PLX_2SIDED_FLAG))
+        {
+            SET_BIT(obj->plist[poly].attr, POLY4DV2_ATTR_2SIDED);
+        }
+        else
+        {
+            //one
+        }
+        
+        if ((poly_surface_desc & PLX_COLOR_MODE_RGB_FLAG))
+        {
+            SET_BIT(obj->plist[poly].attr, POLY4DV2_ATTR_RGB24);
+            int red = ((poly_surface_desc & 0xff0000) >> 16);
+            int green = ((poly_surface_desc & 0x00ff00) >> 8);
+            int blue = (poly_surface_desc & 0x000ff);
+            obj->plist[poly].color = RGB24BIT(0,red, green, blue);
+        }
+        else
+        {
+            SET_BIT(obj->plist[poly].attr, POLY4DV2_ATTR_8BITCOLOR);
+            obj->plist[poly].color = (poly_surface_desc & 0x00ff);
+        }
+        
+        int shade_mode = (poly_surface_desc & PLX_SHADE_MODE_MASK);
+        switch (shade_mode) {
+            case PLX_SHADE_MODE_PURE_FLAG:
+            {
+                SET_BIT(obj->plist[poly].attr, POLY4DV2_ATTR_SHADE_MODE_PURE);
+            }
+                break;
+            case PLX_SHADE_MODE_FLAT_FLAG:
+            {
+                SET_BIT(obj->plist[poly].attr, POLY4DV2_ATTR_SHADE_MODE_FLAT);
+            }
+                break;
+            case PLX_SHADE_MODE_GOURAUD_FLAG:
+            {
+                SET_BIT(obj->plist[poly].attr, POLY4DV2_ATTR_SHADE_MODE_GOURAUD);
+                SET_BIT(obj->vlist_local[obj->plist[poly].vert[0]].attr, VERTEX4DTV1_ATTR_NORMAL);
+                SET_BIT(obj->vlist_local[obj->plist[poly].vert[1]].attr, VERTEX4DTV1_ATTR_NORMAL);
+                SET_BIT(obj->vlist_local[obj->plist[poly].vert[2]].attr, VERTEX4DTV1_ATTR_NORMAL);
+            }
+                break;
+            case PLX_SHADE_MODE_PHONG_FLAG:
+            {
+                SET_BIT(obj->plist[poly].attr, POLY4DV2_ATTR_SHADE_MODE_PHONG);
+                SET_BIT(obj->vlist_local[obj->plist[poly].vert[0]].attr, VERTEX4DTV1_ATTR_NORMAL);
+                SET_BIT(obj->vlist_local[obj->plist[poly].vert[1]].attr, VERTEX4DTV1_ATTR_NORMAL);
+                SET_BIT(obj->vlist_local[obj->plist[poly].vert[2]].attr, VERTEX4DTV1_ATTR_NORMAL);
+            }
+                break;
+            default:
+                break;
+        }
+        
+        SET_BIT(obj->plist[poly].attr, POLY4DV2_ATTR_DISABLE_MATERIAL);
+        obj->plist[poly].state = POLY4DV2_STATE_ACTIVE;
+        obj->plist[poly].vlist = obj->vlist_local;
+        obj->plist[poly].tvlist = obj->tlist;
+    }
+    
+    Compute_OBJECT4DV2_Poly_Normals(obj);
+    Compute_OBJECT4DV2_Vertex_Normals(obj);
+    fclose(fp);
+    
+    return 1;
+    
+}
+
+int OBJECT4DV2::Set_Frame(int frame)
+{
+    if (!this)
+    {
+        return 0;
+    }
+    
+    if (!(this->attr & OBJECT4DV2_ATTR_MULTI_FRAME))
+    {
+        return 0;
+    }
+    
+    if (frame < 0)
+    {
+        frame = 0;
+    }
+    else if(frame >= this->num_frames)
+    {
+        frame = this->num_frames - 1;
+    }
+    
+    this->curr_frame = frame;
+    this->vlist_local = &(this->head_vlist_local[frame*this->num_vertices]);
+    this->vlist_trans = &(this->head_vlist_trans[frame*this->num_vertices]);
+    return 1;
+}
 

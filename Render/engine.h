@@ -9,6 +9,36 @@ typedef unsigned char BYTE;
 typedef unsigned int  QUAD;
 typedef unsigned int  UINT;
 
+typedef struct RGBAV1_TYP{
+    union{
+        int rgba;
+        UCHAR rgba_M[4];
+        struct{UCHAR a, b, g, r;};
+    };
+} RGBAV1, *RGBAV1_PTR;
+
+typedef struct BITMAP_IMAGE_TYP{
+    int state;
+    int attr;
+    int x,y;
+    int width,height;
+    int num_bytes;
+    int bpp;
+    UCHAR *buffer;
+}BITMAP_IMAGE, *BITMAP_IMAGE_PTR;
+
+typedef struct MATV1_TYP{
+    int state;
+    int id;
+    char name[64];
+    int attr;
+    RGBAV1 color;
+    float ka, kd, ks, power;
+    RGBAV1 ra, rd, rs;
+    char texture_file[80];
+    BITMAP_IMAGE texture;
+}MATV1, *MATV1_PTR;
+
 typedef struct POLY4DV1_TYP{
     int state;
     int attr;
@@ -29,6 +59,37 @@ typedef struct POLYF4DV1_TYP{
     POLYF4DV1_TYP *next;
     POLYF4DV1_TYP *prev;
 } POLYF4DV1, *POLYF4DV1_PTR;
+
+typedef struct POLY4DV2_TYP{
+    int state;
+    int attr;
+    int color;
+    int lit_color[3];
+    BITMAP_IMAGE_PTR texture;
+    int mati;
+    
+    VERTEX4DTV1_PTR vlist;
+    POINT2D_PTR tvlist;
+    int vert[3];
+    int text[3];
+    float nlength;
+}POLY4DV2, *POLY4DV2_PTR;
+
+typedef struct POLYF4DV2_TYP{
+    int state;
+    int attr;
+    int color;
+    int lit_color[3];
+    BITMAP_IMAGE_PTR texture;
+    int mati;
+    float nlength;
+    float avg_z;
+    VECTOR4D normal;
+    VERTEX4DTV1 vlist[3];
+    VERTEX4DTV1 tvlist[3];
+    POLYF4DV2_TYP *next;
+    POLYF4DV2_TYP *prev;
+}POLYF4DV2, *POLYF4DV2_PTR;
 
 #define OBJECT4DV1_STATE_ACTIVE      0x0001
 #define OBJECT4DV1_STATE_VISIBLE     0x0002
@@ -73,35 +134,7 @@ typedef struct POLYF4DV1_TYP{
 #define MATV1_STATE_ACTIVE    0x0001
 #define MATV1_MATERIALS    256
 
-typedef struct RGBAV1_TYP{
-    union{
-        int rgba;
-        UCHAR rgba_M[4];
-        struct{UCHAR a, b, g, r;};
-    };
-} RGBAV1, *RGBAV1_PTR;
 
-typedef struct BITMAP_IMAGE_TYP{
-    int state;
-    int attr;
-    int x,y;
-    int width,height;
-    int num_bytes;
-    int bpp;
-    UCHAR *buffer;
-}BITMAP_IMAGE, *BITMAP_IMAGE_PTR;
-
-typedef struct MATV1_TYP{
-    int state;
-    int id;
-    char name[64];
-    int attr;
-    RGBAV1 color;
-    float ka, kd, ks, power;
-    RGBAV1 ra, rd, rs;
-    char texture_file[80];
-    BITMAP_IMAGE texture;
-}MATV1, *MATV1_PTR;
 
 #define LIGHTV1_ATTR_AMBIENT    0x001
 #define LIGHTV1_ATTR_INFINITE    0x002
@@ -154,6 +187,32 @@ typedef struct RENDERLIST4DV1_TYP{
     POLYF4DV1 poly_data[RENDERLIST4DV1_MAX_POLYS];
     int num_polys;
 } RENDERLIST4DV1, *RENDERLIST4DV1_PTR;
+
+typedef struct OBJECT4DV2_TYP{
+    int id;
+    char name[64];
+    int state;
+    int attr;
+    int mati;
+    float *avg_radius;
+    float *max_radius;
+    POINT4D world_pos;
+    VECTOR4D dir;
+    VECTOR4D ux, uy, uz;
+    int num_vertices;
+    int num_frames;
+    int total_vertices;
+    int curr_frame;
+    VERTEX4DTV1_PTR vlist_local;
+    VERTEX4DTV1_PTR vlist_trans;
+    VERTEX4DTV1_PTR head_vlist_local;
+    VERTEX4DTV1_PTR head_vlist_trans;
+    POINT2D_PTR tlist;
+    BITMAP_IMAGE_PTR texture;
+    POLY4DV2_PTR plist;
+    int num_polys;
+    int Set_Frame(int frame);
+}OBJECT4DV2, *OBJECT4DV2_PTR;
 
 typedef struct CAM4DV1_TYP{
     int state;
@@ -223,7 +282,8 @@ typedef struct CAM4DV1_TYP{
 #define POLY4DV2_ATTR_RGB24         0x0010
 #define POLY4DV2_ATTR_SHADE_MODE_PURE    0x0020
 #define POLY4DV2_ATTR_SHADE_MODE_CONSTANT  0x0020 // (alias)
-#define POLY4DV2_ATTR_SHADE_MODE_EMISSIVE  0x0020 // (alias)#define POLY4DV2_ATTR_SHADE_MODE_FLAT    0x0040
+#define POLY4DV2_ATTR_SHADE_MODE_EMISSIVE  0x0020 // (alias)
+#define POLY4DV2_ATTR_SHADE_MODE_FLAT    0x0040
 #define POLY4DV2_ATTR_SHADE_MODE_GOURAUD  0x0080
 #define POLY4DV2_ATTR_SHADE_MODE_PHONG   0x0100
 #define POLY4DV2_ATTR_SHADE_MODE_FASTPHONG 0x0100 // (alias)
@@ -260,6 +320,38 @@ typedef struct CAM4DV1_TYP{
 #define SORT_POLYLIST_AVGZ  0
 #define SORT_POLYLIST_NEARZ  1
 #define SORT_POLYLIST_FARZ  2
+
+#define POLY4DV2_ATTR_ENABLE_MATERIAL 0x0800
+#define POLY4DV2_ATTR_DISABLE_MATERIAL 0x1000
+
+#define VERTEXT_FLAGS_OVERRIDE_CONSTANT 0x1000
+#define VERTEXT_FLAGS_OVERRIDE_EMISSIVE 0x1000
+#define VERTEXT_FLAGS_OVERRIDE_PURE 0x1000
+#define VERTEXT_FLAGS_OVERRIDE_FLAT 0x2000
+#define VERTEXT_FLAGS_OVERRIDE_GOURAUD 0x4000
+#define VERTEXT_FLAGS_OVERRIDE_TEXTURE 0x8000
+
+#define VERTEXT_FLAGS_OVERRIDE_INVERT_TEXTURE_U 0x0080
+#define VERTEXT_FLAGS_OVERRIDE_INVERT_TEXTURE_V 0x0100
+#define VERTEXT_FLAGS_OVERRIDE_INVERT_SWAP_UV 0x0800
+
+#define OBJECT4DV2_MAX_VERTICES 1024
+#define OBJECT4DV2_MAX_POLYS    2048
+#define OBJECT4DV2_STATE_NULL 0x0000
+#define OBJECT4DV2_STATE_ACTIVE 0x0001
+#define OBJECT4DV2_STATE_VISIBLE 0x0002
+#define OBJECT4DV2_STATE_CULLED 0x0004
+
+#define OBJECT4DV2_ATTR_SINGLE_FRAME 0x0001
+#define OBJECT4DV2_ATTR_MULTI_FRAME 0x0002
+#define OBJECT4DV2_ATTR_TEXTURES 0x0004
+#define RENDERLIST4DV2_MAX_POLYS    32768
+
+#define VERTEX4DTV1_ATTR_NULL 0x0000
+#define VERTEX4DTV1_ATTR_POINT 0x0001
+#define VERTEX4DTV1_ATTR_NORMAL 0x0002
+#define VERTEX4DTV1_ATTR_TEXTURE 0x0004
+
 
 int Load_OBJECT4DV1_PLG(OBJECT4DV1_PTR obj, char *filename, VECTOR4D_PTR scale, VECTOR4D_PTR pos, VECTOR4D_PTR rot);
 void RESET_RENDERLIST4DV1(RENDERLIST4DV1_PTR rend_list);

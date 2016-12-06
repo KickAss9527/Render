@@ -30,6 +30,27 @@ typedef struct VECTOR4D_TYP{
     };
 } VECTOR4D, POINT4D, *VECTOR4D_PTR, *POINT4D_PTR;
 
+typedef struct VECTOR2DI_TYP{
+    union{
+        int M[2];
+        struct{int x,y;};
+    };
+}VECTOR2DI, POINT2DI, *VECTOR2DI_PTR, *POINT2DI_PTR;
+
+typedef struct VECTOR3DI_TYP{
+    union{
+        int M[3];
+        struct{int x,y,z;};
+    };
+}VECTOR3DI, POINT3DI, *VECTOR3DI_PTR, *POINT3DI_PTR;
+
+typedef struct VECTOR4DI_TYP{
+    union{
+        int M[4];
+        struct{int x,y,z,w;};
+    };
+}VECTOR4DI, POINT4DI, *VECTOR4DI_PTR, *POINT4DI_PTR;
+
 // a 2d vertex
 typedef struct VERTEX2DI{
     int x,y;
@@ -38,6 +59,25 @@ typedef struct VERTEX2DI{
 typedef struct VERTEX2DF{
     float x,y;
 } VERTEX2DF, *VERTEX2DF_PTR;
+
+typedef struct VERTEX4DTV1_TYP
+{
+    union{
+        float M[12];
+        struct{
+            float x,y,z,w;
+            float nx, ny, nz, nw;
+            float u0, v0;
+            float i;
+            int attr;
+        };
+        struct{
+            POINT4D v;
+            VECTOR4D n;
+            POINT2D t;
+        };
+    };
+}VERTEX4DTV1, *VERTEX4DTV1_PTR;
 
 //2d parametric line
 typedef struct PARMLINE2D_TYP{
@@ -188,10 +228,12 @@ typedef int *FIXP16_PTR;
 #define FIXP16_WP_MASK  0xffff0000
 #define FIXP16_ROUND_UP 0x00008000
 
+#define EPSILON_E3  (float)(1E-3)
 #define EPSILON_E4  (float)(1E-4)
 #define EPSILON_E5  (float)(1E-5)
 #define EPSILON_E6  (float)(1E-6)
 
+#define FCMP(a, b) ((fabs(a-b) < EPSILON_E3) ? 1:0)
 #define PARM_LINE_NO_INTERSECT  0
 #define PARM_LINE_INTERSECT_IN_SEGMENT  1
 #define PARM_LINE_INTERSECT_OUT_SEGMENT  2
@@ -246,6 +288,16 @@ inline void VECTOR4D_INITXYZ(VECTOR4D_PTR v, float x, float y, float z)
     (v)->y = (y);
     (v)->z = (z);
     (v)->w = 1.0;
+}
+
+inline void VERTEX4DTV1_COPY(VERTEX4DTV1_PTR vdst, VERTEX4DTV1_PTR vsrc)
+{
+    *vdst = *vsrc;
+}
+
+inline void VERTEX4DTV1_INIT(VERTEX4DTV1_PTR vdst, VERTEX4DTV1_PTR vsrc)
+{
+    *vdst = *vsrc;
 }
 
 inline void VECTOR2D_INIT(VECTOR2D_PTR vdst, VECTOR2D_PTR vsrc)
