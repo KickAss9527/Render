@@ -223,7 +223,7 @@ void loadLights()
     RGBAV1 white, gray, black, red, green, blue;
     
     white.rgba = RGB32BIT(0,255,255,255);
-    gray.rgba  = RGB32BIT(0,100,100,100);
+    gray.rgba  = RGB32BIT(0,200,200,200);
     black.rgba = RGB32BIT(0,0,0,0);
     red.rgba   = RGB32BIT(0,255,0,0);
     green.rgba = RGB32BIT(0,0,255,0);
@@ -244,7 +244,7 @@ void loadLights()
     
     // directional light
     Init_Light_LIGHTV1(INFINITE_LIGHT_INDEX,
-                       LIGHTV1_STATE_ON,      // turn the light on
+                       LIGHTV1_STATE_OFF,      // turn the light on
                        LIGHTV1_ATTR_INFINITE, // infinite light type
                        black, gray, black,    // color for diffuse term only
                        NULL, &dlight_dir,     // need direction only
@@ -256,7 +256,7 @@ void loadLights()
     
     // point light
     Init_Light_LIGHTV1(POINT_LIGHT_INDEX,
-                       LIGHTV1_STATE_ON,      // turn the light on
+                       LIGHTV1_STATE_OFF,      // turn the light on
                        LIGHTV1_ATTR_POINT,    // pointlight type
                        black, green, black,   // color for diffuse term only
                        &plight_pos, NULL,     // need pos only
@@ -268,7 +268,7 @@ void loadLights()
     
     // spot light
     Init_Light_LIGHTV1(SPOT_LIGHT_INDEX,
-                       LIGHTV1_STATE_ON,         // turn the light on
+                       LIGHTV1_STATE_OFF,         // turn the light on
                        LIGHTV1_ATTR_SPOTLIGHT2,  // spot light type 2
                        black, red, black,      // color for diffuse term only
                        &slight_pos, &slight_dir, // need pos only
@@ -288,7 +288,7 @@ void myDisplay ()
         Remove_Backfaces_RENDERLIST4DV1(&gRend_list, &gCam);
     }
     
-    Light_RENDERLIST4DV1_World16(&gRend_list, &gCam, GetLightList(), 1);
+    Light_RENDERLIST4DV1_World16(&gRend_list, &gCam, GetLightList(), 4);
     World_To_Camera_RENDERLIST4DV1(&gRend_list, &gCam);
     Sort_RENDERLIST4DV1(&gRend_list, SORT_POLYLIST_AVGZ);
     Camera_To_Perspective_RENDERLIST4DV1(&gRend_list, &gCam);
@@ -314,15 +314,17 @@ void myDisplay ()
 
 void btnClick(int idx, LIGHTV1_PTR lights)
 {
-    if (idx==0)
-    {
-        LIGHTV1_PTR li = &lights[AMBIENT_LIGHT_INDEX];
-        int c = li->c_ambient.g;
-        RGBAV1 rgb;
-        c+=10;
-        rgb.rgba = RGB32BIT(0, c, c, c);
-        li->c_ambient = rgb;
-    }
+    LIGHTV1_PTR li = &lights[idx];
+    li->state = li->state == LIGHTV1_STATE_ON ? LIGHTV1_STATE_OFF : LIGHTV1_STATE_ON;
+//    if (idx==0)
+//    {
+//        LIGHTV1_PTR li = &lights[AMBIENT_LIGHT_INDEX];
+//        int c = li->c_ambient.g;
+//        RGBAV1 rgb;
+//        c+=10;
+//        rgb.rgba = RGB32BIT(0, c, c, c);
+//        li->c_ambient = rgb;
+//    }
 }
 
 void myMouse(int button,int state,int x,int y)
@@ -395,21 +397,7 @@ int main(int argc, char *argv[])
 
     }
     
-
-
-    
     loadLights();
-    
-    
-    for (int i=0; i<OBJECT4DV1_MAX_POLYS; i++)
-    {
-        POLYF4DV1_PTR p = gRend_list.poly_ptrs[i];
-        if (!p)
-        {
-            break;
-        }
-        p->idx = i;
-    }
     
     glutInit(&argc, argv);//≥ı ºªØ,±ÿ–Î‘⁄µ˜”√∆‰À˚GLUT∫Ø ˝«∞µ˜”√“ªœ¬
     glutInitDisplayMode (GLUT_RGBA | GLUT_SINGLE);//…Ë∂®ƒ£ Ω,RGBA…´≤ ,∫Õµ•ª∫≥Â«¯

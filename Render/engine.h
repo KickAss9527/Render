@@ -28,7 +28,6 @@ typedef struct POLYF4DV1_TYP{
     POINT4D tvlist[3];
     POLYF4DV1_TYP *next;
     POLYF4DV1_TYP *prev;
-    int idx;
 } POLYF4DV1, *POLYF4DV1_PTR;
 
 #define OBJECT4DV1_STATE_ACTIVE      0x0001
