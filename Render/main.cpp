@@ -40,6 +40,16 @@ bool isDrawWireframe = false;
 #define POINT_LIGHT_INDEX     2 // point light index
 #define SPOT_LIGHT_INDEX      3 // spot light index
 
+void drawPoint(POINT4D_PTR p, RGBAV1_PTR color)
+{
+    int w = sSize*0.5;
+    POINT2D np = {(p->x-w)/w, (w-p->y)/w};
+    glBegin (GL_POINTS);
+    glColor3f (color->r/255.0, color->g/255.0, color->b/255.0);
+    glVertex2f(np.x, np.y);
+    glEnd ();
+}
+
 void drawLine(POINT4D_PTR p0, POINT4D_PTR p1)
 {
     int w = sSize*0.5;

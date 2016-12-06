@@ -1672,3 +1672,351 @@ int OBJECT4DV2::Set_Frame(int frame)
     return 1;
 }
 
+int Light_RENDERLIST4DV2_World16(RENDERLIST4DV2_PTR rend_list, CAM4DV1_PTR cam, LIGHTV1_PTR lights, int max_lights)
+{
+    unsigned int r_base, g_base, b_base,
+                 r_sum, g_sum, b_sum,
+                 r_sum0, g_sum0, b_sum0,
+                 r_sum1, g_sum1, b_sum1,
+                 r_sum2, g_sum2, b_sum2,
+                 ri, gi, bi,
+                 shared_color;
+    float dp, dist, dists, i, nl, atten;
+    VECTOR4D u, v, n, l, d, s;
+    
+    for (int poly=0; poly<rend_list->num_polys; poly++)
+    {
+        POLYF4DV2_PTR curr_poly = rend_list->poly_ptrs[poly];
+        if (!(curr_poly->state & POLY4DV2_STATE_ACTIVE) ||
+              curr_poly->state & POLY4DV2_STATE_CLIPPED ||
+              curr_poly->state & POLY4DV2_STATE_BACKFACE ||
+              curr_poly->state & POLY4DV2_STATE_LIT)
+        {
+            continue;
+        }
+        
+        SET_BIT(curr_poly->state, POLY4DV2_STATE_LIT);
+        
+        if (curr_poly->attr & POLY4DV2_ATTR_SHADE_MODE_FLAT)
+        {
+            RGB888FROM24BIT(curr_poly->color, &r_base, &g_base, &b_base);
+            r_sum = g_sum = b_sum = 0;
+            n.z = __FLT_MAX__;
+            for (int curr_light=0; curr_light < max_lights; curr_light++)
+            {
+                if (lights[curr_light].state == LIGHTV1_STATE_OFF)
+                {
+                    continue;
+                }
+                if (lights[curr_light].attr & LIGHTV1_ATTR_AMBIENT)
+                {
+                    r_sum += (lights[curr_light].c_ambient.r * r_base / 256);
+                    g_sum += (lights[curr_light].c_ambient.g * g_base / 256);
+                    b_sum += (lights[curr_light].c_ambient.b * b_base / 256);
+                }
+                else if(lights[curr_light].attr & LIGHTV1_ATTR_INFINITE)
+                {
+                    if (n.z == __FLT_MAX__)
+                    {
+                        VECTOR4D_Build(&curr_poly->tvlist[0].v, &curr_poly->tvlist[1].v, &u);
+                        VECTOR4D_Build(&curr_poly->tvlist[0].v, &curr_poly->tvlist[2].v, &v);
+                        VECTOR4D_Cross(&u, &v, &n);
+                    }
+                    nl = curr_poly->nlength;
+                    dp = VECTOR4D_Dot(&n, &lights[curr_light].dir);
+                    if (dp > 0)
+                    {
+                        i = 128*dp/nl;
+                        r_sum += (lights[curr_light].c_diffuse.r * r_base  * i/ (256*128));
+                        g_sum += (lights[curr_light].c_diffuse.g * g_base  * i/ (256*128));
+                        b_sum += (lights[curr_light].c_diffuse.b * b_base  * i/ (256*128));
+                    }
+                }
+                else if(lights[curr_light].attr & LIGHTV1_ATTR_POINT)
+                {
+                    if (n.z == __FLT_MAX__)
+                    {
+                        VECTOR4D_Build(&curr_poly->tvlist[0].v, &curr_poly->tvlist[1].v, &u);
+                        VECTOR4D_Build(&curr_poly->tvlist[0].v, &curr_poly->tvlist[2].v, &v);
+                        VECTOR4D_Cross(&u, &v, &n);
+                    }
+                    nl = curr_poly->nlength;
+                    VECTOR4D_Build(&curr_poly->tvlist[0].v, &lights[curr_light].pos, &l);
+                    dp = VECTOR4D_Dot(&n, &l);
+                    dist = VECTOR4D_Length(&l);
+                    if (dp<0)
+                    {
+                        atten = (lights[curr_light].kc + lights[curr_light].kl*dist + lights[curr_light].kq*dist*dist);
+                        i = 128*dp/(nl*dist*atten);
+                        r_sum += (lights[curr_light].c_diffuse.r * r_base * i / (256*128));
+                        g_sum += (lights[curr_light].c_diffuse.g * g_base * i/ (256*128));
+                        b_sum += (lights[curr_light].c_diffuse.b * b_base * i/ (256*128));
+                    }
+                }
+                else if(lights[curr_light].attr & LIGHTV1_ATTR_SPOTLIGHT1)
+                {
+                    if (n.z == __FLT_MAX__)
+                    {
+                        VECTOR4D_Build(&curr_poly->tvlist[0].v, &curr_poly->tvlist[1].v, &u);
+                        VECTOR4D_Build(&curr_poly->tvlist[0].v, &curr_poly->tvlist[2].v, &v);
+                        VECTOR4D_Cross(&u, &v, &n);
+                    }
+                    nl = curr_poly->nlength;
+                    VECTOR4D_Build(&curr_poly->tvlist[0].v, &lights[curr_light].pos, &l);
+                    dp = VECTOR4D_Dot(&n, &lights[curr_light].dir);
+                    dist = VECTOR4D_Length(&l);
+                    if (dp<0)
+                    {
+                        atten = (lights[curr_light].kc + lights[curr_light].kl*dist + lights[curr_light].kq*dist*dist);
+                        i = 128*dp/(nl*atten);
+                        r_sum += (lights[curr_light].c_diffuse.r * r_base  * i/ (256*128));
+                        g_sum += (lights[curr_light].c_diffuse.g * g_base  * i/ (256*128));
+                        b_sum += (lights[curr_light].c_diffuse.b * b_base  * i/ (256*128));
+                    }
+                }
+                else if(lights[curr_light].attr & LIGHTV1_ATTR_SPOTLIGHT2)
+                {
+                    if (n.z == __FLT_MAX__)
+                    {
+                        VECTOR4D_Build(&curr_poly->tvlist[0].v, &curr_poly->tvlist[1].v, &u);
+                        VECTOR4D_Build(&curr_poly->tvlist[0].v, &curr_poly->tvlist[2].v, &v);
+                        VECTOR4D_Cross(&u, &v, &n);
+                    }
+                    nl = curr_poly->nlength;
+                    dp = VECTOR4D_Dot(&n, &lights[curr_light].dir);
+                    if (dp<0)
+                    {
+                        VECTOR4D_Build(&lights[curr_light].pos, &curr_poly->tvlist[0].v, &s);
+                        dists = VECTOR4D_Length(&s);
+                        float dpsl = VECTOR4D_Dot(&s, &lights[curr_light].dir)/dists;
+                        if (dpsl > 0)
+                        {
+                            atten = (lights[curr_light].kc + lights[curr_light].kl*dists + lights[curr_light].kq*dists*dists);
+                            float dpsl_exp = dpsl;
+                            for (int e_index = 1; e_index<(int)lights[curr_light].pf; e_index++)
+                            {
+                                dpsl_exp *= dpsl;
+                            }
+                            i = 128*dp*dpsl_exp/(nl*atten);
+                            r_sum += (lights[curr_light].c_diffuse.r * r_base * i/ (256*128));
+                            g_sum += (lights[curr_light].c_diffuse.g * g_base * i/ (256*128));
+                            b_sum += (lights[curr_light].c_diffuse.b * b_base * i/ (256*128));
+                        }
+                    }
+                }
+            }
+            r_sum = MIN(255, r_sum);
+            g_sum = MIN(255, g_sum);
+            b_sum = MIN(255, b_sum);
+            curr_poly->lit_color[0] = RGB24BIT(0, r_sum, g_sum, b_sum);
+        }
+        else if(curr_poly->attr & POLY4DV2_ATTR_SHADE_MODE_GOURAUD) // gouraud
+        {
+            RGB888FROM24BIT(curr_poly->color, &r_base, &g_base, &b_base);
+            r_sum0 = g_sum0 = b_sum0 = r_sum1 = g_sum1 = b_sum1 =r_sum2 = g_sum2 = b_sum2 =0;
+            n.z = __FLT_MAX__;
+            for (int curr_light=0; curr_light < max_lights; curr_light++)
+            {
+                if (lights[curr_light].state == LIGHTV1_STATE_OFF)
+                {
+                    continue;
+                }
+                if (lights[curr_light].attr & LIGHTV1_ATTR_AMBIENT)
+                {
+                    ri = (lights[curr_light].c_ambient.r * r_base / 256);
+                    gi = (lights[curr_light].c_ambient.g * g_base / 256);
+                    bi = (lights[curr_light].c_ambient.b * b_base / 256);
+                    
+                    r_sum0 += ri;
+                    g_sum0 += gi;
+                    b_sum0 += bi;
+                    
+                    r_sum1 += ri;
+                    g_sum1 += gi;
+                    b_sum1 += bi;
+                    
+                    r_sum2 += ri;
+                    g_sum2 += gi;
+                    b_sum2 += bi;
+                }
+                else if(lights[curr_light].attr & LIGHTV1_ATTR_INFINITE)
+                {
+                    dp = VECTOR4D_Dot(&curr_poly->tvlist[0].n, &lights[curr_light].dir);
+                    if (dp > 0)
+                    {
+                        i = 128*dp;
+                        r_sum0 += (lights[curr_light].c_diffuse.r * r_base  * i/ (256*128));
+                        g_sum0 += (lights[curr_light].c_diffuse.g * g_base  * i/ (256*128));
+                        b_sum0 += (lights[curr_light].c_diffuse.b * b_base  * i/ (256*128));
+                    }
+                    dp = VECTOR4D_Dot(&curr_poly->tvlist[1].n, &lights[curr_light].dir);
+                    if (dp > 0)
+                    {
+                        i = 128*dp;
+                        r_sum1 += (lights[curr_light].c_diffuse.r * r_base  * i/ (256*128));
+                        g_sum1 += (lights[curr_light].c_diffuse.g * g_base  * i/ (256*128));
+                        b_sum1 += (lights[curr_light].c_diffuse.b * b_base  * i/ (256*128));
+                    }
+                    dp = VECTOR4D_Dot(&curr_poly->tvlist[2].n, &lights[curr_light].dir);
+                    if (dp > 0)
+                    {
+                        i = 128*dp;
+                        r_sum2 += (lights[curr_light].c_diffuse.r * r_base  * i/ (256*128));
+                        g_sum2 += (lights[curr_light].c_diffuse.g * g_base  * i/ (256*128));
+                        b_sum2 += (lights[curr_light].c_diffuse.b * b_base  * i/ (256*128));
+                    }
+                }
+                else if(lights[curr_light].attr & LIGHTV1_ATTR_POINT)
+                {
+                    VECTOR4D_Build(&curr_poly->tvlist[0].v, &lights[curr_light].pos, &l);
+                    dp = VECTOR4D_Dot(&curr_poly->tvlist[0].n, &l);
+                    dist = VECTOR4D_Length(&l);
+                    if (dp<0)
+                    {
+                        atten = (lights[curr_light].kc + lights[curr_light].kl*dist + lights[curr_light].kq*dist*dist);
+                        i = 128*dp/(dist*atten);
+                        r_sum0 += (lights[curr_light].c_diffuse.r * r_base * i / (256*128));
+                        g_sum0 += (lights[curr_light].c_diffuse.g * g_base * i/ (256*128));
+                        b_sum0 += (lights[curr_light].c_diffuse.b * b_base * i/ (256*128));
+                    }
+                    dp = VECTOR4D_Dot(&curr_poly->tvlist[1].n, &l);
+                    
+                    if (dp<0)
+                    {
+                        atten = (lights[curr_light].kc + lights[curr_light].kl*dist + lights[curr_light].kq*dist*dist);
+                        i = 128*dp/(dist*atten);
+                        r_sum1 += (lights[curr_light].c_diffuse.r * r_base * i / (256*128));
+                        g_sum1 += (lights[curr_light].c_diffuse.g * g_base * i/ (256*128));
+                        b_sum1 += (lights[curr_light].c_diffuse.b * b_base * i/ (256*128));
+                    }
+                    dp = VECTOR4D_Dot(&curr_poly->tvlist[2].n, &l);
+                    
+                    if (dp<0)
+                    {
+                        atten = (lights[curr_light].kc + lights[curr_light].kl*dist + lights[curr_light].kq*dist*dist);
+                        i = 128*dp/(dist*atten);
+                        r_sum2 += (lights[curr_light].c_diffuse.r * r_base * i / (256*128));
+                        g_sum2 += (lights[curr_light].c_diffuse.g * g_base * i/ (256*128));
+                        b_sum2 += (lights[curr_light].c_diffuse.b * b_base * i/ (256*128));
+                    }
+                }
+                else if(lights[curr_light].attr & LIGHTV1_ATTR_SPOTLIGHT1)
+                {
+                    VECTOR4D_Build(&curr_poly->tvlist[0].v, &lights[curr_light].pos, &l);
+                    dist = VECTOR4D_Length(&l);
+                    dp = VECTOR4D_Dot(&curr_poly->tvlist[0].n, &lights[curr_light].dir);
+                    if (dp<0)
+                    {
+                        atten = (lights[curr_light].kc + lights[curr_light].kl*dist + lights[curr_light].kq*dist*dist);
+                        i = 128*dp/(atten);
+                        r_sum0 += (lights[curr_light].c_diffuse.r * r_base  * i/ (256*128));
+                        g_sum0 += (lights[curr_light].c_diffuse.g * g_base  * i/ (256*128));
+                        b_sum0 += (lights[curr_light].c_diffuse.b * b_base  * i/ (256*128));
+                    }
+                    dp = VECTOR4D_Dot(&curr_poly->tvlist[1].n, &lights[curr_light].dir);
+                    if (dp<0)
+                    {
+                        atten = (lights[curr_light].kc + lights[curr_light].kl*dist + lights[curr_light].kq*dist*dist);
+                        i = 128*dp/(atten);
+                        r_sum1 += (lights[curr_light].c_diffuse.r * r_base  * i/ (256*128));
+                        g_sum1 += (lights[curr_light].c_diffuse.g * g_base  * i/ (256*128));
+                        b_sum1 += (lights[curr_light].c_diffuse.b * b_base  * i/ (256*128));
+                    }
+                    dp = VECTOR4D_Dot(&curr_poly->tvlist[2].n, &lights[curr_light].dir);
+                    if (dp<0)
+                    {
+                        atten = (lights[curr_light].kc + lights[curr_light].kl*dist + lights[curr_light].kq*dist*dist);
+                        i = 128*dp/(atten);
+                        r_sum2 += (lights[curr_light].c_diffuse.r * r_base  * i/ (256*128));
+                        g_sum2 += (lights[curr_light].c_diffuse.g * g_base  * i/ (256*128));
+                        b_sum2 += (lights[curr_light].c_diffuse.b * b_base  * i/ (256*128));
+                    }
+                }
+                else if(lights[curr_light].attr & LIGHTV1_ATTR_SPOTLIGHT2)
+                {
+                    dp = VECTOR4D_Dot(&curr_poly->tvlist[0].n, &lights[curr_light].dir);
+                    if (dp<0)
+                    {
+                        VECTOR4D_Build(&lights[curr_light].pos, &curr_poly->tvlist[0].v, &s);
+                        dists = VECTOR4D_Length(&s);
+                        float dpsl = VECTOR4D_Dot(&s, &lights[curr_light].dir)/dists;
+                        if (dpsl > 0)
+                        {
+                            atten = (lights[curr_light].kc + lights[curr_light].kl*dists + lights[curr_light].kq*dists*dists);
+                            float dpsl_exp = dpsl;
+                            for (int e_index = 1; e_index<(int)lights[curr_light].pf; e_index++)
+                            {
+                                dpsl_exp *= dpsl;
+                            }
+                            i = 128*dp*dpsl_exp/(atten);
+                            r_sum0 += (lights[curr_light].c_diffuse.r * r_base * i/ (256*128));
+                            g_sum0 += (lights[curr_light].c_diffuse.g * g_base * i/ (256*128));
+                            b_sum0 += (lights[curr_light].c_diffuse.b * b_base * i/ (256*128));
+                        }
+                    }
+                    dp = VECTOR4D_Dot(&curr_poly->tvlist[1].n, &lights[curr_light].dir);
+                    if (dp<0)
+                    {
+                        VECTOR4D_Build(&lights[curr_light].pos, &curr_poly->tvlist[1].v, &s);
+                        dists = VECTOR4D_Length(&s);
+                        float dpsl = VECTOR4D_Dot(&s, &lights[curr_light].dir)/dists;
+                        if (dpsl > 0)
+                        {
+                            atten = (lights[curr_light].kc + lights[curr_light].kl*dists + lights[curr_light].kq*dists*dists);
+                            float dpsl_exp = dpsl;
+                            for (int e_index = 1; e_index<(int)lights[curr_light].pf; e_index++)
+                            {
+                                dpsl_exp *= dpsl;
+                            }
+                            i = 128*dp*dpsl_exp/(atten);
+                            r_sum1 += (lights[curr_light].c_diffuse.r * r_base * i/ (256*128));
+                            g_sum1 += (lights[curr_light].c_diffuse.g * g_base * i/ (256*128));
+                            b_sum1 += (lights[curr_light].c_diffuse.b * b_base * i/ (256*128));
+                        }
+                    }
+                    dp = VECTOR4D_Dot(&curr_poly->tvlist[2].n, &lights[curr_light].dir);
+                    if (dp<0)
+                    {
+                        VECTOR4D_Build(&lights[curr_light].pos, &curr_poly->tvlist[2].v, &s);
+                        dists = VECTOR4D_Length(&s);
+                        float dpsl = VECTOR4D_Dot(&s, &lights[curr_light].dir)/dists;
+                        if (dpsl > 0)
+                        {
+                            atten = (lights[curr_light].kc + lights[curr_light].kl*dists + lights[curr_light].kq*dists*dists);
+                            float dpsl_exp = dpsl;
+                            for (int e_index = 1; e_index<(int)lights[curr_light].pf; e_index++)
+                            {
+                                dpsl_exp *= dpsl;
+                            }
+                            i = 128*dp*dpsl_exp/(atten);
+                            r_sum2 += (lights[curr_light].c_diffuse.r * r_base * i/ (256*128));
+                            g_sum2 += (lights[curr_light].c_diffuse.g * g_base * i/ (256*128));
+                            b_sum2 += (lights[curr_light].c_diffuse.b * b_base * i/ (256*128));
+                        }
+                    }
+                }
+            }
+            r_sum0 = MIN(255, r_sum0);
+            g_sum0 = MIN(255, g_sum0);
+            b_sum0 = MIN(255, b_sum0);
+            r_sum1 = MIN(255, r_sum1);
+            g_sum1 = MIN(255, g_sum1);
+            b_sum1 = MIN(255, b_sum1);
+            r_sum2 = MIN(255, r_sum2);
+            g_sum2 = MIN(255, g_sum2);
+            b_sum2 = MIN(255, b_sum2);
+            curr_poly->lit_color[0] = RGB24BIT(0, r_sum0, g_sum0, b_sum0);
+            curr_poly->lit_color[1] = RGB24BIT(0, r_sum1, g_sum1, b_sum1);
+            curr_poly->lit_color[2] = RGB24BIT(0, r_sum2, g_sum2, b_sum2);
+        }
+        else //constant
+        {
+            curr_poly->lit_color[0] = curr_poly->color;
+        }
+    }
+    
+    return 1;
+}
+
+
+
