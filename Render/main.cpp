@@ -186,23 +186,23 @@ void drawPoly2(RENDERLIST4DV2_PTR rend_list)
         {
             continue;
         }
-        
+
         unsigned int r, g, b;
         int color = curr_poly->lit_color[0];
         RGB888FROM24BIT(color, &r, &g, &b);
-        
+
         //        printf("(%d, %d, %d)\n", r, g, b);
         glColor3f (r/255.0, g/255.0, b/255.0);//…Ë÷√µ±«∞ª≠± —’…´
         drawTrangle(&curr_poly->tvlist[0].v,
                     &curr_poly->tvlist[1].v,
                     &curr_poly->tvlist[2].v);
-        
+
         glColor3f (1.0, 1.0, 0.0);//…Ë÷√µ±«∞ª≠± —’…´
 //        printf("\n(v1 : %.1f, %.1f;  v2 : %.1f, %.1f;  v3 : %.1f, %.1f)",
 //               curr_poly->tvlist[0].v.x, curr_poly->tvlist[0].v.y,
 //               curr_poly->tvlist[1].v.x, curr_poly->tvlist[1].v.y,
 //               curr_poly->tvlist[2].v.x, curr_poly->tvlist[2].v.y);
-        
+
         if (isDrawWireframe)
         {
             drawLine(&curr_poly->tvlist[0].v, &curr_poly->tvlist[1].v);
@@ -223,16 +223,16 @@ void drawPoly(RENDERLIST4DV1_PTR rend_list)
         {
             continue;
         }
-        
+
         unsigned int r, g, b;
         int color = curr_poly.lcolor;
         RGB888FROM24BIT(color, &r, &g, &b);
-        
+
 //        printf("(%d, %d, %d)\n", r, g, b);
         glColor3f (r/255.0, g/255.0, b/255.0);//…Ë÷√µ±«∞ª≠± —’…´
         drawTrangle(&curr_poly.tvlist[0],&curr_poly.tvlist[1],&curr_poly.tvlist[2]);
         glColor3f (1.0, 1.0, 0.0);//…Ë÷√µ±«∞ª≠± —’…´
-        
+
         if (isDrawWireframe)
         {
             drawLine(&curr_poly.tvlist[0], &curr_poly.tvlist[1]);
@@ -268,17 +268,17 @@ void drawDebugBtn()
 void loadLights()
 {
     Reset_Lights_LIGHTV1();
-    
+
     RGBAV1 white, gray, black, red, green, blue;
-    
+
     white.rgba = RGB32BIT(0,255,255,255);
     gray.rgba  = RGB32BIT(0,200,200,200);
     black.rgba = RGB32BIT(0,0,0,0);
     red.rgba   = RGB32BIT(0,255,0,0);
     green.rgba = RGB32BIT(0,0,255,0);
     blue.rgba  = RGB32BIT(0,0,0,255);
-    
-    
+
+
     // ambient light
     Init_Light_LIGHTV1(AMBIENT_LIGHT_INDEX,
                        LIGHTV1_STATE_ON,      // turn the light on
@@ -287,10 +287,10 @@ void loadLights()
                        NULL, NULL,            // no need for pos or dir
                        0,0,0,                 // no need for attenuation
                        0,0,0);                // spotlight info NA
-    
-    
+
+
     VECTOR4D dlight_dir = {-1,0,-1,0};
-    
+
     // directional light
     Init_Light_LIGHTV1(INFINITE_LIGHT_INDEX,
                        LIGHTV1_STATE_OFF,      // turn the light on
@@ -299,10 +299,10 @@ void loadLights()
                        NULL, &dlight_dir,     // need direction only
                        0,0,0,                 // no need for attenuation
                        0,0,0);                // spotlight info NA
-    
-    
+
+
     VECTOR4D plight_pos = {0,200,0,0};
-    
+
     // point light
     Init_Light_LIGHTV1(POINT_LIGHT_INDEX,
                        LIGHTV1_STATE_OFF,      // turn the light on
@@ -311,10 +311,10 @@ void loadLights()
                        &plight_pos, NULL,     // need pos only
                        0,.001,0,              // linear attenuation only
                        0,0,1);                // spotlight info NA
-    
+
     VECTOR4D slight_pos = {0,200,0,0};
     VECTOR4D slight_dir = {-1,0,-1,0};
-    
+
     // spot light
     Init_Light_LIGHTV1(SPOT_LIGHT_INDEX,
                        LIGHTV1_STATE_OFF,         // turn the light on
@@ -384,7 +384,7 @@ void myMouse(int button,int state,int x,int y)
 {
     if(state==GLUT_DOWN)
     {
-        
+
         if (sSize - y <= btnSize)
         {
             int idx = x/btnSize;
@@ -405,54 +405,55 @@ int main(int argc, char *argv[])
 {
     POINT4D cam_pos = {0,30,0,1};
     VECTOR4D cam_dir = {0,0,0,1};
-    
+
     Init_CAM4DV1(&gCam, &cam_pos, &cam_dir, 50,sSize,90, sSize,sSize);
     Build_CAM4DV1_Matrix_Euler(&gCam, CAM_ROT_SEQ_ZYX);
 
-    int towerCnt = 10;
+    int towerCnt = 10*0;
     for (int tower=0; tower<towerCnt; tower++)
     {
         OBJECT4DV2 obj;
-        float scale = (50 + arc4random()%50)*0.01;
+        float scale = (50 + rand()%50)*0.01;
         scale = 0.5;
         int xt = 300;
-        float x = xt*0.5 - arc4random()%xt;
-        float z = 50 + arc4random()%100;
-    
+        float x = xt*0.5 - rand()%xt;
+        float z = 50 + rand()%100;
+
         VECTOR4D vscale = {scale,scale,scale,scale}, vpos = {x,0,z,1}, vrot = {0,0,0,1};
 #ifdef __APPLE__
         Load_OBEJCT4DV2_PLG(&obj, "/MyFiles/Work/GitProject/Render/Render/tower1.plg", &vscale, &vpos, &vrot);
 #else
         Load_OBJECT4DV2_PLG(&obj,"C:\\Users\\Administrator\\Desktop\\git\\Render\\Render\\tower1.plg", &vscale, &vpos, &vrot);
 #endif
-        
+
         gAllObjects[tower] = obj;
     }
-    
-    for (int cube=0; cube < 30; cube++)
+
+    for (int cube=0; cube < 1; cube++)
     {
         OBJECT4DV2 obj;
-        float scale = (50 + arc4random()%50)*0.01;
-        float r = 0.1*(arc4random()%100);
+        float scale = (50 + rand()%50)*0.01;
+        float r = rand()%100;
         int xt = 400;
-        float x = xt*0.5 - arc4random()%xt;
-        float z = 50 + arc4random()%300;
-//        x = r =0;
-//        z = 50;
-//        scale = 1;
-        VECTOR4D vscale = {scale,scale,scale,scale}, vpos = {x,0,z,1}, vrot = {r,r,r,1};
+        float x = xt*0.5 - rand()%xt;
+        float z = 50 + rand()%300;
+        x = r =0;
+        z = 50;
+        scale = 1;
+        VECTOR4D vscale = {scale,scale,scale,scale}, vpos = {x,30,z,1}, vrot = {r,r,r,1};
 #ifdef __APPLE__
         Load_OBEJCT4DV2_PLG(&obj,"/MyFiles/Work/GitProject/Render/Render/cube1.plg", &vscale, &vpos, &vrot);
 #else
-        Load_OBEJCT4DV2_PLG(&obj,"C:\\Users\\Administrator\\Desktop\\git\\Render\\Render\\cube1.plg", &vscale, &vpos, &vrot);
+        Load_OBJECT4DV2_PLG(&obj,"C:\\Users\\Administrator\\Desktop\\git\\Render\\Render\\cube1.plg", &vscale, &vpos, &vrot);
 #endif
         gAllObjects[cube+towerCnt] = obj;
-        
+        r = 45;
+        Rotate_XYZ_OBJECT4DV2(&obj, r, r, r);
 
     }
-    
+
     loadLights();
-    
+
     glutInit(&argc, argv);//≥ı ºªØ,±ÿ–Î‘⁄µ˜”√∆‰À˚GLUT∫Ø ˝«∞µ˜”√“ªœ¬
     glutInitDisplayMode (GLUT_RGBA | GLUT_SINGLE);//…Ë∂®ƒ£ Ω,RGBA…´≤ ,∫Õµ•ª∫≥Â«¯
     glutInitWindowPosition (100, 100);//…Ë÷√¥∞ø⁄Œª÷√,»Áπ˚…Ë-1,-1æÕ «ƒ¨»œŒª÷√
@@ -460,12 +461,12 @@ int main(int argc, char *argv[])
     glutCreateWindow ("hello word!");//¥¥Ω®√˚≥∆Œ™"hello word!"µƒ¥∞ø⁄,¥∞ø⁄¥¥Ω®∫Û≤ªª·¡¢º¥œ‘ æµΩ∆¡ƒª…œ,“™µ˜”√∫Û√ÊµƒglutMainLoop()≤≈ª·œ‘ æ
     glutDisplayFunc(myDisplay);//µ˜”√ªÊ÷∆∫Ø ˝ πÀ¸œ‘ æ‘⁄∏’¥¥Ω®µƒ¥∞ø⁄…œ
    glutTimerFunc(200, onTimer, 1);
-    
+
     glutMouseFunc(myMouse);
     glutMainLoop();//œ˚œ¢—≠ª∑,¥∞ø⁄πÿ±’≤≈ª·∑µªÿ
-    
-    
-    
+
+
+
     return 0;
 }
 

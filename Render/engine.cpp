@@ -295,7 +295,7 @@ int Load_OBJECT4DV1_PLG(OBJECT4DV1_PTR obj, char *filename, VECTOR4D_PTR scale, 
         //1010,1111,1111,1111    poly_surface_desc
         //1111,0000,0000,0000    f00
         //0000,1111,0000,0000    f0
-        //0000,0000,1111,0000    f  
+        //0000,0000,1111,0000    f
         if(poly_surface_desc & PLX_COLOR_MODE_RGB_FLAG)
         {
             SET_BIT(obj->plist[poly].attr, POLY4DV1_ATTR_RGB24);
@@ -332,7 +332,7 @@ int Load_OBJECT4DV1_PLG(OBJECT4DV1_PTR obj, char *filename, VECTOR4D_PTR scale, 
         }
         obj->plist[poly].state = POLY4DV1_STATE_ACTIVE;
     }
-    
+
     fclose(fp);
     return 1;
 }
@@ -984,7 +984,7 @@ int Light_RENDERLIST4DV1_World16(RENDERLIST4DV1_PTR rend_list,
 {
     unsigned int r_base, g_base, b_base, r_sum, g_sum, b_sum, shared_color;
     float dp, dist, i, nl, atten;
-    
+
     for (int poly=0; poly<rend_list->num_polys; poly++)
     {
         POLYF4DV1_PTR curr_poly = &rend_list->poly_data[poly];
@@ -994,7 +994,7 @@ int Light_RENDERLIST4DV1_World16(RENDERLIST4DV1_PTR rend_list,
         {
             continue;
         }
-                
+
         if (curr_poly->attr & POLY4DV1_ATTR_SHADE_MODE_FLAT ||
             curr_poly->attr & POLY4DV1_ATTR_SHADE_MODE_GOURAUD)
         {
@@ -1024,7 +1024,7 @@ int Light_RENDERLIST4DV1_World16(RENDERLIST4DV1_PTR rend_list,
                 {
                     continue;
                 }
-                                
+
                 if (lights[curr_light].attr & LIGHTV1_ATTR_POINT)
                 {
                     VECTOR4D u, v, n, l;
@@ -1046,7 +1046,7 @@ int Light_RENDERLIST4DV1_World16(RENDERLIST4DV1_PTR rend_list,
                         g_sum += (lights[curr_light].c_diffuse.g * r_base * i)/(256*128);
                         b_sum += (lights[curr_light].c_diffuse.b * r_base * i)/(256*128);
                     }
-                    
+
                 }
                 else if (lights[curr_light].attr & LIGHTV1_ATTR_AMBIENT)
                 {
@@ -1123,14 +1123,14 @@ int Light_RENDERLIST4DV1_World16(RENDERLIST4DV1_PTR rend_list,
             b_sum = MIN(255, b_sum);
             shared_color = RGB24BIT(0, r_sum, g_sum, b_sum);
             curr_poly->lcolor = shared_color;
-            
+
         }
         else//POLY4DV1_ATTR_SHADE_MODE_CONSTANT
         {
             curr_poly->lcolor = curr_poly->color;
         }
     }
-    
+
     return 1;
 }
 
@@ -1141,14 +1141,14 @@ int Light_OBJECT4DV1_World16(OBJECT4DV1_PTR obj,
 {
     unsigned int r_base, g_base, b_base, r_sum, g_sum, b_sum, shared_color;
     float dp, dist, i, nl, atten;
-    
+
     if (!(obj->state & OBJECT4DV1_STATE_ACTIVE) ||
         obj->state & OBJECT4DV1_STATE_CULLED ||
         !(obj->state & OBJECT4DV1_STATE_VISIBLE))
     {
         return 0;
     }
-    
+
     for (int poly=0; poly<obj->num_polys; poly++)
     {
         POLY4DV1_PTR curr_poly = &obj->plist[poly];
@@ -1158,11 +1158,11 @@ int Light_OBJECT4DV1_World16(OBJECT4DV1_PTR obj,
         {
             continue;
         }
-        
+
         int vindex_0 = curr_poly->vert[0];
         int vindex_1 = curr_poly->vert[1];
         int vindex_2 = curr_poly->vert[2];
-        
+
         if (curr_poly->attr & POLY4DV1_ATTR_SHADE_MODE_FLAT ||
             curr_poly->attr & POLY4DV1_ATTR_SHADE_MODE_GOURAUD)
         {
@@ -1192,7 +1192,7 @@ int Light_OBJECT4DV1_World16(OBJECT4DV1_PTR obj,
                 {
                     continue;
                 }
-                
+
                 if (lights[curr_light].attr & LIGHTV1_ATTR_POINT)
                 {
                     VECTOR4D u, v, n, l;
@@ -1214,7 +1214,7 @@ int Light_OBJECT4DV1_World16(OBJECT4DV1_PTR obj,
                         g_sum += (lights[curr_light].c_diffuse.g * r_base * i)/(256*128);
                         b_sum += (lights[curr_light].c_diffuse.b * r_base * i)/(256*128);
                     }
-                    
+
                 }
                 else if (lights[curr_light].attr & LIGHTV1_ATTR_AMBIENT)
                 {
@@ -1291,7 +1291,7 @@ int Light_OBJECT4DV1_World16(OBJECT4DV1_PTR obj,
             b_sum = MIN(255, b_sum);
             shared_color = RGB24BIT(0, r_sum, g_sum, b_sum);
             curr_poly->lcolor = shared_color;
-            
+
         }
         else//POLY4DV1_ATTR_SHADE_MODE_CONSTANT
         {
@@ -1308,10 +1308,10 @@ int Compare_AvgZ_POLYF4DV1(const void *arg1,const void *arg2)
     POLYF4DV1_PTR poly_1, poly_2;
     poly_1 = *((POLYF4DV1_PTR*)(arg1));
     poly_2 = *((POLYF4DV1_PTR*)(arg2));
-    
+
     z1 = 0.33333*(poly_1->tvlist[0].z+poly_1->tvlist[1].z+poly_1->tvlist[2].z);
     z2 = 0.33333*(poly_2->tvlist[0].z+poly_2->tvlist[1].z+poly_2->tvlist[2].z);
-    
+
     if (z1 > z2)
     {
         return -1;
@@ -1320,7 +1320,7 @@ int Compare_AvgZ_POLYF4DV1(const void *arg1,const void *arg2)
     {
         return 1;
     }
-    
+
     return 0;
 }
 
@@ -1339,7 +1339,7 @@ void Sort_RENDERLIST4DV1(RENDERLIST4DV1_PTR rend_list, int sort_method)
                   Compare_AvgZ_POLYF4DV1);
         }
             break;
-            
+
         default:
             break;
     }
@@ -1388,50 +1388,50 @@ int Init_OBJECT4DV2(OBJECT4DV2_PTR obj,
     {
         Destroy_OBJECT4DV2(obj);
     }
-    
+
     if (!(obj->vlist_local = (VERTEX4DTV1_PTR)malloc(sizeof(VERTEX4DTV1)*_num_vertices*_num_frames)))
     {
         return 0;
     }
     memset((void*)obj->vlist_local, 0, sizeof(VERTEX4DTV1)*_num_vertices*_num_frames);
-    
+
     if (!(obj->vlist_trans = (VERTEX4DTV1_PTR)malloc(sizeof(VERTEX4DTV1)*_num_vertices*_num_frames)))
     {
         return 0;
     }
     memset((void*)obj->vlist_trans, 0, sizeof(VERTEX4DTV1)*_num_vertices*_num_frames);
-    
+
     if (!(obj->tlist = (POINT2D_PTR)malloc(sizeof(POINT2D)*_num_polys*3)))
     {
         return 0;
     }
     memset((void*)obj->tlist, 0, sizeof(POINT2D)*_num_polys*3);
-    
+
     if (!(obj->avg_radius = (float *)malloc(sizeof(float)*_num_frames)))
     {
         return 0;
     }
     memset((void*)obj->avg_radius, 0, sizeof(float)*_num_frames);
-    
+
     if (!(obj->max_radius = (float *)malloc(sizeof(float)*_num_frames)))
     {
         return 0;
     }
     memset((void*)obj->max_radius, 0, sizeof(float)*_num_frames);
-    
+
     if (!(obj->plist = (POLY4DV2_PTR)malloc(sizeof(POLY4DV2)*_num_polys)))
     {
         return 0;
     }
     memset((void*)obj->plist, 0, sizeof(POLY4DV2)*_num_polys);
-    
+
     obj->head_vlist_local = obj->vlist_local;
     obj->head_vlist_trans = obj->vlist_trans;
     obj->num_frames = _num_frames;
     obj->num_vertices = _num_vertices;
     obj->num_polys = _num_polys;
     obj->total_vertices = _num_vertices*_num_frames;
-    
+
     return 1;
 }
 
@@ -1440,20 +1440,20 @@ int Compute_OBJECT4DV2_Poly_Normals(OBJECT4DV2_PTR obj)
     if (!obj) {
         return 0;
     }
-    
+
     for (int poly=0; poly<obj->num_polys; poly++)
     {
         int vindex_0 = obj->plist[poly].vert[0];
         int vindex_1 = obj->plist[poly].vert[1];
         int vindex_2 = obj->plist[poly].vert[2];
-        
+
         VECTOR4D u, v, n;
         VECTOR4D_Build(&obj->vlist_local[vindex_0].v, &obj->vlist_local[vindex_1].v, &u);
         VECTOR4D_Build(&obj->vlist_local[vindex_0].v, &obj->vlist_local[vindex_2].v, &v);
         VECTOR4D_Cross(&u, &v, &n);
         obj->plist[poly].nlength = VECTOR4D_Length(&n);
     }
-    
+
     return 1;
 }
 
@@ -1463,10 +1463,10 @@ int Compute_OBJECT4DV2_Vertex_Normals(OBJECT4DV2_PTR obj)
     {
         return 0;
     }
-    
+
     int polys_touch_vertex[OBJECT4DV2_MAX_VERTICES];
     memset((void*)polys_touch_vertex, 0, sizeof(int)*OBJECT4DV2_MAX_VERTICES);
-    
+
     for (int poly=0; poly<obj->num_polys; poly++)
     {
         if(obj->plist[poly].attr & POLY4DV2_ATTR_SHADE_MODE_GOURAUD)
@@ -1474,22 +1474,22 @@ int Compute_OBJECT4DV2_Vertex_Normals(OBJECT4DV2_PTR obj)
             int vindex_0 = obj->plist[poly].vert[0];
             int vindex_1 = obj->plist[poly].vert[1];
             int vindex_2 = obj->plist[poly].vert[2];
-            
+
             VECTOR4D u, v, n;
             VECTOR4D_Build(&obj->vlist_local[vindex_0].v, &obj->vlist_local[vindex_1].v, &u);
             VECTOR4D_Build(&obj->vlist_local[vindex_0].v, &obj->vlist_local[vindex_2].v, &v);
             VECTOR4D_Cross(&u, &v, &n);
-            
+
             polys_touch_vertex[vindex_0]++;
             polys_touch_vertex[vindex_1]++;
             polys_touch_vertex[vindex_2]++;
-            
+
             VECTOR4D_Add(&obj->vlist_local[vindex_0].n, &n, &obj->vlist_local[vindex_0].n);
             VECTOR4D_Add(&obj->vlist_local[vindex_1].n, &n, &obj->vlist_local[vindex_1].n);
             VECTOR4D_Add(&obj->vlist_local[vindex_2].n, &n, &obj->vlist_local[vindex_2].n);
         }
     }
-    
+
     for (int vertex = 0; vertex < obj->num_vertices; vertex++)
     {
         if (polys_touch_vertex[vertex] >= 1)
@@ -1497,16 +1497,263 @@ int Compute_OBJECT4DV2_Vertex_Normals(OBJECT4DV2_PTR obj)
             obj->vlist_local[vertex].nx /= polys_touch_vertex[vertex];
             obj->vlist_local[vertex].ny /= polys_touch_vertex[vertex];
             obj->vlist_local[vertex].nz /= polys_touch_vertex[vertex];
-            
+
             VECTOR4D_Normalize(&obj->vlist_local[vertex].n);
         }
     }
-    
+
     return 1;
 }
 
+void Build_XYZ_Rotation_MATRIX4X4(float theta_x, float theta_y, float theta_z, MATRIX4X4_PTR mrot)
+{
+    MATRIX4X4 mx, my, mz, mtmp;
+    float sin_theta=0, cos_theta=0;
+    int rot_seq = 0;
+    MAT_IDENTITY_4X4(mrot);
 
-int Load_OBEJCT4DV2_PLG(OBJECT4DV2_PTR obj,
+    if(fabs(theta_x) > EPSILON_E5)  rot_seq |= 1;
+    if(fabs(theta_y) > EPSILON_E5)  rot_seq |= 2;
+    if(fabs(theta_z) > EPSILON_E5)  rot_seq |= 4;
+
+    switch(rot_seq)
+    {
+     case 0: // no rotation
+      {
+      // what a waste!
+      return;
+      } break;
+
+      case 1: // x rotation
+      {
+      // compute the sine and cosine of the angle
+      cos_theta = Fast_Cos(theta_x);
+      sin_theta = Fast_Sin(theta_x);
+
+      // set the matrix up
+      Mat_Init_4X4(&mx, 1,    0,          0,         0,
+                        0,    cos_theta,  sin_theta, 0,
+                        0,   -sin_theta, cos_theta, 0,
+                        0,    0,          0,         1);
+
+      // that's it, copy to output matrix
+      MAT_COPY_4X4(&mx, mrot);
+      return;
+
+      } break;
+
+      case 2: // y rotation
+      {
+      // compute the sine and cosine of the angle
+      cos_theta = Fast_Cos(theta_y);
+      sin_theta = Fast_Sin(theta_y);
+
+      // set the matrix up
+      Mat_Init_4X4(&my,cos_theta, 0, -sin_theta, 0,
+                       0,         1,  0,         0,
+                       sin_theta, 0, cos_theta,  0,
+                       0,         0, 0,          1);
+
+
+      // that's it, copy to output matrix
+      MAT_COPY_4X4(&my, mrot);
+      return;
+
+      } break;
+
+      case 3: // xy rotation
+      {
+      // compute the sine and cosine of the angle for x
+      cos_theta = Fast_Cos(theta_x);
+      sin_theta = Fast_Sin(theta_x);
+
+      // set the matrix up
+      Mat_Init_4X4(&mx, 1,    0,          0,         0,
+                        0,    cos_theta,  sin_theta, 0,
+                        0,   -sin_theta, cos_theta, 0,
+                        0,    0,          0,         1);
+
+      // compute the sine and cosine of the angle for y
+      cos_theta = Fast_Cos(theta_y);
+      sin_theta = Fast_Sin(theta_y);
+
+      // set the matrix up
+      Mat_Init_4X4(&my,cos_theta, 0, -sin_theta, 0,
+                       0,         1,  0,         0,
+                       sin_theta, 0, cos_theta,  0,
+                       0,         0, 0,          1);
+
+      // concatenate matrices
+      Mat_Mul_4X4(&mx, &my, mrot);
+      return;
+
+      } break;
+
+      case 4: // z rotation
+      {
+      // compute the sine and cosine of the angle
+      cos_theta = Fast_Cos(theta_z);
+      sin_theta = Fast_Sin(theta_z);
+
+      // set the matrix up
+      Mat_Init_4X4(&mz, cos_theta, sin_theta, 0, 0,
+                       -sin_theta, cos_theta, 0, 0,
+                        0,         0,         1, 0,
+                        0,         0,         0, 1);
+
+
+      // that's it, copy to output matrix
+      MAT_COPY_4X4(&mz, mrot);
+      return;
+
+      } break;
+
+      case 5: // xz rotation
+      {
+      // compute the sine and cosine of the angle x
+      cos_theta = Fast_Cos(theta_x);
+      sin_theta = Fast_Sin(theta_x);
+
+      // set the matrix up
+      Mat_Init_4X4(&mx, 1,    0,          0,         0,
+                        0,    cos_theta,  sin_theta, 0,
+                        0,   -sin_theta, cos_theta, 0,
+                        0,    0,          0,         1);
+
+      // compute the sine and cosine of the angle z
+      cos_theta = Fast_Cos(theta_z);
+      sin_theta = Fast_Sin(theta_z);
+
+      // set the matrix up
+      Mat_Init_4X4(&mz, cos_theta, sin_theta, 0, 0,
+                       -sin_theta, cos_theta, 0, 0,
+                        0,         0,         1, 0,
+                        0,         0,         0, 1);
+
+      // concatenate matrices
+      Mat_Mul_4X4(&mx, &mz, mrot);
+      return;
+
+      } break;
+
+      case 6: // yz rotation
+      {
+      // compute the sine and cosine of the angle y
+      cos_theta = Fast_Cos(theta_y);
+      sin_theta = Fast_Sin(theta_y);
+
+      // set the matrix up
+      Mat_Init_4X4(&my,cos_theta, 0, -sin_theta, 0,
+                       0,         1,  0,         0,
+                       sin_theta, 0, cos_theta,  0,
+                       0,         0, 0,          1);
+
+      // compute the sine and cosine of the angle z
+      cos_theta = Fast_Cos(theta_z);
+      sin_theta = Fast_Sin(theta_z);
+
+      // set the matrix up
+      Mat_Init_4X4(&mz, cos_theta, sin_theta, 0, 0,
+                       -sin_theta, cos_theta, 0, 0,
+                        0,         0,         1, 0,
+                        0,         0,         0, 1);
+
+      // concatenate matrices
+      Mat_Mul_4X4(&my, &mz, mrot);
+      return;
+
+      } break;
+
+      case 7: // xyz rotation
+      {
+      // compute the sine and cosine of the angle x
+      cos_theta = Fast_Cos(theta_x);
+      sin_theta = Fast_Sin(theta_x);
+
+      // set the matrix up
+      Mat_Init_4X4(&mx, 1,    0,         0,         0,
+                        0,    cos_theta, sin_theta, 0,
+                        0,   -sin_theta, cos_theta, 0,
+                        0,    0,         0,         1);
+
+      // compute the sine and cosine of the angle y
+      cos_theta = Fast_Cos(theta_y);
+      sin_theta = Fast_Sin(theta_y);
+
+      // set the matrix up
+      Mat_Init_4X4(&my,cos_theta, 0, -sin_theta, 0,
+                       0,         1,  0,         0,
+                       sin_theta, 0,  cos_theta,  0,
+                       0,         0,  0,          1);
+
+      // compute the sine and cosine of the angle z
+      cos_theta = Fast_Cos(theta_z);
+      sin_theta = Fast_Sin(theta_z);
+
+      // set the matrix up
+      Mat_Init_4X4(&mz, cos_theta, sin_theta, 0, 0,
+                       -sin_theta, cos_theta, 0, 0,
+                        0,         0,         1, 0,
+                        0,         0,         0, 1);
+
+      // concatenate matrices, watch order!
+      Mat_Mul_4X4(&mx, &my, &mtmp);
+      Mat_Mul_4X4(&mtmp, &mz, mrot);
+
+      } break;
+        default:break;
+    }
+}
+
+void Rotate_XYZ_OBJECT4DV2(OBJECT4DV2_PTR obj,
+                           float theta_x,
+                           float theta_y,
+                           float theta_z,
+                           int all_frames)
+{
+    MATRIX4X4 mrot;
+    Build_XYZ_Rotation_MATRIX4X4(theta_x, theta_y, theta_y, &mrot);
+    if(!all_frames)
+    {
+        for (int vertex=0; vertex<obj->num_vertices; vertex++)
+        {
+            POINT4D presult;
+            Mat_Mul_VECTOR4D_4X4(&obj->vlist_local[vertex].v, &mrot, &presult);
+            VECTOR4D_COPY(&obj->vlist_local[vertex].v, &presult);
+            if(obj->vlist_local[vertex].attr & VERTEX4DTV1_ATTR_NORMAL)
+            {
+                Mat_Mul_VECTOR4D_4X4(&obj->vlist_local[vertex].n, &mrot, &presult);
+                VECTOR4D_COPY(&obj->vlist_local[vertex].n, &presult);
+            }
+        }
+    }
+    else
+    {
+        for (int vertex=0; vertex<obj->total_vertices; vertex++)
+        {
+            POINT4D presult;
+            Mat_Mul_VECTOR4D_4X4(&obj->head_vlist_local[vertex].v, &mrot, &presult);
+            VECTOR4D_COPY(&obj->head_vlist_local[vertex].v, &presult);
+            if(obj->head_vlist_local[vertex].attr & VERTEX4DTV1_ATTR_NORMAL)
+            {
+                Mat_Mul_VECTOR4D_4X4(&obj->head_vlist_local[vertex].n, &mrot, &presult);
+                VECTOR4D_COPY(&obj->head_vlist_local[vertex].n, &presult);
+            }
+        }
+    }
+
+    VECTOR4D vresult;
+    Mat_Mul_VECTOR4D_4X4(&obj->ux, &mrot, &vresult);
+    VECTOR4D_COPY(&obj->ux, &vresult);
+
+    Mat_Mul_VECTOR4D_4X4(&obj->uy, &mrot, &vresult);
+    VECTOR4D_COPY(&obj->uy, &vresult);
+
+    Mat_Mul_VECTOR4D_4X4(&obj->uz, &mrot, &vresult);
+    VECTOR4D_COPY(&obj->uz, &vresult);
+}
+
+int Load_OBJECT4DV2_PLG(OBJECT4DV2_PTR obj,
                         char *filename,
                         VECTOR4D_PTR scale,
                         VECTOR4D_PTR pos,
@@ -1525,16 +1772,16 @@ int Load_OBEJCT4DV2_PLG(OBJECT4DV2_PTR obj,
     obj->num_frames = 1;
     obj->curr_frame = 0;
     obj->attr = OBJECT4DV2_ATTR_SINGLE_FRAME;
-    
+
     if(!(fp = fopen(filename, "r"))) return 0;
     if (!(token_string = Get_Line_PLG(buffer, 255, fp))) return 0;
     sscanf(token_string, "%s %d %d", obj->name, &obj->num_vertices, &obj->num_polys);
-    
+
     if (!Init_OBJECT4DV2(obj, obj->num_vertices, obj->num_polys, obj->num_frames))
     {
         printf("\nPLG file error with file %s can't allocate memory", filename);
     }
-    
+
     for (int vertex=0; vertex<obj->num_vertices; vertex++)
     {
         if (!(token_string = Get_Line_PLG(buffer, 255, fp)))
@@ -1542,23 +1789,23 @@ int Load_OBEJCT4DV2_PLG(OBJECT4DV2_PTR obj,
             printf("plg file error with file %s vertex list invalid", filename);
             return 0;
         }
-        
+
         sscanf(token_string, "%f %f %f", &obj->vlist_local[vertex].x, &obj->vlist_local[vertex].y, &obj->vlist_local[vertex].z);
         obj->vlist_local[vertex].w = 1;
-        
+
         obj->vlist_local[vertex].x *= scale->x;
         obj->vlist_local[vertex].y *= scale->y;
         obj->vlist_local[vertex].z *= scale->z;
-        
+
         SET_BIT(obj->vlist_local[vertex].attr, VERTEX4DTV1_ATTR_POINT);
     }
-    
+
     Compute_OBJECT4DV2_Radius(obj);
-    
+
     int poly_surface_desc = 0;
     int poly_num_verts = 0;
-    char tmp_string[8];
-    
+    char tmp_string[9];
+
     for (int poly=0; poly<obj->num_polys; poly++)
     {
         if (!(token_string = Get_Line_PLG(buffer, 255, fp)))
@@ -1566,7 +1813,7 @@ int Load_OBEJCT4DV2_PLG(OBJECT4DV2_PTR obj,
             printf("plg file error with file %s polygon descriptor invalid", filename);
             return 0;
         }
-        
+
         sscanf(token_string, "%s %d %d %d %d", tmp_string, &poly_num_verts,
                &obj->plist[poly].vert[0],
                &obj->plist[poly].vert[1],
@@ -1580,7 +1827,7 @@ int Load_OBEJCT4DV2_PLG(OBJECT4DV2_PTR obj,
             poly_surface_desc = atoi(tmp_string);
         }
         obj->plist[poly].vlist = obj->vlist_local;
-        
+
         if((poly_surface_desc & PLX_2SIDED_FLAG))
         {
             SET_BIT(obj->plist[poly].attr, POLY4DV2_ATTR_2SIDED);
@@ -1589,7 +1836,7 @@ int Load_OBEJCT4DV2_PLG(OBJECT4DV2_PTR obj,
         {
             //one
         }
-        
+
         if ((poly_surface_desc & PLX_COLOR_MODE_RGB_FLAG))
         {
             SET_BIT(obj->plist[poly].attr, POLY4DV2_ATTR_RGB24);
@@ -1603,7 +1850,7 @@ int Load_OBEJCT4DV2_PLG(OBJECT4DV2_PTR obj,
             SET_BIT(obj->plist[poly].attr, POLY4DV2_ATTR_8BITCOLOR);
             obj->plist[poly].color = (poly_surface_desc & 0x00ff);
         }
-        
+
         int shade_mode = (poly_surface_desc & PLX_SHADE_MODE_MASK);
         switch (shade_mode) {
             case PLX_SHADE_MODE_PURE_FLAG:
@@ -1635,19 +1882,19 @@ int Load_OBEJCT4DV2_PLG(OBJECT4DV2_PTR obj,
             default:
                 break;
         }
-        
+
         SET_BIT(obj->plist[poly].attr, POLY4DV2_ATTR_DISABLE_MATERIAL);
         obj->plist[poly].state = POLY4DV2_STATE_ACTIVE;
         obj->plist[poly].vlist = obj->vlist_local;
         obj->plist[poly].tvlist = obj->tlist;
     }
-    
+
     Compute_OBJECT4DV2_Poly_Normals(obj);
     Compute_OBJECT4DV2_Vertex_Normals(obj);
     fclose(fp);
-    
+
     return 1;
-    
+
 }
 
 int OBJECT4DV2::Set_Frame(int frame)
@@ -1656,12 +1903,12 @@ int OBJECT4DV2::Set_Frame(int frame)
     {
         return 0;
     }
-    
+
     if (!(this->attr & OBJECT4DV2_ATTR_MULTI_FRAME))
     {
         return 0;
     }
-    
+
     if (frame < 0)
     {
         frame = 0;
@@ -1670,7 +1917,7 @@ int OBJECT4DV2::Set_Frame(int frame)
     {
         frame = this->num_frames - 1;
     }
-    
+
     this->curr_frame = frame;
     this->vlist_local = &(this->head_vlist_local[frame*this->num_vertices]);
     this->vlist_trans = &(this->head_vlist_trans[frame*this->num_vertices]);
@@ -1688,7 +1935,7 @@ int Light_RENDERLIST4DV2_World16(RENDERLIST4DV2_PTR rend_list, CAM4DV1_PTR cam, 
                  shared_color;
     float dp, dist, dists, i, nl, atten;
     VECTOR4D u, v, n, l, d, s;
-    
+
     for (int poly=0; poly<rend_list->num_polys; poly++)
     {
         POLYF4DV2_PTR curr_poly = rend_list->poly_ptrs[poly];
@@ -1699,9 +1946,9 @@ int Light_RENDERLIST4DV2_World16(RENDERLIST4DV2_PTR rend_list, CAM4DV1_PTR cam, 
         {
             continue;
         }
-        
+
         SET_BIT(curr_poly->state, POLY4DV2_STATE_LIT);
-        
+
         if (curr_poly->attr & POLY4DV2_ATTR_SHADE_MODE_FLAT)
         {
             RGB888FROM24BIT(curr_poly->color, &r_base, &g_base, &b_base);
@@ -1831,15 +2078,15 @@ int Light_RENDERLIST4DV2_World16(RENDERLIST4DV2_PTR rend_list, CAM4DV1_PTR cam, 
                     ri = (lights[curr_light].c_ambient.r * r_base / 256);
                     gi = (lights[curr_light].c_ambient.g * g_base / 256);
                     bi = (lights[curr_light].c_ambient.b * b_base / 256);
-                    
+
                     r_sum0 += ri;
                     g_sum0 += gi;
                     b_sum0 += bi;
-                    
+
                     r_sum1 += ri;
                     g_sum1 += gi;
                     b_sum1 += bi;
-                    
+
                     r_sum2 += ri;
                     g_sum2 += gi;
                     b_sum2 += bi;
@@ -1885,7 +2132,7 @@ int Light_RENDERLIST4DV2_World16(RENDERLIST4DV2_PTR rend_list, CAM4DV1_PTR cam, 
                         b_sum0 += (lights[curr_light].c_diffuse.b * b_base * i/ (256*128));
                     }
                     dp = VECTOR4D_Dot(&curr_poly->tvlist[1].n, &l);
-                    
+
                     if (dp<0)
                     {
                         atten = (lights[curr_light].kc + lights[curr_light].kl*dist + lights[curr_light].kq*dist*dist);
@@ -1895,7 +2142,7 @@ int Light_RENDERLIST4DV2_World16(RENDERLIST4DV2_PTR rend_list, CAM4DV1_PTR cam, 
                         b_sum1 += (lights[curr_light].c_diffuse.b * b_base * i/ (256*128));
                     }
                     dp = VECTOR4D_Dot(&curr_poly->tvlist[2].n, &l);
-                    
+
                     if (dp<0)
                     {
                         atten = (lights[curr_light].kc + lights[curr_light].kl*dist + lights[curr_light].kq*dist*dist);
@@ -2019,7 +2266,7 @@ int Light_RENDERLIST4DV2_World16(RENDERLIST4DV2_PTR rend_list, CAM4DV1_PTR cam, 
             curr_poly->lit_color[0] = curr_poly->color;
         }
     }
-    
+
     return 1;
 }
 
@@ -2071,7 +2318,7 @@ void Model_To_World_OBJECT4DV2(OBJECT4DV2_PTR obj, int coord_select, int all_fra
 int Insert_POLY4DV2_RENDERLIST4DV2(RENDERLIST4DV2_PTR rend_list, POLY4DV2_PTR poly)
 {
     if (rend_list->num_polys >= RENDERLIST4DV1_MAX_POLYS) return 0;
-    
+
     rend_list->poly_ptrs[rend_list->num_polys] = &rend_list->poly_data[rend_list->num_polys];
     rend_list->poly_data[rend_list->num_polys].state = poly->state;
     rend_list->poly_data[rend_list->num_polys].attr = poly->attr;
@@ -2081,7 +2328,7 @@ int Insert_POLY4DV2_RENDERLIST4DV2(RENDERLIST4DV2_PTR rend_list, POLY4DV2_PTR po
     rend_list->poly_data[rend_list->num_polys].lit_color[0] = poly->lit_color[0];
     rend_list->poly_data[rend_list->num_polys].lit_color[1] = poly->lit_color[1];
     rend_list->poly_data[rend_list->num_polys].lit_color[2] = poly->lit_color[2];
-    
+
     VERTEX4DTV1_COPY(&rend_list->poly_data[rend_list->num_polys].tvlist[0], &poly->vlist[poly->vert[0]]);
     VERTEX4DTV1_COPY(&rend_list->poly_data[rend_list->num_polys].tvlist[1], &poly->vlist[poly->vert[1]]);
     VERTEX4DTV1_COPY(&rend_list->poly_data[rend_list->num_polys].tvlist[2], &poly->vlist[poly->vert[2]]);
@@ -2095,7 +2342,7 @@ int Insert_POLY4DV2_RENDERLIST4DV2(RENDERLIST4DV2_PTR rend_list, POLY4DV2_PTR po
     rend_list->poly_data[rend_list->num_polys].vlist[0].t = poly->tvlist[poly->text[0]];
     rend_list->poly_data[rend_list->num_polys].vlist[1].t = poly->tvlist[poly->text[1]];
     rend_list->poly_data[rend_list->num_polys].vlist[2].t = poly->tvlist[poly->text[2]];
-    
+
     if(rend_list->num_polys == 0)
     {
         rend_list->poly_data[0].next = NULL;
@@ -2114,10 +2361,10 @@ int Insert_POLY4DV2_RENDERLIST4DV2(RENDERLIST4DV2_PTR rend_list, POLY4DV2_PTR po
 int Insert_POLYF4DV2_RENDERLIST4DV2(RENDERLIST4DV2_PTR rend_list, POLYF4DV2_PTR poly)
 {
     if (rend_list->num_polys >= RENDERLIST4DV1_MAX_POLYS) return 0;
-    
+
     rend_list->poly_ptrs[rend_list->num_polys] = &rend_list->poly_data[rend_list->num_polys];
     memcpy((void*)&rend_list->poly_data[rend_list->num_polys], (void*)poly, sizeof(POLYF4DV2));
-    
+
     if(rend_list->num_polys == 0)
     {
         rend_list->poly_data[0].next = NULL;
@@ -2144,7 +2391,7 @@ int Insert_OBJECT4DV2_RENDERLIST4DV2(RENDERLIST4DV2_PTR rend_list,
     {
         return 0;
     }
-    
+
     for (int poly=0; poly < obj->num_polys; poly++)
     {
         POLY4DV2_PTR curr_poly = &obj->plist[poly];
@@ -2159,13 +2406,13 @@ int Insert_OBJECT4DV2_RENDERLIST4DV2(RENDERLIST4DV2_PTR rend_list,
             curr_poly->vlist = obj->vlist_local;
         else
             curr_poly->vlist = obj->vlist_trans;
-        
+
         if (!Insert_POLY4DV2_RENDERLIST4DV2(rend_list, curr_poly))
         {
             curr_poly->vlist = vlist_old;
             return 0;
         }
-        
+
         curr_poly->vlist = vlist_old;
     }
     return 1;
@@ -2174,7 +2421,7 @@ int Insert_OBJECT4DV2_RENDERLIST4DV2(RENDERLIST4DV2_PTR rend_list,
 void Reset_OBJECT4DV2(OBJECT4DV2_PTR obj)
 {
     RESET_BIT(obj->state, OBJECT4DV2_STATE_CULLED);
-    
+
     for (int poly=0; poly<obj->num_polys; poly++)
     {
         POLY4DV2_PTR curr_poly = &obj->plist[poly];
@@ -2205,7 +2452,7 @@ void Remove_Backfaces_RENDERLIST4DV2(RENDERLIST4DV2_PTR rend_list, CAM4DV1_PTR c
         VECTOR4D u,v,n;
         VECTOR4D_Build(&curr_poly->tvlist[0].v, &curr_poly->tvlist[1].v, &u);
         VECTOR4D_Build(&curr_poly->tvlist[0].v, &curr_poly->tvlist[2].v, &v);
-        
+
         VECTOR4D_Cross(&u, &v, &n);
         VECTOR4D view;
         VECTOR4D_Build(&curr_poly->tvlist[0].v, &cam->pos, &view);
@@ -2224,7 +2471,7 @@ void Remove_Backfaces_OBJECT4DV2(OBJECT4DV2_PTR obj, CAM4DV1_PTR cam)
     {
         return;
     }
-    
+
     for ( int poly=0; poly<obj->num_polys; poly++)
     {
         POLY4DV2_PTR curr_poly = &obj->plist[poly];
@@ -2235,14 +2482,14 @@ void Remove_Backfaces_OBJECT4DV2(OBJECT4DV2_PTR obj, CAM4DV1_PTR cam)
         {
             continue;
         }
-        
+
         int vindex_0 = curr_poly->vert[0];
         int vindex_1 = curr_poly->vert[1];
         int vindex_2 = curr_poly->vert[2];
         VECTOR4D u,v,n;
         VECTOR4D_Build(&obj->vlist_trans[vindex_0].v, &obj->vlist_trans[vindex_1].v, &u);
         VECTOR4D_Build(&obj->vlist_trans[vindex_0].v, &obj->vlist_trans[vindex_2].v, &v);
-        
+
         VECTOR4D_Cross(&u, &v, &n);
         VECTOR4D view;
         VECTOR4D_Build(&obj->vlist_trans[0].v, &cam->pos, &view);
@@ -2327,7 +2574,7 @@ void Perspective_To_Screen_OBJECT4DV2(OBJECT4DV2_PTR obj, CAM4DV1_PTR cam)
         obj->vlist_trans[vertex].x = alpha + alpha*obj->vlist_trans[vertex].x;
         obj->vlist_trans[vertex].y = beta - beta*obj->vlist_trans[vertex].y;
     }
-    
+
 }
 
 void Perspective_To_Screen_RENDERLIST4DV2(RENDERLIST4DV2_PTR rend_list, CAM4DV1_PTR cam)
@@ -2365,7 +2612,7 @@ int Cull_OBJECT4DV2(OBJECT4DV2_PTR obj, CAM4DV1_PTR cam, int cull_flags)
             return 1;
         }
     }
-    
+
     if (cull_flags & CULL_OBJECT_X_PLANE)
     {
         float z_test = 0.5*cam->viewport_width*sphere_pos.z/cam->view_dist;
@@ -2376,7 +2623,7 @@ int Cull_OBJECT4DV2(OBJECT4DV2_PTR obj, CAM4DV1_PTR cam, int cull_flags)
             return 1;
         }
     }
-    
+
     if (cull_flags & CULL_OBJECT_Y_PLANE)
     {
         float z_test = 0.5*cam->viewport_height*sphere_pos.z/cam->view_dist;
@@ -2490,16 +2737,16 @@ void Transform_OBJECT4DV2(OBJECT4DV2_PTR obj, MATRIX4X4_PTR mt, int coord_select
                 break;
         }
     }
-    
+
     if(transform_basis)
     {
         VECTOR4D vresult;
         Mat_Mul_VECTOR4D_4X4(&obj->ux, mt, &vresult);
         VECTOR4D_COPY(&obj->ux, &vresult);
-        
+
         Mat_Mul_VECTOR4D_4X4(&obj->uy, mt, &vresult);
         VECTOR4D_COPY(&obj->uy, &vresult);
-        
+
         Mat_Mul_VECTOR4D_4X4(&obj->uz, mt, &vresult);
         VECTOR4D_COPY(&obj->uz, &vresult);
     }
@@ -2511,10 +2758,10 @@ int Compare_AvgZ_POLYF4DV2(const void *arg1,const void *arg2)
     POLYF4DV2_PTR poly_1, poly_2;
     poly_1 = *((POLYF4DV2_PTR*)(arg1));
     poly_2 = *((POLYF4DV2_PTR*)(arg2));
-    
+
     z1 = 0.33333*(poly_1->tvlist[0].z+poly_1->tvlist[1].z+poly_1->tvlist[2].z);
     z2 = 0.33333*(poly_2->tvlist[0].z+poly_2->tvlist[1].z+poly_2->tvlist[2].z);
-    
+
     if (z1 > z2)
     {
         return -1;
@@ -2523,7 +2770,7 @@ int Compare_AvgZ_POLYF4DV2(const void *arg1,const void *arg2)
     {
         return 1;
     }
-    
+
     return 0;
 }
 
@@ -2533,13 +2780,13 @@ int Compare_NearZ_POLYF4DV2(const void *arg1,const void *arg2)
     POLYF4DV2_PTR poly_1, poly_2;
     poly_1 = *((POLYF4DV2_PTR*)(arg1));
     poly_2 = *((POLYF4DV2_PTR*)(arg2));
-    
+
     z1 = MIN(poly_1->tvlist[0].z, poly_1->tvlist[1].z);
     z1 = MIN(poly_1->tvlist[2].z, z1);
-    
+
     z2 = MIN(poly_2->tvlist[0].z, poly_2->tvlist[1].z);
     z2 = MIN(poly_2->tvlist[2].z, z2);
-    
+
     if (z1 > z2)
     {
         return -1;
@@ -2548,7 +2795,7 @@ int Compare_NearZ_POLYF4DV2(const void *arg1,const void *arg2)
     {
         return 1;
     }
-    
+
     return 0;
 }
 
@@ -2558,13 +2805,13 @@ int Compare_FarZ_POLYF4DV2(const void *arg1,const void *arg2)
     POLYF4DV2_PTR poly_1, poly_2;
     poly_1 = *((POLYF4DV2_PTR*)(arg1));
     poly_2 = *((POLYF4DV2_PTR*)(arg2));
-    
+
     z1 = MAX(poly_1->tvlist[0].z, poly_1->tvlist[1].z);
     z1 = MAX(poly_1->tvlist[2].z, z1);
-    
+
     z2 = MAX(poly_2->tvlist[0].z, poly_2->tvlist[1].z);
     z2 = MAX(poly_2->tvlist[2].z, z2);
-    
+
     if (z1 > z2)
     {
         return -1;
@@ -2573,7 +2820,7 @@ int Compare_FarZ_POLYF4DV2(const void *arg1,const void *arg2)
     {
         return 1;
     }
-    
+
     return 0;
 }
 
@@ -2605,7 +2852,7 @@ void Sort_RENDERLIST4DV2(RENDERLIST4DV2_PTR rend_list, int sort_method)
                   Compare_FarZ_POLYF4DV2);
         }
             break;
-            
+
         default:
             break;
     }

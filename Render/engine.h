@@ -69,7 +69,7 @@ typedef struct POLY4DV2_TYP{
     int mati;
     VERTEX4DTV1_PTR vlist;
     POINT2D_PTR tvlist;
-    
+
     int vert[3];
     int text[3];
     float nlength;
@@ -84,7 +84,7 @@ typedef struct POLYF4DV2_TYP{
     int mati;
     VERTEX4DTV1 vlist[3];
     VERTEX4DTV1 tvlist[3];
-    
+
     float nlength;
     float avg_z;
     VECTOR4D normal;
@@ -118,8 +118,8 @@ typedef struct POLYF4DV2_TYP{
 
 #define DD_PIXEL_FORMAT8 8
 #define DD_PIXEL_FORMAT555 15
-#define DD_PIXEL_FORMAT565 16 
-#define DD_PIXEL_FORMAT888 24 
+#define DD_PIXEL_FORMAT565 16
+#define DD_PIXEL_FORMAT888 24
 #define DD_PIXEL_FORMATALPHA888 32
 #define MATV1_ATTR_2SIDE    0x0001
 #define MATV1_ATTR_TRANSPARENT    0x0002
@@ -364,7 +364,7 @@ typedef struct CAM4DV1_TYP{
 
 
 int Load_OBJECT4DV1_PLG(OBJECT4DV1_PTR obj, char *filename, VECTOR4D_PTR scale, VECTOR4D_PTR pos, VECTOR4D_PTR rot);
-int Load_OBEJCT4DV2_PLG(OBJECT4DV2_PTR obj,
+int Load_OBJECT4DV2_PLG(OBJECT4DV2_PTR obj,
                         char *filename,
                         VECTOR4D_PTR scale,
                         VECTOR4D_PTR pos,
@@ -444,7 +444,11 @@ int Light_RENDERLIST4DV1_World16(RENDERLIST4DV1_PTR rend_list,
 int Light_RENDERLIST4DV2_World16(RENDERLIST4DV2_PTR rend_list, CAM4DV1_PTR cam, LIGHTV1_PTR lights, int max_lights);
 LIGHTV1_PTR GetLightList(void);
 int Reset_Lights_LIGHTV1(void);
-
+void Rotate_XYZ_OBJECT4DV2(OBJECT4DV2_PTR obj,
+                           float theta_x,
+                           float theta_y,
+                           float theta_z,
+                           int all_frames=0);
 void Sort_RENDERLIST4DV1(RENDERLIST4DV1_PTR rend_list, int sort_method);
 void Sort_RENDERLIST4DV2(RENDERLIST4DV2_PTR rend_list, int sort_method);
 #endif // ENGINE_H_INCLUDED
