@@ -67,9 +67,9 @@ typedef struct POLY4DV2_TYP{
     int lit_color[3];
     BITMAP_IMAGE_PTR texture;
     int mati;
-    
     VERTEX4DTV1_PTR vlist;
     POINT2D_PTR tvlist;
+    
     int vert[3];
     int text[3];
     float nlength;
@@ -82,11 +82,13 @@ typedef struct POLYF4DV2_TYP{
     int lit_color[3];
     BITMAP_IMAGE_PTR texture;
     int mati;
+    VERTEX4DTV1 vlist[3];
+    VERTEX4DTV1 tvlist[3];
+    
     float nlength;
     float avg_z;
     VECTOR4D normal;
-    VERTEX4DTV1 vlist[3];
-    VERTEX4DTV1 tvlist[3];
+
     POLYF4DV2_TYP *next;
     POLYF4DV2_TYP *prev;
 }POLYF4DV2, *POLYF4DV2_PTR;
@@ -362,11 +364,24 @@ typedef struct CAM4DV1_TYP{
 
 
 int Load_OBJECT4DV1_PLG(OBJECT4DV1_PTR obj, char *filename, VECTOR4D_PTR scale, VECTOR4D_PTR pos, VECTOR4D_PTR rot);
+int Load_OBEJCT4DV2_PLG(OBJECT4DV2_PTR obj,
+                        char *filename,
+                        VECTOR4D_PTR scale,
+                        VECTOR4D_PTR pos,
+                        VECTOR4D_PTR rot,
+                        int vertex_flags);
+
 void RESET_RENDERLIST4DV1(RENDERLIST4DV1_PTR rend_list);
+void Reset_RENDERLIST4DV2(RENDERLIST4DV2_PTR rend_list);
+
 int Insert_OBJECT4DV1_RENDERLIST4DV1(RENDERLIST4DV1_PTR rend_list,
                                      OBJECT4DV1_PTR obj,
                                      int insert_local,
                                      int lighting_on);
+int Insert_OBJECT4DV2_RENDERLIST4DV2(RENDERLIST4DV2_PTR rend_list,
+                                     OBJECT4DV2_PTR obj,
+                                     int insert_local);
+
 void Init_CAM4DV1(CAM4DV1_PTR cam,
                   //int cam_attr,
                   POINT4D_PTR cam_pos,
@@ -379,21 +394,30 @@ void Init_CAM4DV1(CAM4DV1_PTR cam,
                   float viewport_height);
 
 void Remove_Backfaces_OBJECT4DV1(OBJECT4DV1_PTR obj, CAM4DV1_PTR cam);
+void Remove_Backfaces_OBJECT4DV2(OBJECT4DV2_PTR obj, CAM4DV1_PTR cam);
 void Remove_Backfaces_RENDERLIST4DV1(RENDERLIST4DV1_PTR rend_list, CAM4DV1_PTR cam);
+void Remove_Backfaces_RENDERLIST4DV2(RENDERLIST4DV2_PTR rend_list, CAM4DV1_PTR cam);
 
 void Build_CAM4DV1_Matrix_Euler(CAM4DV1_PTR cam, int cam_rot_seq);
 
 void Model_To_World_OBJECT4DV1(OBJECT4DV1_PTR obj, int coord_select = TRANSFORM_LOCAL_TO_TRANS);
 void Model_To_World_RENDERLIST4DV1(RENDERLIST4DV1_PTR rend_list, POINT4D_PTR world_pos, int coord_select = TRANSFORM_LOCAL_TO_TRANS);
+void Model_To_World_OBJECT4DV2(OBJECT4DV2_PTR obj, int coord_select, int all_frames);
 
 void World_To_Camera_OBJECT4DV1(CAM4DV1_PTR cam, OBJECT4DV1_PTR obj);
+void World_To_Camera_OBJECT4DV2(OBJECT4DV2_PTR obj, CAM4DV1_PTR cam);
 void World_To_Camera_RENDERLIST4DV1(RENDERLIST4DV1_PTR rend_list, CAM4DV1_PTR cam);
+void World_To_Camera_RENDERLIST4DV2(RENDERLIST4DV2_PTR rend_list, CAM4DV1_PTR cam);
 
 void Camera_To_Perspective_OBJECT4DV1(OBJECT4DV1_PTR obj, CAM4DV1_PTR cam);
+void Camera_To_Perspective_OBJECT4DV2(OBJECT4DV2_PTR obj, CAM4DV1_PTR cam);
 void Camera_To_Perspective_RENDERLIST4DV1(RENDERLIST4DV1_PTR rend_list, CAM4DV1_PTR cam);
+void Camera_To_Perspective_RENDERLIST4DV2(RENDERLIST4DV2_PTR rend_list, CAM4DV1_PTR cam);
 
 void Perspective_To_Screen_OBJECT4DV1(OBJECT4DV1_PTR obj, CAM4DV1_PTR cam);
+void Perspective_To_Screen_OBJECT4DV2(OBJECT4DV2_PTR obj, CAM4DV1_PTR cam);
 void Perspective_To_Screen_RENDERLIST4DV1(RENDERLIST4DV1_PTR rend_list, CAM4DV1_PTR cam);
+void Perspective_To_Screen_RENDERLIST4DV2(RENDERLIST4DV2_PTR rend_list, CAM4DV1_PTR cam);
 
 int Init_Light_LIGHTV1(int index,
                        int _state,
