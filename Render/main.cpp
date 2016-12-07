@@ -31,9 +31,9 @@ static int slices = 16;
 static int stacks = 16;
 int sSize = 800;
 CAM4DV1 gCam;
-RENDERLIST4DV1 gRend_list;
-OBJECT4DV1 gAllObjects[100];
-bool isDrawWireframe = false;
+RENDERLIST4DV2 gRend_list;
+OBJECT4DV2 gAllObjects[100];
+bool isDrawWireframe = 10;
 
 #define AMBIENT_LIGHT_INDEX   0 // ambient light index
 #define INFINITE_LIGHT_INDEX  1 // infinite light index
@@ -175,6 +175,43 @@ void drawTrangle(POINT4D_PTR p0, POINT4D_PTR p1, POINT4D_PTR p2)
     }
 }
 
+void drawPoly2(RENDERLIST4DV2_PTR rend_list)
+{
+    for(int poly=0; poly<rend_list->num_polys; poly++)
+    {
+        POLYF4DV2_PTR curr_poly = rend_list->poly_ptrs[poly];
+        if(!(curr_poly->state & POLY4DV1_STATE_ACTIVE) ||
+           (curr_poly->state & POLY4DV1_STATE_CLIPPED) ||
+           (curr_poly->state & POLY4DV1_STATE_BACKFACE))
+        {
+            continue;
+        }
+        
+        unsigned int r, g, b;
+        int color = curr_poly->lit_color[0];
+        RGB888FROM24BIT(color, &r, &g, &b);
+        
+        //        printf("(%d, %d, %d)\n", r, g, b);
+        glColor3f (r/255.0, g/255.0, b/255.0);//…Ë÷√µ±«∞ª≠± —’…´
+        drawTrangle(&curr_poly->tvlist[0].v,
+                    &curr_poly->tvlist[1].v,
+                    &curr_poly->tvlist[2].v);
+        
+        glColor3f (1.0, 1.0, 0.0);//…Ë÷√µ±«∞ª≠± —’…´
+//        printf("\n(v1 : %.1f, %.1f;  v2 : %.1f, %.1f;  v3 : %.1f, %.1f)",
+//               curr_poly->tvlist[0].v.x, curr_poly->tvlist[0].v.y,
+//               curr_poly->tvlist[1].v.x, curr_poly->tvlist[1].v.y,
+//               curr_poly->tvlist[2].v.x, curr_poly->tvlist[2].v.y);
+        
+        if (isDrawWireframe)
+        {
+            drawLine(&curr_poly->tvlist[0].v, &curr_poly->tvlist[1].v);
+            drawLine(&curr_poly->tvlist[2].v, &curr_poly->tvlist[1].v);
+            drawLine(&curr_poly->tvlist[2].v, &curr_poly->tvlist[0].v);
+        }
+    }
+}
+
 void drawPoly(RENDERLIST4DV1_PTR rend_list)
 {
     for(int poly=0; poly<rend_list->num_polys; poly++)
@@ -202,7 +239,6 @@ void drawPoly(RENDERLIST4DV1_PTR rend_list)
             drawLine(&curr_poly.tvlist[2], &curr_poly.tvlist[1]);
             drawLine(&curr_poly.tvlist[2], &curr_poly.tvlist[0]);
         }
-
     }
 }
 
@@ -292,23 +328,27 @@ void loadLights()
 
 void myDisplay ()
 {
-    RESET_RENDERLIST4DV1(&gRend_list);
+    Reset_RENDERLIST4DV2(&gRend_list);
     for (int i=0; i<100; i++)
     {
-        OBJECT4DV1 obj = gAllObjects[i];
-        Model_To_World_OBJECT4DV1(&obj);
-        Insert_OBJECT4DV1_RENDERLIST4DV1(&gRend_list, &obj, 0, 0);
-        Remove_Backfaces_RENDERLIST4DV1(&gRend_list, &gCam);
+        OBJECT4DV2_PTR obj = &gAllObjects[i];
+        if (!(obj->state & OBJECT4DV2_STATE_ACTIVE))
+        {
+            break;
+        }
+        Model_To_World_OBJECT4DV2(obj);
+        Insert_OBJECT4DV2_RENDERLIST4DV2(&gRend_list, obj, 0);
     }
-    
-    Light_RENDERLIST4DV1_World16(&gRend_list, &gCam, GetLightList(), 4);
-    World_To_Camera_RENDERLIST4DV1(&gRend_list, &gCam);
-    Sort_RENDERLIST4DV1(&gRend_list, SORT_POLYLIST_AVGZ);
-    Camera_To_Perspective_RENDERLIST4DV1(&gRend_list, &gCam);
-    Perspective_To_Screen_RENDERLIST4DV1(&gRend_list, &gCam);
+    Remove_Backfaces_RENDERLIST4DV2(&gRend_list, &gCam);
+    Light_RENDERLIST4DV2_World16(&gRend_list, &gCam, GetLightList(), 4);
+    World_To_Camera_RENDERLIST4DV2(&gRend_list, &gCam);
+    Sort_RENDERLIST4DV2(&gRend_list, SORT_POLYLIST_AVGZ);
+    Camera_To_Perspective_RENDERLIST4DV2(&gRend_list, &gCam);
+    Perspective_To_Screen_RENDERLIST4DV2(&gRend_list, &gCam);
+
 
     glClear (GL_COLOR_BUFFER_BIT);
-    drawPoly(&gRend_list);
+    drawPoly2(&gRend_list);
     drawDebugBtn();
     glFlush();
 
@@ -363,9 +403,6 @@ void onTimer(int value)
 
 int main(int argc, char *argv[])
 {
-
-    
-    
     POINT4D cam_pos = {0,30,0,1};
     VECTOR4D cam_dir = {0,0,0,1};
     
@@ -373,19 +410,20 @@ int main(int argc, char *argv[])
     Build_CAM4DV1_Matrix_Euler(&gCam, CAM_ROT_SEQ_ZYX);
 
     int towerCnt = 10;
-    for ( int tower=0; tower<towerCnt; tower++)
+    for (int tower=0; tower<towerCnt; tower++)
     {
-        OBJECT4DV1 obj;
+        OBJECT4DV2 obj;
         float scale = (50 + arc4random()%50)*0.01;
         scale = 0.5;
         int xt = 300;
         float x = xt*0.5 - arc4random()%xt;
-        float z = 70 + arc4random()%130;
+        float z = 50 + arc4random()%100;
+    
         VECTOR4D vscale = {scale,scale,scale,scale}, vpos = {x,0,z,1}, vrot = {0,0,0,1};
 #ifdef __APPLE__
-        Load_OBJECT4DV1_PLG(&obj,"/MyFiles/Work/GitProject/Render/Render/tower1.plg", &vscale, &vpos, &vrot);
+        Load_OBEJCT4DV2_PLG(&obj, "/MyFiles/Work/GitProject/Render/Render/tower1.plg", &vscale, &vpos, &vrot);
 #else
-        Load_OBJECT4DV1_PLG(&obj,"C:\\Users\\Administrator\\Desktop\\git\\Render\\Render\\tower1.plg", &vscale, &vpos, &vrot);
+        Load_OBJECT4DV2_PLG(&obj,"C:\\Users\\Administrator\\Desktop\\git\\Render\\Render\\tower1.plg", &vscale, &vpos, &vrot);
 #endif
         
         gAllObjects[tower] = obj;
@@ -393,17 +431,20 @@ int main(int argc, char *argv[])
     
     for (int cube=0; cube < 30; cube++)
     {
-        OBJECT4DV1 obj;
+        OBJECT4DV2 obj;
         float scale = (50 + arc4random()%50)*0.01;
         float r = 0.1*(arc4random()%100);
         int xt = 400;
         float x = xt*0.5 - arc4random()%xt;
-        float z = 100 + arc4random()%300;
+        float z = 50 + arc4random()%300;
+//        x = r =0;
+//        z = 50;
+//        scale = 1;
         VECTOR4D vscale = {scale,scale,scale,scale}, vpos = {x,0,z,1}, vrot = {r,r,r,1};
 #ifdef __APPLE__
-        Load_OBJECT4DV1_PLG(&obj,"/MyFiles/Work/GitProject/Render/Render/cube1.plg", &vscale, &vpos, &vrot);
+        Load_OBEJCT4DV2_PLG(&obj,"/MyFiles/Work/GitProject/Render/Render/cube1.plg", &vscale, &vpos, &vrot);
 #else
-        Load_OBJECT4DV1_PLG(&obj,"C:\\Users\\Administrator\\Desktop\\git\\Render\\Render\\cube1.plg", &vscale, &vpos, &vrot);
+        Load_OBEJCT4DV2_PLG(&obj,"C:\\Users\\Administrator\\Desktop\\git\\Render\\Render\\cube1.plg", &vscale, &vpos, &vrot);
 #endif
         gAllObjects[cube+towerCnt] = obj;
         

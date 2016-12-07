@@ -1567,7 +1567,10 @@ int Load_OBEJCT4DV2_PLG(OBJECT4DV2_PTR obj,
             return 0;
         }
         
-        sscanf(token_string, "%s %d %d %d", tmp_string, &poly_num_verts, &obj->plist[poly].vert[0], &obj->plist[poly].vert[1], &obj->plist[poly].vert[2]);
+        sscanf(token_string, "%s %d %d %d %d", tmp_string, &poly_num_verts,
+               &obj->plist[poly].vert[0],
+               &obj->plist[poly].vert[1],
+               &obj->plist[poly].vert[2]);
         if (tmp_string[0] == '0' && toupper(tmp_string[1]) == 'X')
         {
             sscanf(tmp_string, "%x", &poly_surface_desc);
@@ -2082,10 +2085,10 @@ int Insert_POLY4DV2_RENDERLIST4DV2(RENDERLIST4DV2_PTR rend_list, POLY4DV2_PTR po
     VERTEX4DTV1_COPY(&rend_list->poly_data[rend_list->num_polys].tvlist[0], &poly->vlist[poly->vert[0]]);
     VERTEX4DTV1_COPY(&rend_list->poly_data[rend_list->num_polys].tvlist[1], &poly->vlist[poly->vert[1]]);
     VERTEX4DTV1_COPY(&rend_list->poly_data[rend_list->num_polys].tvlist[2], &poly->vlist[poly->vert[2]]);
-    VERTEX4DTV1_COPY(&rend_list->poly_data[rend_list->num_polys].vlist[0],  &poly->vlist[poly->vert[0]]);
+    VERTEX4DTV1_COPY(&rend_list->poly_data[rend_list->num_polys].vlist[0], &poly->vlist[poly->vert[0]]);
     VERTEX4DTV1_COPY(&rend_list->poly_data[rend_list->num_polys].vlist[1], &poly->vlist[poly->vert[1]]);
     VERTEX4DTV1_COPY(&rend_list->poly_data[rend_list->num_polys].vlist[2], &poly->vlist[poly->vert[2]]);
-    
+
     rend_list->poly_data[rend_list->num_polys].tvlist[0].t = poly->tvlist[poly->text[0]];
     rend_list->poly_data[rend_list->num_polys].tvlist[1].t = poly->tvlist[poly->text[1]];
     rend_list->poly_data[rend_list->num_polys].tvlist[2].t = poly->tvlist[poly->text[2]];
@@ -2185,6 +2188,8 @@ void Reset_OBJECT4DV2(OBJECT4DV2_PTR obj)
     }
 }
 
+
+
 void Remove_Backfaces_RENDERLIST4DV2(RENDERLIST4DV2_PTR rend_list, CAM4DV1_PTR cam)
 {
     for (int poly=0; poly<rend_list->num_polys; poly++)
@@ -2204,6 +2209,7 @@ void Remove_Backfaces_RENDERLIST4DV2(RENDERLIST4DV2_PTR rend_list, CAM4DV1_PTR c
         VECTOR4D_Cross(&u, &v, &n);
         VECTOR4D view;
         VECTOR4D_Build(&curr_poly->tvlist[0].v, &cam->pos, &view);
+
         float dp = VECTOR4D_Dot(&n, &view);
         if (dp <= 0)
         {
@@ -2496,6 +2502,112 @@ void Transform_OBJECT4DV2(OBJECT4DV2_PTR obj, MATRIX4X4_PTR mt, int coord_select
         
         Mat_Mul_VECTOR4D_4X4(&obj->uz, mt, &vresult);
         VECTOR4D_COPY(&obj->uz, &vresult);
+    }
+}
+
+int Compare_AvgZ_POLYF4DV2(const void *arg1,const void *arg2)
+{
+    float z1, z2;
+    POLYF4DV2_PTR poly_1, poly_2;
+    poly_1 = *((POLYF4DV2_PTR*)(arg1));
+    poly_2 = *((POLYF4DV2_PTR*)(arg2));
+    
+    z1 = 0.33333*(poly_1->tvlist[0].z+poly_1->tvlist[1].z+poly_1->tvlist[2].z);
+    z2 = 0.33333*(poly_2->tvlist[0].z+poly_2->tvlist[1].z+poly_2->tvlist[2].z);
+    
+    if (z1 > z2)
+    {
+        return -1;
+    }
+    else if (z1 < z2)
+    {
+        return 1;
+    }
+    
+    return 0;
+}
+
+int Compare_NearZ_POLYF4DV2(const void *arg1,const void *arg2)
+{
+    float z1, z2;
+    POLYF4DV2_PTR poly_1, poly_2;
+    poly_1 = *((POLYF4DV2_PTR*)(arg1));
+    poly_2 = *((POLYF4DV2_PTR*)(arg2));
+    
+    z1 = MIN(poly_1->tvlist[0].z, poly_1->tvlist[1].z);
+    z1 = MIN(poly_1->tvlist[2].z, z1);
+    
+    z2 = MIN(poly_2->tvlist[0].z, poly_2->tvlist[1].z);
+    z2 = MIN(poly_2->tvlist[2].z, z2);
+    
+    if (z1 > z2)
+    {
+        return -1;
+    }
+    else if (z1 < z2)
+    {
+        return 1;
+    }
+    
+    return 0;
+}
+
+int Compare_FarZ_POLYF4DV2(const void *arg1,const void *arg2)
+{
+    float z1, z2;
+    POLYF4DV2_PTR poly_1, poly_2;
+    poly_1 = *((POLYF4DV2_PTR*)(arg1));
+    poly_2 = *((POLYF4DV2_PTR*)(arg2));
+    
+    z1 = MAX(poly_1->tvlist[0].z, poly_1->tvlist[1].z);
+    z1 = MAX(poly_1->tvlist[2].z, z1);
+    
+    z2 = MAX(poly_2->tvlist[0].z, poly_2->tvlist[1].z);
+    z2 = MAX(poly_2->tvlist[2].z, z2);
+    
+    if (z1 > z2)
+    {
+        return -1;
+    }
+    else if (z1 < z2)
+    {
+        return 1;
+    }
+    
+    return 0;
+}
+
+void Sort_RENDERLIST4DV2(RENDERLIST4DV2_PTR rend_list, int sort_method)
+{
+    switch (sort_method)
+    {
+        case SORT_POLYLIST_AVGZ:
+        {
+            qsort((void *)rend_list->poly_ptrs,
+                  rend_list->num_polys,
+                  sizeof(POLYF4DV2_PTR),
+                  Compare_AvgZ_POLYF4DV2);
+        }
+            break;
+        case SORT_POLYLIST_NEARZ:
+        {
+            qsort((void *)rend_list->poly_ptrs,
+                  rend_list->num_polys,
+                  sizeof(POLYF4DV2_PTR),
+                  Compare_NearZ_POLYF4DV2);
+        }
+            break;
+        case SORT_POLYLIST_FARZ:
+        {
+            qsort((void *)rend_list->poly_ptrs,
+                  rend_list->num_polys,
+                  sizeof(POLYF4DV2_PTR),
+                  Compare_FarZ_POLYF4DV2);
+        }
+            break;
+            
+        default:
+            break;
     }
 }
 

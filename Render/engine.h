@@ -369,7 +369,7 @@ int Load_OBEJCT4DV2_PLG(OBJECT4DV2_PTR obj,
                         VECTOR4D_PTR scale,
                         VECTOR4D_PTR pos,
                         VECTOR4D_PTR rot,
-                        int vertex_flags);
+                        int vertex_flags=0);
 
 void RESET_RENDERLIST4DV1(RENDERLIST4DV1_PTR rend_list);
 void Reset_RENDERLIST4DV2(RENDERLIST4DV2_PTR rend_list);
@@ -402,7 +402,7 @@ void Build_CAM4DV1_Matrix_Euler(CAM4DV1_PTR cam, int cam_rot_seq);
 
 void Model_To_World_OBJECT4DV1(OBJECT4DV1_PTR obj, int coord_select = TRANSFORM_LOCAL_TO_TRANS);
 void Model_To_World_RENDERLIST4DV1(RENDERLIST4DV1_PTR rend_list, POINT4D_PTR world_pos, int coord_select = TRANSFORM_LOCAL_TO_TRANS);
-void Model_To_World_OBJECT4DV2(OBJECT4DV2_PTR obj, int coord_select, int all_frames);
+void Model_To_World_OBJECT4DV2(OBJECT4DV2_PTR obj, int coord_select = TRANSFORM_LOCAL_TO_TRANS, int all_frames = 0);
 
 void World_To_Camera_OBJECT4DV1(CAM4DV1_PTR cam, OBJECT4DV1_PTR obj);
 void World_To_Camera_OBJECT4DV2(OBJECT4DV2_PTR obj, CAM4DV1_PTR cam);
@@ -441,7 +441,10 @@ int Light_RENDERLIST4DV1_World16(RENDERLIST4DV1_PTR rend_list,
                                  CAM4DV1_PTR cam,
                                  LIGHTV1_PTR lights,
                                  int max_lights);
+int Light_RENDERLIST4DV2_World16(RENDERLIST4DV2_PTR rend_list, CAM4DV1_PTR cam, LIGHTV1_PTR lights, int max_lights);
 LIGHTV1_PTR GetLightList(void);
 int Reset_Lights_LIGHTV1(void);
+
 void Sort_RENDERLIST4DV1(RENDERLIST4DV1_PTR rend_list, int sort_method);
+void Sort_RENDERLIST4DV2(RENDERLIST4DV2_PTR rend_list, int sort_method);
 #endif // ENGINE_H_INCLUDED
