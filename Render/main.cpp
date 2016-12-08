@@ -33,7 +33,7 @@ int sSize = 800;
 CAM4DV1 gCam;
 RENDERLIST4DV2 gRend_list;
 OBJECT4DV2 gAllObjects[100];
-bool isDrawWireframe = 10;
+bool isDrawWireframe = 0;
 
 #define AMBIENT_LIGHT_INDEX   0 // ambient light index
 #define INFINITE_LIGHT_INDEX  1 // infinite light index
@@ -219,10 +219,10 @@ void drawTrangleBottomPlane(POINT4D_PTR pt, POINT4D_PTR pl, POINT4D_PTR pr)
     float dl = (pl->x - pt->x)/(pl->y - pt->y);
     float dr = (pr->x - pt->x)/(pr->y - pt->y);
     float xl=pt->x, xr=pt->x;
-    for (int y=pt->y; y<=pl->y; y++)
+    for (int y=pt->y; y<=(int)pl->y; y++)
     {
-        POINT4D p0 = {static_cast<float>(xl+0.5), static_cast<float>(y)};
-        POINT4D p1 = {static_cast<float>(xr+0.5), static_cast<float>(y)};
+        POINT4D p0 = {static_cast<float>(xl), static_cast<float>(y)};
+        POINT4D p1 = {static_cast<float>(xr), static_cast<float>(y)};
         drawLine(&p0, &p1);
         xl += dl;
         xr += dr;
@@ -248,10 +248,10 @@ void drawTrangleTopPlane(POINT4D_PTR pb, POINT4D_PTR pl, POINT4D_PTR pr)
     float dl = (pb->x - pl->x)/(pb->y - pl->y);
     float dr = (pb->x - pr->x)/(pb->y - pr->y);
     float xl=pl->x, xr=pr->x;
-    for (int y=pl->y; y<=pb->y; y++)
+    for (int y=pl->y; y<(int)pb->y; y++)
     {
-        POINT4D p0 = {static_cast<float>(xl+0.5), static_cast<float>(y)};
-        POINT4D p1 = {static_cast<float>(xr+0.5), static_cast<float>(y)};
+        POINT4D p0 = {static_cast<float>(xl), static_cast<float>(y)};
+        POINT4D p1 = {static_cast<float>(xr), static_cast<float>(y)};
         drawLine(&p0, &p1);
         xl += dl;
         xr += dr;
@@ -266,6 +266,7 @@ void drawTrangleGOURAUDTopPlane(POINT4D_PTR pb, POINT4D_PTR pl, POINT4D_PTR pr,R
     {
         POINT4D p0 = {static_cast<float>(xl+0.5), static_cast<float>(y)};
         POINT4D p1 = {static_cast<float>(xr+0.5), static_cast<float>(y)};
+        
         drawLine(&p0, &p1);
         xl += dl;
         xr += dr;
@@ -346,13 +347,13 @@ void drawTrangle(POINT4D_PTR p0, POINT4D_PTR p1, POINT4D_PTR p2)
             pm = p1;
             pb = p0;
         }
-        drawTranglePlane(pt, pm, pb);
+//        drawTranglePlane(pt, pm, pb);
         int xline = (pm->y - pt->y)*(pb->x - pt->x)/(pb->y - pt->y);
-        xline += pt->x + 0.5;//get x of mid point
+        xline += pt->x;//get x of mid point
 
         POINT4D pTmp = {static_cast<float>(xline), pm->y,1,1};
-//        drawTrangleBottomPlane(pt, pm, &pTmp);
-//        drawTrangleTopPlane(pb, pm, &pTmp);
+        drawTrangleBottomPlane(pt, pm, &pTmp);
+        drawTrangleTopPlane(pb, pm, &pTmp);
     }
 }
 
@@ -503,14 +504,29 @@ void drawPoly2(RENDERLIST4DV2_PTR rend_list)
         //               curr_poly->tvlist[0].v.x, curr_poly->tvlist[0].v.y,
         //               curr_poly->tvlist[1].v.x, curr_poly->tvlist[1].v.y,
         //               curr_poly->tvlist[2].v.x, curr_poly->tvlist[2].v.y);
-        if (isDrawWireframe)
+
+    }
+    
+    if (isDrawWireframe)
+    {
+        for(int poly=0; poly<rend_list->num_polys; poly++)
         {
+            POLYF4DV2_PTR curr_poly = rend_list->poly_ptrs[poly];
+            if(!(curr_poly->state & POLY4DV2_STATE_ACTIVE) ||
+               (curr_poly->state & POLY4DV2_STATE_CLIPPED) ||
+               (curr_poly->state & POLY4DV2_STATE_BACKFACE))
+            {
+                continue;
+            }
+            
             glColor3f (1.0, 1.0, 0.0);//…Ë÷√µ±«∞ª≠± —’…´
             drawLine(&curr_poly->tvlist[0].v, &curr_poly->tvlist[1].v);
             drawLine(&curr_poly->tvlist[2].v, &curr_poly->tvlist[1].v);
             drawLine(&curr_poly->tvlist[2].v, &curr_poly->tvlist[0].v);
+            
         }
     }
+
 }
 
 void drawPoly(RENDERLIST4DV1_PTR rend_list)
@@ -735,10 +751,11 @@ int main(int argc, char *argv[])
     {
         OBJECT4DV2 obj;
         float scale = (50 + rand()%50)*0.01;
-        float r = rand()%100;
+        float r = arc4random()%100;
         int xt = 400;
         float x = xt*0.5 - rand()%xt;
-        float z = 50 + rand()%300;
+        float z = 30 + rand()%100;
+
         VECTOR4D vscale = {scale,scale,scale,scale}, vpos = {x,0,z,1}, vrot = {r,r,r,1};
 #ifdef __APPLE__
         Load_OBJECT4DV2_PLG(&obj,"/MyFiles/Work/GitProject/Render/Render/cube1.plg", &vscale, &vpos, &vrot);
@@ -746,7 +763,7 @@ int main(int argc, char *argv[])
         Load_OBJECT4DV2_PLG(&obj,"C:\\Users\\Administrator\\Desktop\\git\\Render\\Render\\cube1.plg", &vscale, &vpos, &vrot);
 #endif
         gAllObjects[cube+towerCnt] = obj;
-//        Rotate_XYZ_OBJECT4DV2(&obj, r, r, r);
+        Rotate_XYZ_OBJECT4DV2(&obj, r, r, r);
 
     }
 

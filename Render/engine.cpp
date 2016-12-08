@@ -1533,7 +1533,7 @@ void Build_XYZ_Rotation_MATRIX4X4(float theta_x, float theta_y, float theta_z, M
       // set the matrix up
       Mat_Init_4X4(&mx, 1,    0,          0,         0,
                         0,    cos_theta,  sin_theta, 0,
-                        0,   -sin_theta, cos_theta, 0,
+                        0,   -sin_theta, cos_theta,  0,
                         0,    0,          0,         1);
 
       // that's it, copy to output matrix
