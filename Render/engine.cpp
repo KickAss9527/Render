@@ -1802,7 +1802,7 @@ int Load_OBJECT4DV2_PLG(OBJECT4DV2_PTR obj,
 
     Compute_OBJECT4DV2_Radius(obj);
 
-    int poly_surface_desc = 0;
+    unsigned int poly_surface_desc = 0;
     int poly_num_verts = 0;
     char tmp_string[9];
 
@@ -1828,7 +1828,7 @@ int Load_OBJECT4DV2_PLG(OBJECT4DV2_PTR obj,
         }
         obj->plist[poly].vlist = obj->vlist_local;
 
-        if((poly_surface_desc & PLX_2SIDED_FLAG))
+        if((poly_surface_desc & PLX_2SIDED_FLAG))//应该 >> 
         {
             SET_BIT(obj->plist[poly].attr, POLY4DV2_ATTR_2SIDED);
         }
@@ -1851,19 +1851,21 @@ int Load_OBJECT4DV2_PLG(OBJECT4DV2_PTR obj,
             obj->plist[poly].color = (poly_surface_desc & 0x00ff);
         }
 
-        int shade_mode = (poly_surface_desc & PLX_SHADE_MODE_MASK);
+        int shade_mode = (poly_surface_desc & PLX_SHADE_MODE_MASK); //& 110 ...
+        //1010 11001100 01100110 00110011
+        //10110111000110110000000
         switch (shade_mode) {
-            case PLX_SHADE_MODE_PURE_FLAG:
+            case PLX_SHADE_MODE_PURE_FLAG://0
             {
                 SET_BIT(obj->plist[poly].attr, POLY4DV2_ATTR_SHADE_MODE_PURE);
             }
                 break;
-            case PLX_SHADE_MODE_FLAT_FLAG:
+            case PLX_SHADE_MODE_FLAT_FLAG://0010 ...
             {
                 SET_BIT(obj->plist[poly].attr, POLY4DV2_ATTR_SHADE_MODE_FLAT);
             }
                 break;
-            case PLX_SHADE_MODE_GOURAUD_FLAG:
+            case PLX_SHADE_MODE_GOURAUD_FLAG://0100 ...
             {
                 SET_BIT(obj->plist[poly].attr, POLY4DV2_ATTR_SHADE_MODE_GOURAUD);
                 SET_BIT(obj->vlist_local[obj->plist[poly].vert[0]].attr, VERTEX4DTV1_ATTR_NORMAL);
@@ -1871,7 +1873,7 @@ int Load_OBJECT4DV2_PLG(OBJECT4DV2_PTR obj,
                 SET_BIT(obj->vlist_local[obj->plist[poly].vert[2]].attr, VERTEX4DTV1_ATTR_NORMAL);
             }
                 break;
-            case PLX_SHADE_MODE_PHONG_FLAG:
+            case PLX_SHADE_MODE_PHONG_FLAG: //0110 ...
             {
                 SET_BIT(obj->plist[poly].attr, POLY4DV2_ATTR_SHADE_MODE_PHONG);
                 SET_BIT(obj->vlist_local[obj->plist[poly].vert[0]].attr, VERTEX4DTV1_ATTR_NORMAL);

@@ -139,9 +139,12 @@ void drawTranglePlaneGOURAUD(POINT4D_PTR pt, POINT4D_PTR pm, POINT4D_PTR pb, RGB
             POINT4D p = {static_cast<float>(x), static_cast<float>(y)};
             float dx = (x-tmpxl)/(tmpxr-tmpxl);
             RGBAV1 c;
-            c.r = tmpcrl + (tmpcrr - tmpcrl)*dx;
-            c.g = tmpcgl + (tmpcgr - tmpcgl)*dx;
-            c.b = tmpcbl + (tmpcbr - tmpcbl)*dx;
+            int r = tmpcrl + (tmpcrr - tmpcrl)*dx;
+            int g = tmpcgl + (tmpcgr - tmpcgl)*dx;
+            int b = tmpcbl + (tmpcbr - tmpcbl)*dx;
+            c.r = MIN(MAX(0, r), 255);
+            c.g = MIN(MAX(0, g), 255);
+            c.b = MIN(MAX(0, b), 255);
             drawPoint(&p, &c);
         }
 
@@ -160,9 +163,10 @@ void drawTranglePlaneGOURAUD(POINT4D_PTR pt, POINT4D_PTR pm, POINT4D_PTR pb, RGB
     }
     
     dl = (pb->x - pm->x)/(pb->y - pm->y);
-    dcl_r = (cb->r - cm->r)/(pm->y - pt->y);
-    dcl_g = (cb->g - cm->g)/(pm->y - pt->y);
-    dcl_b = (cb->b - cm->b)/(pm->y - pt->y);
+
+        dcl_r = (cb->r - cm->r)/(pm->y - pt->y);
+        dcl_g = (cb->g - cm->g)/(pm->y - pt->y);
+        dcl_b = (cb->b - cm->b)/(pm->y - pt->y);
     for (int y=pm->y; y<=pb->y; y++)
     {
         float tmpxl = xl;
@@ -173,6 +177,7 @@ void drawTranglePlaneGOURAUD(POINT4D_PTR pt, POINT4D_PTR pm, POINT4D_PTR pb, RGB
         float tmpcgr = gr;
         float tmpcbl = bl;
         float tmpcbr = br;
+        
         if (xl > xr)
         {
             tmpxl = xr;
@@ -189,9 +194,12 @@ void drawTranglePlaneGOURAUD(POINT4D_PTR pt, POINT4D_PTR pm, POINT4D_PTR pb, RGB
             POINT4D p = {static_cast<float>(x), static_cast<float>(y)};
             float dx = (x-tmpxl)/(tmpxr-tmpxl);
             RGBAV1 c;
-            c.r = tmpcrl + (tmpcrr - tmpcrl)*dx;
-            c.g = tmpcgl + (tmpcgr - tmpcgl)*dx;
-            c.b = tmpcbl + (tmpcbr - tmpcbl)*dx;
+            int r = tmpcrl + (tmpcrr - tmpcrl)*dx;
+            int g = tmpcgl + (tmpcgr - tmpcgl)*dx;
+            int b = tmpcbl + (tmpcbr - tmpcbl)*dx;
+            c.r = MIN(MAX(0, r), 255);
+            c.g = MIN(MAX(0, g), 255);
+            c.b = MIN(MAX(0, b), 255);
             drawPoint(&p, &c);
         }
         
@@ -458,16 +466,28 @@ void drawPoly2(RENDERLIST4DV2_PTR rend_list)
         {
             continue;
         }
+        if (curr_poly->attr & POLY4DV2_ATTR_SHADE_MODE_GOURAUD)
+        {
+            RGBAV1 c0, c1, c2;
+            c0.rgba = curr_poly->lit_color[0];
+            c1.rgba = curr_poly->lit_color[1];
+            c2.rgba = curr_poly->lit_color[2];
 
-        unsigned int r, g, b;
-        int color = curr_poly->lit_color[0];
-        RGB888FROM24BIT(color, &r, &g, &b);
+            drawTrangleGOURAUD(&curr_poly->tvlist[0].v,
+                               &curr_poly->tvlist[1].v,
+                               &curr_poly->tvlist[2].v, &c0, &c1, &c2);
+        }
+        else if(curr_poly->attr & POLY4DV2_ATTR_SHADE_MODE_FLAT)
+        {
+            unsigned int r, g, b;
+            int color = curr_poly->lit_color[0];
+            RGB888FROM24BIT(color, &r, &g, &b);
+            glColor3f (r/255.0, g/255.0, b/255.0);//…Ë÷√µ±«∞ª≠± —’…´
+            drawTrangle(&curr_poly->tvlist[0].v,
+                        &curr_poly->tvlist[1].v,
+                        &curr_poly->tvlist[2].v);
 
-        //        printf("(%d, %d, %d)\n", r, g, b);
-        glColor3f (r/255.0, g/255.0, b/255.0);//…Ë÷√µ±«∞ª≠± —’…´
-//        drawTrangle(&curr_poly->tvlist[0].v,
-//                    &curr_poly->tvlist[1].v,
-//                    &curr_poly->tvlist[2].v);
+        }
         RGBAV1 white, gray, black, red, green, blue;
         
         white.rgba = RGB32BIT(0,255,255,255);
@@ -476,18 +496,16 @@ void drawPoly2(RENDERLIST4DV2_PTR rend_list)
         red.rgba   = RGB32BIT(0,255,0,0);
         green.rgba = RGB32BIT(0,0,255,0);
         blue.rgba  = RGB32BIT(0,0,0,255);
-        drawTrangleGOURAUD(&curr_poly->tvlist[0].v,
-                           &curr_poly->tvlist[1].v,
-                           &curr_poly->tvlist[2].v, &red, &green, &blue);
-        
-        glColor3f (1.0, 1.0, 0.0);//…Ë÷√µ±«∞ª≠± —’…´
-//        printf("\n(v1 : %.1f, %.1f;  v2 : %.1f, %.1f;  v3 : %.1f, %.1f)",
-//               curr_poly->tvlist[0].v.x, curr_poly->tvlist[0].v.y,
-//               curr_poly->tvlist[1].v.x, curr_poly->tvlist[1].v.y,
-//               curr_poly->tvlist[2].v.x, curr_poly->tvlist[2].v.y);
 
+
+        
+        //        printf("\n(v1 : %.1f, %.1f;  v2 : %.1f, %.1f;  v3 : %.1f, %.1f)",
+        //               curr_poly->tvlist[0].v.x, curr_poly->tvlist[0].v.y,
+        //               curr_poly->tvlist[1].v.x, curr_poly->tvlist[1].v.y,
+        //               curr_poly->tvlist[2].v.x, curr_poly->tvlist[2].v.y);
         if (isDrawWireframe)
         {
+            glColor3f (1.0, 1.0, 0.0);//…Ë÷√µ±«∞ª≠± —’…´
             drawLine(&curr_poly->tvlist[0].v, &curr_poly->tvlist[1].v);
             drawLine(&curr_poly->tvlist[2].v, &curr_poly->tvlist[1].v);
             drawLine(&curr_poly->tvlist[2].v, &curr_poly->tvlist[0].v);
@@ -661,6 +679,8 @@ void btnClick(int idx, LIGHTV1_PTR lights)
 //        rgb.rgba = RGB32BIT(0, c, c, c);
 //        li->c_ambient = rgb;
 //    }
+    
+    myDisplay();
 }
 
 void myMouse(int button,int state,int x,int y)
@@ -692,7 +712,7 @@ int main(int argc, char *argv[])
     Init_CAM4DV1(&gCam, &cam_pos, &cam_dir, 50,sSize,90, sSize,sSize);
     Build_CAM4DV1_Matrix_Euler(&gCam, CAM_ROT_SEQ_ZYX);
 
-    int towerCnt = 10*0;
+    int towerCnt = 1;
     for (int tower=0; tower<towerCnt; tower++)
     {
         OBJECT4DV2 obj;
@@ -701,7 +721,8 @@ int main(int argc, char *argv[])
         int xt = 300;
         float x = xt*0.5 - rand()%xt;
         float z = 50 + rand()%100;
-
+        x = -30;
+        z = 49;
         VECTOR4D vscale = {scale,scale,scale,scale}, vpos = {x,0,z,1}, vrot = {0,0,0,1};
 #ifdef __APPLE__
         Load_OBJECT4DV2_PLG(&obj, "/MyFiles/Work/GitProject/Render/Render/tower1.plg", &vscale, &vpos, &vrot);
@@ -712,7 +733,7 @@ int main(int argc, char *argv[])
         gAllObjects[tower] = obj;
     }
 
-    for (int cube=0; cube < 1; cube++)
+    for (int cube=0; cube < 0; cube++)
     {
         OBJECT4DV2 obj;
         float scale = (50 + rand()%50)*0.01;
@@ -720,12 +741,13 @@ int main(int argc, char *argv[])
         int xt = 400;
         float x = xt*0.5 - rand()%xt;
         float z = 50 + rand()%300;
-        x = r =0;
+        x = 0;
         z = 15;
         scale = 1;
+        r = 45;
         VECTOR4D vscale = {scale,scale,scale,scale}, vpos = {x,30,z,1}, vrot = {r,r,r,1};
 #ifdef __APPLE__
-        Load_OBJECT4DV2_PLG(&obj,"/MyFiles/Work/GitProject/Render/Render/trangle.plg", &vscale, &vpos, &vrot);
+        Load_OBJECT4DV2_PLG(&obj,"/MyFiles/Work/GitProject/Render/Render/cube1.plg", &vscale, &vpos, &vrot);
 #else
         Load_OBJECT4DV2_PLG(&obj,"C:\\Users\\Administrator\\Desktop\\git\\Render\\Render\\cube1.plg", &vscale, &vpos, &vrot);
 #endif
@@ -743,7 +765,7 @@ int main(int argc, char *argv[])
     glutInitWindowSize (sSize, sSize);//…Ë÷√¥∞ø⁄¥Û–°
     glutCreateWindow ("hello word!");//¥¥Ω®√˚≥∆Œ™"hello word!"µƒ¥∞ø⁄,¥∞ø⁄¥¥Ω®∫Û≤ªª·¡¢º¥œ‘ æµΩ∆¡ƒª…œ,“™µ˜”√∫Û√ÊµƒglutMainLoop()≤≈ª·œ‘ æ
     glutDisplayFunc(myDisplay);//µ˜”√ªÊ÷∆∫Ø ˝ πÀ¸œ‘ æ‘⁄∏’¥¥Ω®µƒ¥∞ø⁄…œ
-   glutTimerFunc(200, onTimer, 1);
+//   glutTimerFunc(200, onTimer, 1);
 
     glutMouseFunc(myMouse);
     glutMainLoop();//œ˚œ¢—≠ª∑,¥∞ø⁄πÿ±’≤≈ª·∑µªÿ
