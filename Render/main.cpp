@@ -33,7 +33,8 @@ int sSize = 800;
 CAM4DV1 gCam;
 RENDERLIST4DV2 gRend_list;
 OBJECT4DV2 gAllObjects[100];
-bool isDrawWireframe = 0;
+bool isDrawWireframe = 10;
+int refreshFrequency = 30;
 
 #define AMBIENT_LIGHT_INDEX   0 // ambient light index
 #define INFINITE_LIGHT_INDEX  1 // infinite light index
@@ -649,6 +650,9 @@ void myDisplay ()
     for (int i=0; i<100; i++)
     {
         OBJECT4DV2_PTR obj = &gAllObjects[i];
+        
+        float ro = 0.000001*clock();
+        Rotate_XYZ_OBJECT4DV2(obj, 0, ro, ro);
         if (!(obj->state & OBJECT4DV2_STATE_ACTIVE))
         {
             break;
@@ -717,7 +721,7 @@ void myMouse(int button,int state,int x,int y)
 void onTimer(int value)
 {
     glutPostRedisplay();
-    glutTimerFunc(200, onTimer, 1);
+    glutTimerFunc(refreshFrequency, onTimer, 1);
 }
 
 int main(int argc, char *argv[])
@@ -728,7 +732,7 @@ int main(int argc, char *argv[])
     Init_CAM4DV1(&gCam, &cam_pos, &cam_dir, 50,sSize,90, sSize,sSize);
     Build_CAM4DV1_Matrix_Euler(&gCam, CAM_ROT_SEQ_ZYX);
 
-    int towerCnt = 10;
+    int towerCnt = 0;
     for (int tower=0; tower<towerCnt; tower++)
     {
         OBJECT4DV2 obj;
@@ -747,23 +751,25 @@ int main(int argc, char *argv[])
         gAllObjects[tower] = obj;
     }
 
-    for (int cube=0; cube < 30; cube++)
+    for (int cube=0; cube < 1; cube++)
     {
         OBJECT4DV2 obj;
         float scale = (50 + rand()%50)*0.01;
-        float r = arc4random()%100;
+        float r = rand()%100;
         int xt = 400;
         float x = xt*0.5 - rand()%xt;
         float z = 30 + rand()%100;
-
-        VECTOR4D vscale = {scale,scale,scale,scale}, vpos = {x,0,z,1}, vrot = {r,r,r,1};
+        float y = 30;
+        x = 0;
+        z = 10;
+        VECTOR4D vscale = {scale,scale,scale,scale}, vpos = {x,y,z,1}, vrot = {r,r,r,1};
 #ifdef __APPLE__
         Load_OBJECT4DV2_PLG(&obj,"/MyFiles/Work/GitProject/Render/Render/cube1.plg", &vscale, &vpos, &vrot);
 #else
         Load_OBJECT4DV2_PLG(&obj,"C:\\Users\\Administrator\\Desktop\\git\\Render\\Render\\cube1.plg", &vscale, &vpos, &vrot);
 #endif
         gAllObjects[cube+towerCnt] = obj;
-        Rotate_XYZ_OBJECT4DV2(&obj, r, r, r);
+        
 
     }
 
@@ -775,7 +781,7 @@ int main(int argc, char *argv[])
     glutInitWindowSize (sSize, sSize);//…Ë÷√¥∞ø⁄¥Û–°
     glutCreateWindow ("hello word!");//¥¥Ω®√˚≥∆Œ™"hello word!"µƒ¥∞ø⁄,¥∞ø⁄¥¥Ω®∫Û≤ªª·¡¢º¥œ‘ æµΩ∆¡ƒª…œ,“™µ˜”√∫Û√ÊµƒglutMainLoop()≤≈ª·œ‘ æ
     glutDisplayFunc(myDisplay);//µ˜”√ªÊ÷∆∫Ø ˝ πÀ¸œ‘ æ‘⁄∏’¥¥Ω®µƒ¥∞ø⁄…œ
-//   glutTimerFunc(200, onTimer, 1);
+   glutTimerFunc(refreshFrequency, onTimer, 1);
 
     glutMouseFunc(myMouse);
     glutMainLoop();//œ˚œ¢—≠ª∑,¥∞ø⁄πÿ±’≤≈ª·∑µªÿ
