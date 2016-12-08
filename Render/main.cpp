@@ -222,6 +222,12 @@ void drawTrangleBottomPlane(POINT4D_PTR pt, POINT4D_PTR pl, POINT4D_PTR pr)
     float xl=pt->x, xr=pt->x;
     for (int y=pt->y; y<=(int)pl->y; y++)
     {
+        if ((xl < pl->x && xl < pr->x && xl < pt->x) ||
+            (xr < pl->x && xr < pr->x && xr < pt->x) ||
+            (xl > pl->x && xl > pr->x && xl > pt->x) ||
+            (xr > pl->x && xr > pr->x && xr > pt->x)) {
+            continue;
+        }
         POINT4D p0 = {static_cast<float>(xl), static_cast<float>(y)};
         POINT4D p1 = {static_cast<float>(xr), static_cast<float>(y)};
         drawLine(&p0, &p1);
@@ -251,6 +257,12 @@ void drawTrangleTopPlane(POINT4D_PTR pb, POINT4D_PTR pl, POINT4D_PTR pr)
     float xl=pl->x, xr=pr->x;
     for (int y=pl->y; y<(int)pb->y; y++)
     {
+        if ((xl < pl->x && xl < pr->x && xl < pb->x) ||
+            (xr < pl->x && xr < pr->x && xr < pb->x) ||
+            (xl > pl->x && xl > pr->x && xl > pb->x) ||
+            (xr > pl->x && xr > pr->x && xr > pb->x)) {
+            continue;
+        }
         POINT4D p0 = {static_cast<float>(xl), static_cast<float>(y)};
         POINT4D p1 = {static_cast<float>(xr), static_cast<float>(y)};
         drawLine(&p0, &p1);
