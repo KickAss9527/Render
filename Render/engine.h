@@ -13,7 +13,7 @@ typedef struct RGBAV1_TYP{
     union{
         int rgba;
         UCHAR rgba_M[4];
-        struct{UCHAR a, b, g, r;};
+        struct{UCHAR b, g, r, a;};//大端, 低地址高位
     };
 } RGBAV1, *RGBAV1_PTR;
 

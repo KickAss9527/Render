@@ -163,7 +163,7 @@ void Reset_OBJECT4DV1(OBJECT4DV1_PTR obj)
     for (int poly=0; poly<obj->num_polys; poly++)
     {
         POLY4DV1_PTR curr_poly = &obj->plist[poly];
-        if (!(curr_poly->state & POLY4DV2_STATE_ACTIVE))
+        if (!(curr_poly->state & POLY4DV1_STATE_ACTIVE))
         {
             continue;
         }
@@ -2385,9 +2385,9 @@ int Insert_OBJECT4DV2_RENDERLIST4DV2(RENDERLIST4DV2_PTR rend_list,
                                      int insert_local)
 {
     unsigned int base_color;
-    if(!(obj->state & OBJECT4DV1_STATE_ACTIVE) ||
-       obj->state & OBJECT4DV1_STATE_CULLED ||
-       !(obj->state & OBJECT4DV1_STATE_VISIBLE))
+    if(!(obj->state & OBJECT4DV2_STATE_ACTIVE) ||
+       obj->state & OBJECT4DV2_STATE_CULLED ||
+       !(obj->state & OBJECT4DV2_STATE_VISIBLE))
     {
         return 0;
     }
@@ -2395,9 +2395,9 @@ int Insert_OBJECT4DV2_RENDERLIST4DV2(RENDERLIST4DV2_PTR rend_list,
     for (int poly=0; poly < obj->num_polys; poly++)
     {
         POLY4DV2_PTR curr_poly = &obj->plist[poly];
-        if(!(curr_poly->state & POLY4DV1_STATE_ACTIVE) ||
-           curr_poly->state & POLY4DV1_STATE_CLIPPED ||
-           curr_poly->state & POLY4DV1_STATE_BACKFACE)
+        if(!(curr_poly->state & POLY4DV2_STATE_ACTIVE) ||
+           curr_poly->state & POLY4DV2_STATE_CLIPPED ||
+           curr_poly->state & POLY4DV2_STATE_BACKFACE)
         {
             continue;
         }

@@ -26,11 +26,11 @@
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "Render/main.cpp"
-            timestampString = "502793698.484241"
+            timestampString = "502868714.262799"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "501"
-            endingLineNumber = "501">
+            startingLineNumber = "783"
+            endingLineNumber = "783">
          </BreakpointContent>
       </BreakpointProxy>
       <BreakpointProxy
@@ -88,11 +88,11 @@
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "Render/main.cpp"
-            timestampString = "502699986.900984"
+            timestampString = "502868714.262799"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "119"
-            endingLineNumber = "119"
+            startingLineNumber = "291"
+            endingLineNumber = "291"
             landmarkName = "drawTrangle(POINT4D_PTR p0, POINT4D_PTR p1, POINT4D_PTR p2)"
             landmarkType = "9">
          </BreakpointContent>
@@ -189,7 +189,7 @@
             endingColumnNumber = "9223372036854775807"
             startingLineNumber = "2250"
             endingLineNumber = "2250"
-            landmarkName = "Remove_Backfaces_OBJECT4DV2(OBJECT4DV2_PTR obj, CAM4DV1_PTR cam)"
+            landmarkName = "Light_RENDERLIST4DV2_World16(RENDERLIST4DV2_PTR rend_list, CAM4DV1_PTR cam, LIGHTV1_PTR lights, int max_lights)"
             landmarkType = "9">
          </BreakpointContent>
       </BreakpointProxy>
@@ -205,7 +205,71 @@
             endingColumnNumber = "9223372036854775807"
             startingLineNumber = "2214"
             endingLineNumber = "2214"
-            landmarkName = "Remove_Backfaces_RENDERLIST4DV2(RENDERLIST4DV2_PTR rend_list, CAM4DV1_PTR cam)"
+            landmarkName = "Light_RENDERLIST4DV2_World16(RENDERLIST4DV2_PTR rend_list, CAM4DV1_PTR cam, LIGHTV1_PTR lights, int max_lights)"
+            landmarkType = "9">
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            shouldBeEnabled = "No"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "Render/engine.cpp"
+            timestampString = "502853063.663295"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "1929"
+            endingLineNumber = "1929"
+            landmarkName = "Light_RENDERLIST4DV2_World16(RENDERLIST4DV2_PTR rend_list, CAM4DV1_PTR cam, LIGHTV1_PTR lights, int max_lights)"
+            landmarkType = "9">
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            shouldBeEnabled = "No"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "Render/engine.cpp"
+            timestampString = "502853161.227552"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "2063"
+            endingLineNumber = "2063"
+            landmarkName = "Light_RENDERLIST4DV2_World16(RENDERLIST4DV2_PTR rend_list, CAM4DV1_PTR cam, LIGHTV1_PTR lights, int max_lights)"
+            landmarkType = "9">
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            shouldBeEnabled = "No"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "Render/engine.cpp"
+            timestampString = "502853275.280036"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "42"
+            endingLineNumber = "42"
+            landmarkName = "Init_Light_LIGHTV1(int index, int _state, int _attr, RGBAV1 _c_ambient, RGBAV1 _c_diffuse, RGBAV1 _c_specular, POINT4D_PTR _pos, VECTOR4D_PTR _dir, float _kc, float _kl, float _kq, float _spot_inner, float _spot_outer, float _pf)"
+            landmarkType = "9">
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            shouldBeEnabled = "No"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "Render/main.cpp"
+            timestampString = "502861218.190567"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "114"
+            endingLineNumber = "114"
+            landmarkName = "drawTranglePlaneGOURAUD(POINT4D_PTR pt, POINT4D_PTR pm, POINT4D_PTR pb, RGBAV1_PTR ct, RGBAV1_PTR cm, RGBAV1_PTR cb)"
             landmarkType = "9">
          </BreakpointContent>
       </BreakpointProxy>
