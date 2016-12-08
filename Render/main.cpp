@@ -33,7 +33,7 @@ int sSize = 800;
 CAM4DV1 gCam;
 RENDERLIST4DV2 gRend_list;
 OBJECT4DV2 gAllObjects[100];
-bool isDrawWireframe = 0;
+bool isDrawWireframe = 10;
 
 #define AMBIENT_LIGHT_INDEX   0 // ambient light index
 #define INFINITE_LIGHT_INDEX  1 // infinite light index
@@ -712,7 +712,7 @@ int main(int argc, char *argv[])
     Init_CAM4DV1(&gCam, &cam_pos, &cam_dir, 50,sSize,90, sSize,sSize);
     Build_CAM4DV1_Matrix_Euler(&gCam, CAM_ROT_SEQ_ZYX);
 
-    int towerCnt = 1;
+    int towerCnt = 10;
     for (int tower=0; tower<towerCnt; tower++)
     {
         OBJECT4DV2 obj;
@@ -721,8 +721,6 @@ int main(int argc, char *argv[])
         int xt = 300;
         float x = xt*0.5 - rand()%xt;
         float z = 50 + rand()%100;
-        x = -30;
-        z = 49;
         VECTOR4D vscale = {scale,scale,scale,scale}, vpos = {x,0,z,1}, vrot = {0,0,0,1};
 #ifdef __APPLE__
         Load_OBJECT4DV2_PLG(&obj, "/MyFiles/Work/GitProject/Render/Render/tower1.plg", &vscale, &vpos, &vrot);
@@ -733,7 +731,7 @@ int main(int argc, char *argv[])
         gAllObjects[tower] = obj;
     }
 
-    for (int cube=0; cube < 0; cube++)
+    for (int cube=0; cube < 30; cube++)
     {
         OBJECT4DV2 obj;
         float scale = (50 + rand()%50)*0.01;
@@ -741,19 +739,14 @@ int main(int argc, char *argv[])
         int xt = 400;
         float x = xt*0.5 - rand()%xt;
         float z = 50 + rand()%300;
-        x = 0;
-        z = 15;
-        scale = 1;
-        r = 45;
-        VECTOR4D vscale = {scale,scale,scale,scale}, vpos = {x,30,z,1}, vrot = {r,r,r,1};
+        VECTOR4D vscale = {scale,scale,scale,scale}, vpos = {x,0,z,1}, vrot = {r,r,r,1};
 #ifdef __APPLE__
         Load_OBJECT4DV2_PLG(&obj,"/MyFiles/Work/GitProject/Render/Render/cube1.plg", &vscale, &vpos, &vrot);
 #else
         Load_OBJECT4DV2_PLG(&obj,"C:\\Users\\Administrator\\Desktop\\git\\Render\\Render\\cube1.plg", &vscale, &vpos, &vrot);
 #endif
         gAllObjects[cube+towerCnt] = obj;
-        r = 45;
-        Rotate_XYZ_OBJECT4DV2(&obj, r, r, r);
+//        Rotate_XYZ_OBJECT4DV2(&obj, r, r, r);
 
     }
 
