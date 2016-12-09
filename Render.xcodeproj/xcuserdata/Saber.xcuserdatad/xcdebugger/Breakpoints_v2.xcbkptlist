@@ -26,11 +26,11 @@
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "Render/main.cpp"
-            timestampString = "502880668.560194"
+            timestampString = "502970911.298305"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "834"
-            endingLineNumber = "834">
+            startingLineNumber = "1026"
+            endingLineNumber = "1026">
          </BreakpointContent>
       </BreakpointProxy>
       <BreakpointProxy
@@ -88,11 +88,11 @@
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "Render/main.cpp"
-            timestampString = "502880668.560194"
+            timestampString = "502970911.298305"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "314"
-            endingLineNumber = "314"
+            startingLineNumber = "448"
+            endingLineNumber = "448"
             landmarkName = "drawTrangle(POINT4D_PTR p0, POINT4D_PTR p1, POINT4D_PTR p2)"
             landmarkType = "9">
          </BreakpointContent>
@@ -296,11 +296,11 @@
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "Render/main.cpp"
-            timestampString = "502880020.648313"
+            timestampString = "502959661.088991"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "165"
-            endingLineNumber = "165"
+            startingLineNumber = "166"
+            endingLineNumber = "166"
             landmarkName = "drawTranglePlaneGOURAUD(POINT4D_PTR pt, POINT4D_PTR pm, POINT4D_PTR pb, RGBAV1_PTR ct, RGBAV1_PTR cm, RGBAV1_PTR cb)"
             landmarkType = "9">
          </BreakpointContent>
@@ -312,12 +312,12 @@
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "Render/main.cpp"
-            timestampString = "502880668.560194"
+            timestampString = "502969264.410491"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "496"
-            endingLineNumber = "496"
-            landmarkName = "drawPoly2(RENDERLIST4DV2_PTR rend_list)"
+            startingLineNumber = "243"
+            endingLineNumber = "243"
+            landmarkName = "drawTrangleGOURAUDBottomPlane(POINT4D_PTR pt, POINT4D_PTR pl, POINT4D_PTR pr, POINT4D_PTR pb, RGBAV1_PTR ct, RGBAV1_PTR cl, RGBAV1_PTR cr)"
             landmarkType = "9">
          </BreakpointContent>
       </BreakpointProxy>
@@ -328,12 +328,12 @@
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "Render/main.cpp"
-            timestampString = "502880476.531733"
+            timestampString = "502970173.303112"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "258"
-            endingLineNumber = "258"
-            landmarkName = "drawTrangleTopPlane(POINT4D_PTR pb, POINT4D_PTR pl, POINT4D_PTR pr)"
+            startingLineNumber = "259"
+            endingLineNumber = "259"
+            landmarkName = "drawTrangleGOURAUDBottomPlane(POINT4D_PTR pt, POINT4D_PTR pl, POINT4D_PTR pr, POINT4D_PTR pb, RGBAV1_PTR ct, RGBAV1_PTR cl, RGBAV1_PTR cr)"
             landmarkType = "9">
          </BreakpointContent>
       </BreakpointProxy>
