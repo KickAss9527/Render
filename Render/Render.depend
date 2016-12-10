@@ -304,7 +304,7 @@
 	<GL/glut.h>
 	<stdlib.h>
 
-1481117627 source:c:\users\administrator\desktop\git\render\render\main.cpp
+1481381183 source:c:\users\administrator\desktop\git\render\render\main.cpp
 	<GLUT/glut.h>
 	<windows.h>
 	<GL/glut.h>
@@ -315,6 +315,7 @@
 	<string.h>
 	<stdio.h>
 	<stdlib.h>
+	<math.h>
 
 1481113515 c:\users\administrator\desktop\git\render\render\lxmath.h
 	<string.h>
@@ -327,10 +328,10 @@
 1476739977 c:\mingw\include\math.h
 	<_mingw.h>
 
-1481117435 c:\users\administrator\desktop\git\render\render\engine.h
+1481283269 c:\users\administrator\desktop\git\render\render\engine.h
 	"lxMath.h"
 
-1481117240 source:c:\users\administrator\desktop\git\render\render\engine.cpp
+1481283269 source:c:\users\administrator\desktop\git\render\render\engine.cpp
 	<iostream>
 	<string.h>
 	<stdio.h>

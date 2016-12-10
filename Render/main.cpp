@@ -26,7 +26,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
-
+#include <math.h>
 static int slices = 16;
 static int stacks = 16;
 int sSize = 800;
@@ -69,7 +69,9 @@ void drawTranglePlane(POINT4D_PTR pt, POINT4D_PTR pm, POINT4D_PTR pb)
     float dr = (pb->x - pt->x)/(pb->y - pt->y);
     float xl = pt->x;
     float xr = xl;
-    
+
+
+
     for (int y=pt->y; y<=pb->y; y++)
     {
         POINT4D p0 = {static_cast<float>(xl), static_cast<float>(y)};
@@ -82,7 +84,7 @@ void drawTranglePlane(POINT4D_PTR pt, POINT4D_PTR pm, POINT4D_PTR pb)
             break;
         }
     }
-    
+
     dl = (pb->x - pm->x)/(pb->y - pm->y);
     for (int y=pm->y; y<=pb->y; y++)
     {
@@ -96,123 +98,94 @@ void drawTranglePlane(POINT4D_PTR pt, POINT4D_PTR pm, POINT4D_PTR pb)
 
 void drawTranglePlaneGOURAUD(POINT4D_PTR pt, POINT4D_PTR pm, POINT4D_PTR pb, RGBAV1_PTR ct, RGBAV1_PTR cm, RGBAV1_PTR cb)
 {
-    float dl = (pm->x - pt->x)/(pm->y - pt->y);
-    float dr = (pb->x - pt->x)/(pb->y - pt->y);
-    float dcl_r = (cm->r - ct->r)/(pm->y - pt->y);
-    float dcr_r = (cb->r - ct->r)/(pb->y - pt->y);
-    float dcl_g = (cm->g - ct->g)/(pm->y - pt->y);
-    float dcr_g = (cb->g - ct->g)/(pb->y - pt->y);
-    float dcl_b = (cm->b - ct->b)/(pm->y - pt->y);
-    float dcr_b = (cb->b - ct->b)/(pb->y - pt->y);
-    
-    float xl = pt->x;
-    float xr = xl;
-    float rl = ct->r;
-    float rr = rl;
-    float gl = ct->g;
-    float gr = gl;
-    float bl = ct->b;
-    float br = bl;
+    float ymt = (pm->y - pt->y);
+    float ybt = (pb->y - pt->y);
+    float dm = (pm->x - pt->x)/ymt;
+    float db = (pb->x - pt->x)/ybt;
+    float xb, xm;
+    xb = xm = pt->x;
 
-    
-    for (int y=pt->y; y<=pb->y; y++)
+    float cm_r,cm_g,cm_b,cb_r,cb_g,cb_b;
+    float dm_r,dm_g,dm_b,db_r,db_g,db_b;
+
+    dm_r = (cm->r - ct->r)/ymt;
+    dm_g = (cm->g - ct->g)/ymt;
+    dm_b = (cm->b - ct->b)/ymt;
+
+    db_r = (cb->r - ct->r)/ybt;
+    db_g = (cb->g - ct->g)/ybt;
+    db_b = (cb->b - ct->b)/ybt;
+
+    cm_r = cb_r = ct->r;
+    cm_g = cb_g = ct->g;
+    cm_b = cb_b = ct->b;
+
+    for(int y=pt->y; y<=pb->y; y++)
     {
-        float tmpxl = xl;
-        float tmpxr = xr;
-        float tmpcrl = rl;
-        float tmpcrr = rr;
-        float tmpcgl = gl;
-        float tmpcgr = gr;
-        float tmpcbl = bl;
-        float tmpcbr = br;
-        if (xl > xr)
+        bool seqMB = xm < xb;
+        float r,g,b;
+
+        if(seqMB)
         {
-            tmpxl = xr;
-            tmpxr = xl;
-            tmpcrl = rr;
-            tmpcrr = rl;
-            tmpcgl = gr;
-            tmpcgr = gl;
-            tmpcbl = br;
-            tmpcbr = bl;
+            r = cm_r;
+            g = cm_g;
+            b = cm_b;
         }
-        for (int x=tmpxl; x<=tmpxr; x++)
+        else
         {
-            POINT4D p = {static_cast<float>(x), static_cast<float>(y)};
-            float dx = (x-tmpxl)/(tmpxr-tmpxl);
-            RGBAV1 c;
-            int r = tmpcrl + (tmpcrr - tmpcrl)*dx;
-            int g = tmpcgl + (tmpcgr - tmpcgl)*dx;
-            int b = tmpcbl + (tmpcbr - tmpcbl)*dx;
-            c.r = MIN(MAX(0, r), 255);
-            c.g = MIN(MAX(0, g), 255);
-            c.b = MIN(MAX(0, b), 255);
-            drawPoint(&p, &c);
+            r = cb_r;
+            g = cb_g;
+            b = cb_b;
+        }
+        float startX = MIN(xb,xm);
+        float endX = MAX(xb,xm);
+        for(int x=startX; x<=endX; x++)
+        {
+            POINT4D p0 = {static_cast<float>(x), static_cast<float>(y)};
+            float delX;
+            if(fabs(endX-startX)<0.00001)
+            {
+                delX=1;
+            }
+            else
+            {
+                delX = (x-(int)startX)/(endX-startX);
+            }
+            RGBAV1 co;
+            delX *= seqMB?1:-1;
+            float tmpR = r + delX*(cb_r - cm_r);
+            float tmpG = g + delX*(cb_g - cm_g);
+            float tmpB = b + delX*(cb_b - cm_b);
+
+            co.r = MIN(MAX(0, tmpR), 255);
+            co.g = MIN(MAX(0, tmpG), 255);
+            co.b = MIN(MAX(0, tmpB), 255);
+            drawPoint(&p0, &co);
         }
 
-        rl += dcl_r;
-        rr += dcr_r;
-        gl += dcl_g;
-        gr += dcr_g;
-        bl += dcl_b;
-        br += dcr_b;
-        xl += dl;
-        xr += dr;
-        if (y+1 >= pm->y)
-        {
-            break;
-        }
-    }
-    
-    dl = (pb->x - pm->x)/(pb->y - pm->y);
+        xb += db;
+        xm += dm;
 
-        dcl_r = (cb->r - cm->r)/(pm->y - pt->y);
-        dcl_g = (cb->g - cm->g)/(pm->y - pt->y);
-        dcl_b = (cb->b - cm->b)/(pm->y - pt->y);
-    for (int y=pm->y; y<=pb->y; y++)
-    {
-        float tmpxl = xl;
-        float tmpxr = xr;
-        float tmpcrl = rl;
-        float tmpcrr = rr;
-        float tmpcgl = gl;
-        float tmpcgr = gr;
-        float tmpcbl = bl;
-        float tmpcbr = br;
-        
-        if (xl > xr)
+        cm_r += dm_r;
+        cm_g += dm_g;
+        cm_b += dm_b;
+
+        cb_r += db_r;
+        cb_g += db_g;
+        cb_b += db_b;
+
+        if(y == (int)pm->y)
         {
-            tmpxl = xr;
-            tmpxr = xl;
-            tmpcrl = rr;
-            tmpcrr = rl;
-            tmpcgl = gr;
-            tmpcgr = gl;
-            tmpcbl = br;
-            tmpcbr = bl;
+            xm = pm->x;
+            cm_r = cm->r;
+            cm_g = cm->g;
+            cm_b = cm->b;
+            float ybm = pb->y - pm->y;
+            dm = (pb->x - pm->x)/ybm;
+            dm_r = (cb->r - cm->r)/ybm;
+            dm_g = (cb->g - cm->g)/ybm;
+            dm_b = (cb->b - cm->b)/ybm;
         }
-        for (int x=tmpxl; x<=tmpxr; x++)
-        {
-            POINT4D p = {static_cast<float>(x), static_cast<float>(y)};
-            float dx = (x-tmpxl)/(tmpxr-tmpxl);
-            RGBAV1 c;
-            int r = tmpcrl + (tmpcrr - tmpcrl)*dx;
-            int g = tmpcgl + (tmpcgr - tmpcgl)*dx;
-            int b = tmpcbl + (tmpcbr - tmpcbl)*dx;
-            c.r = MIN(MAX(0, r), 255);
-            c.g = MIN(MAX(0, g), 255);
-            c.b = MIN(MAX(0, b), 255);
-            drawPoint(&p, &c);
-        }
-        
-        rl += dcl_r;
-        rr += dcr_r;
-        gl += dcl_g;
-        gr += dcr_g;
-        bl += dcl_b;
-        br += dcr_b;
-        xl += dl;
-        xr += dr;
     }
 }
 
@@ -237,84 +210,6 @@ void drawTrangleBottomPlane(POINT4D_PTR pt, POINT4D_PTR pl, POINT4D_PTR pr)
     }
 }
 
-void drawTrangleGOURAUDBottomPlane(POINT4D_PTR pt, POINT4D_PTR pl, POINT4D_PTR pr, POINT4D_PTR pb,
-                                   RGBAV1_PTR ct, RGBAV1_PTR cl, RGBAV1_PTR cr)
-{
-    if (pl->x > pr->x || pt->y > pl->y || pt->y > pr->y )
-    {
-        printf("f");
-    }
-    float deLy = pl->y - pt->y;
-    float deRy = pr->y - pt->y;
-    float dl = (pl->x - pt->x)/deLy;
-    float dr = (pr->x - pt->x)/deRy;
-    float xl=pt->x, xr=pt->x;
-    
-    float dcl_r = (cl->r - ct->r)/deLy;
-    float dcr_r = (cr->r - ct->r)/deRy;
-    float dcl_g = (cl->g - ct->g)/deLy;
-    float dcr_g = (cr->g - ct->g)/deRy;
-    float dcl_b = (cl->b - ct->b)/deLy;
-    float dcr_b = (cr->b - ct->b)/deRy;//
-    
-    if (pb)
-    {
-        float delY = pb->y - pt->y;
-        if (pt->x < pb->x) //左斜
-        {
-            dcr_r = (cr->r - ct->r)/delY;
-            dcr_g = (cr->g - ct->g)/delY;
-            dcr_b = (cr->b - ct->b)/delY;
-        }
-        else
-        {
-            dcl_r = (cl->r - ct->r)/delY;
-            dcl_g = (cl->g - ct->g)/delY;
-            dcl_b = (cl->b - ct->b)/delY;
-        }
-    }
-    
-    float rl = ct->r;
-    float rr = rl;
-    float gl = ct->g;
-    float gr = gl;
-    float bl = ct->b;
-    float br = bl;
-
-    for (int y=pt->y; y<=(int)pl->y; y++)
-    {
-        if ((xl < pl->x && xl < pr->x && xl < pt->x) ||
-            (xr < pl->x && xr < pr->x && xr < pt->x) ||
-            (xl > pl->x && xl > pr->x && xl > pt->x) ||
-            (xr > pl->x && xr > pr->x && xr > pt->x)) {
-//            continue;
-        }
-        
-        int delX = xr - xl;
-        for (int x=xl; x<=xr; x++)
-        {
-            POINT4D p = {static_cast<float>(x), static_cast<float>(y)};
-            float delP = (x-xl)/delX;
-            RGBAV1 c;
-            c.r = rl + (rr-rl)*delP;
-            c.g = gl + (gr-gl)*delP;
-            c.b = bl + (br-bl)*delP;
-            c.r = MIN(MAX(0, c.r), 255);
-            c.g = MIN(MAX(0, c.g), 255);
-            c.b = MIN(MAX(0, c.b), 255);
-            drawPoint(&p, &c);
-        }
-        xl += dl;
-        xr += dr;
-        rl += dcl_r;
-        rr += dcr_r;
-        gl += dcl_g;
-        gr += dcr_g;
-        bl += dcl_b;
-        br += dcr_b;
-    }
-}
-
 void drawTrangleTopPlane(POINT4D_PTR pb, POINT4D_PTR pl, POINT4D_PTR pr)
 {
     float dl = (pb->x - pl->x)/(pb->y - pl->y);
@@ -334,88 +229,6 @@ void drawTrangleTopPlane(POINT4D_PTR pb, POINT4D_PTR pl, POINT4D_PTR pr)
         xl += dl;
         xr += dr;
     }
-}
-void drawTrangleGOURAUDTopPlane(POINT4D_PTR pt, POINT4D_PTR pl, POINT4D_PTR pr, POINT4D_PTR pb,
-                                RGBAV1_PTR cl, RGBAV1_PTR cr, RGBAV1_PTR cb)
-{
-
-    float deLy = pb->y - pl->y;
-    float deRy = pb->y - pr->y;
-    float dl = (pb->x - pl->x)/deLy;
-    float dr = (pb->x - pr->x)/deRy;
-    float xl=pl->x, xr=pr->x;
-    
-    float dcl_r = (cb->r - cl->r)/deLy;
-    float dcr_r = (cb->r - cr->r)/deRy;
-    float dcl_g = (cb->g - cl->g)/deLy;
-    float dcr_g = (cb->g - cr->g)/deRy;
-    float dcl_b = (cb->b - cl->b)/deLy;
-    float dcr_b = (cb->b - cr->b)/deRy;
-    
-    float rl = cl->r;
-    float rr = cr->r;
-    float gl = cl->g;
-    float gr = cr->g;
-    float bl = cl->b;
-    float br = cr->b;
-    
-    if (pt)
-    {
-        float delY = pb->y - pt->y;
-        
-        if (pt->x < pl->x) //左斜
-        {
-            dcl_r = (cb->r - cl->r)/delY;
-            dcl_g = (cb->g - cl->g)/delY;
-            dcl_b = (cb->b - cl->b)/delY;
-            rl = cl->r + (pl->y - pt->y)*dcl_r;
-            gl = cl->g + (pl->y - pt->y)*dcl_g;
-            bl = cl->b + (pl->y - pt->y)*dcl_b;
-        }
-        else
-        {
-            dcr_r = (cb->r - cr->r)/delY;
-            dcr_g = (cb->g - cr->g)/delY;
-            dcr_b = (cb->b - cr->b)/delY;
-            rr = cr->r + (pr->y - pt->y)*dcr_r;
-            gr = cr->g + (pr->y - pt->y)*dcr_g;
-            br = cr->b + (pr->y - pt->y)*dcr_b;
-        }
-    }
-
-    for (int y=pl->y; y<=(int)pb->y; y++)
-    {
-//        if ((xl < pl->x && xl < pr->x && xl < pt->x) ||
-//            (xr < pl->x && xr < pr->x && xr < pt->x) ||
-//            (xl > pl->x && xl > pr->x && xl > pt->x) ||
-//            (xr > pl->x && xr > pr->x && xr > pt->x)) {
-//            continue;
-//        }
-        
-        float delX = xr - xl;
-        for (int x=xl; x<=xr; x++)
-        {
-            POINT4D p = {static_cast<float>(x), static_cast<float>(y)};
-            float delP = (x - xl)/delX;
-            RGBAV1 c;
-            c.r = rl + (rr-rl)*delP;
-            c.g = gl + (gr-gl)*delP;
-            c.b = bl + (br-bl)*delP;
-            c.r = MIN(MAX(0, c.r), 255);
-            c.g = MIN(MAX(0, c.g), 255);
-            c.b = MIN(MAX(0, c.b), 255);
-            drawPoint(&p, &c);
-        }
-        xl += dl;
-        xr += dr;
-        rl += dcl_r;
-        rr += dcr_r;
-        gl += dcl_g;
-        gr += dcr_g;
-        bl += dcl_b;
-        br += dcr_b;
-    }
-
 }
 
 void drawTrangle(POINT4D_PTR p0, POINT4D_PTR p1, POINT4D_PTR p2)
@@ -546,12 +359,12 @@ void drawTrangleGOURAUD(POINT4D_PTR p0, POINT4D_PTR p1, POINT4D_PTR p2,RGBAV1_PT
 //    }
     if (0)
     {
-        
+
     }
     else
     {
         POINT4D_PTR pt, pm, pb;
-        RGBAV1_PTR ct = nullptr, cm = nullptr, cb = nullptr;
+        RGBAV1_PTR ct, cm, cb;
         if(p0->y < p1->y && p1->y < p2->y)
         {
             pt = p0;
@@ -606,47 +419,8 @@ void drawTrangleGOURAUD(POINT4D_PTR p0, POINT4D_PTR p1, POINT4D_PTR p2,RGBAV1_PT
             cm = c1;
             cb = c0;
         }
-        
-        float xline = (pm->y - pt->y)*(pb->x - pt->x)/(pb->y - pt->y);
-        xline += pt->x;//get x of mid point
-        RGBAV1 white, gray, black, red, green, blue;
-        
-        white.rgba = RGB32BIT(0,255,255,255);
-        gray.rgba  = RGB32BIT(0,200,200,200);
-        black.rgba = RGB32BIT(0,0,0,0);
-        red.rgba   = RGB32BIT(0,255,0,0);
-        green.rgba = RGB32BIT(0,0,255,0);
-        blue.rgba  = RGB32BIT(0,0,0,255);
-        ct = &white;
-        cm = &red;
-        cb = &red;
-        POINT4D pTmp = {static_cast<float>(xline), pm->y,1,1};
-        POINT4D_PTR pLeft, pRight;
-        RGBAV1_PTR cbLeft, cbRight, cbTop, ctBottom, ctLeft, ctRight;
-        
-        if (pm->x < pTmp.x) //右斜
-        {
-            pLeft = pm;
-            pRight = &pTmp;
-            
-            cbTop = ctRight = ct;
-            cbLeft = ctLeft = cm;
-            cbRight = ctBottom = cb;
-        }
-        else
-        {
-            pLeft = &pTmp;
-            pRight = pm;
-            
-            cbTop = ctLeft = ct;
-            cbLeft = ctBottom = cb;
-            cbRight = ctRight = cm;
-        }
-        
-        
-        
-        drawTrangleGOURAUDBottomPlane(pt, pLeft, pRight, pb, cbTop, cbLeft, cbRight);
-        drawTrangleGOURAUDTopPlane(pt,  pLeft, pRight, pb, ctLeft, ctRight, ctBottom);
+
+        drawTranglePlaneGOURAUD(pt, pm, pb, ct, cm, cb);
     }
 }
 
@@ -654,14 +428,14 @@ void drawTrangleGOURAUD(POINT4D_PTR p0, POINT4D_PTR p1, POINT4D_PTR p2,RGBAV1_PT
 void drawPoly2(RENDERLIST4DV2_PTR rend_list)
 {
     RGBAV1 white, gray, black, red, green, blue;
-    
+
     white.rgba = RGB32BIT(0,255,255,255);
     gray.rgba  = RGB32BIT(0,200,200,200);
     black.rgba = RGB32BIT(0,0,0,0);
     red.rgba   = RGB32BIT(0,255,0,0);
     green.rgba = RGB32BIT(0,0,255,0);
     blue.rgba  = RGB32BIT(0,0,0,255);
-    
+
     for(int poly=0; poly<rend_list->num_polys; poly++)
     {
         POLYF4DV2_PTR curr_poly = rend_list->poly_ptrs[poly];
@@ -677,14 +451,14 @@ void drawPoly2(RENDERLIST4DV2_PTR rend_list)
             c0.rgba = curr_poly->lit_color[0];
             c1.rgba = curr_poly->lit_color[1];
             c2.rgba = curr_poly->lit_color[2];
-            c0 = white;
-            c1 = red;
-            c2 = red;
-            
+            //c0 = blue;
+            //c1 = red;
+            //c2 = green;
+
             drawTrangleGOURAUD(&curr_poly->tvlist[0].v,
                                &curr_poly->tvlist[1].v,
                                &curr_poly->tvlist[2].v, &c0, &c1, &c2);
-            break;
+
         }
         else if(curr_poly->attr & POLY4DV2_ATTR_SHADE_MODE_FLAT)
         {
@@ -700,14 +474,14 @@ void drawPoly2(RENDERLIST4DV2_PTR rend_list)
 
 
 
-        
+
         //        printf("\n(v1 : %.1f, %.1f;  v2 : %.1f, %.1f;  v3 : %.1f, %.1f)",
         //               curr_poly->tvlist[0].v.x, curr_poly->tvlist[0].v.y,
         //               curr_poly->tvlist[1].v.x, curr_poly->tvlist[1].v.y,
         //               curr_poly->tvlist[2].v.x, curr_poly->tvlist[2].v.y);
 
     }
-    
+
     if (isDrawWireframe)
     {
         for(int poly=0; poly<rend_list->num_polys; poly++)
@@ -719,12 +493,12 @@ void drawPoly2(RENDERLIST4DV2_PTR rend_list)
             {
                 continue;
             }
-            
+
             glColor3f (1.0, 1.0, 0.0);//…Ë÷√µ±«∞ª≠± —’…´
             drawLine(&curr_poly->tvlist[0].v, &curr_poly->tvlist[1].v);
             drawLine(&curr_poly->tvlist[2].v, &curr_poly->tvlist[1].v);
             drawLine(&curr_poly->tvlist[2].v, &curr_poly->tvlist[0].v);
-            
+
         }
     }
 
@@ -850,10 +624,10 @@ void myDisplay ()
     for (int i=0; i<100; i++)
     {
         OBJECT4DV2_PTR obj = &gAllObjects[i];
-        
+
         static float ro = 1;
         ro += 0.000001;
-        
+
         Rotate_XYZ_OBJECT4DV2(obj, 0, ro, ro);
         if (!(obj->state & OBJECT4DV2_STATE_ACTIVE))
         {
@@ -901,7 +675,7 @@ void btnClick(int idx, LIGHTV1_PTR lights)
 //        rgb.rgba = RGB32BIT(0, c, c, c);
 //        li->c_ambient = rgb;
 //    }
-    
+
     myDisplay();
 }
 
@@ -963,7 +737,7 @@ int main(int argc, char *argv[])
         float z = 30 + rand()%100;
         float y = 30;
         x = 0;
-        z = 10;
+        z = 20;
         VECTOR4D vscale = {scale,scale,scale,scale}, vpos = {x,y,z,1}, vrot = {r,r,r,1};
 #ifdef __APPLE__
         Load_OBJECT4DV2_PLG(&obj,"/MyFiles/Work/GitProject/Render/Render/cube1.plg", &vscale, &vpos, &vrot);
@@ -971,7 +745,7 @@ int main(int argc, char *argv[])
         Load_OBJECT4DV2_PLG(&obj,"C:\\Users\\Administrator\\Desktop\\git\\Render\\Render\\cube1.plg", &vscale, &vpos, &vrot);
 #endif
         gAllObjects[cube+towerCnt] = obj;
-        
+
 
     }
 
