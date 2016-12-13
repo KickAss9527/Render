@@ -68,7 +68,7 @@ typedef struct POLY4DV2_TYP{
     BITMAP_IMAGE_PTR texture;
     int mati;
     VERTEX4DTV1_PTR vlist;
-    POINT2D_PTR tvlist;
+    POINT2D_PTR tlist;
 
     int vert[3];
     int text[3];

@@ -27,6 +27,8 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		051A40FC1DFE5157001DD94C /* metal04.bmp */ = {isa = PBXFileReference; lastKnownFileType = image.bmp; path = metal04.bmp; sourceTree = "<group>"; };
+		051A40FE1DFE55C0001DD94C /* Wood.bmp */ = {isa = PBXFileReference; lastKnownFileType = image.bmp; path = Wood.bmp; sourceTree = "<group>"; };
 		052FE6661DD94EF200A5E04F /* Render */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = Render; sourceTree = BUILT_PRODUCTS_DIR; };
 		052FE6691DD94EF200A5E04F /* main.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = main.cpp; sourceTree = "<group>"; };
 		052FE6711DD94F1900A5E04F /* OpenGL.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenGL.framework; path = System/Library/Frameworks/OpenGL.framework; sourceTree = SDKROOT; };
@@ -53,6 +55,13 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		051A41011DFE89E9001DD94C /* lib */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			path = lib;
+			sourceTree = "<group>";
+		};
 		052FE65D1DD94EF200A5E04F = {
 			isa = PBXGroup;
 			children = (
@@ -73,6 +82,7 @@
 		052FE6681DD94EF200A5E04F /* Render */ = {
 			isa = PBXGroup;
 			children = (
+				051A41011DFE89E9001DD94C /* lib */,
 				0534530E1DF8FF870085515C /* trangle.plg */,
 				0553A3BB1DE52AE500E557A1 /* tower1.plg */,
 				05A74A6E1DE299EB003E6A66 /* cube1.plg */,
@@ -81,6 +91,8 @@
 				05A74A711DE299EB003E6A66 /* lxMath.cpp */,
 				05A74A721DE299EB003E6A66 /* lxMath.h */,
 				052FE6691DD94EF200A5E04F /* main.cpp */,
+				051A40FC1DFE5157001DD94C /* metal04.bmp */,
+				051A40FE1DFE55C0001DD94C /* Wood.bmp */,
 			);
 			path = Render;
 			sourceTree = "<group>";
@@ -250,6 +262,12 @@
 		052FE66E1DD94EF200A5E04F /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				GCC_NO_COMMON_BLOCKS = NO;
+				HEADER_SEARCH_PATHS = "\"$(SRCROOT)/Render/lib\"";
+				LIBRARY_SEARCH_PATHS = (
+					"$(PROJECT_DIR)/Render/lib",
+					"$(PROJECT_DIR)/Render/lib/soil",
+				);
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = Debug;
@@ -257,6 +275,12 @@
 		052FE66F1DD94EF200A5E04F /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				GCC_NO_COMMON_BLOCKS = NO;
+				HEADER_SEARCH_PATHS = "\"$(SRCROOT)/Render/lib\"";
+				LIBRARY_SEARCH_PATHS = (
+					"$(PROJECT_DIR)/Render/lib",
+					"$(PROJECT_DIR)/Render/lib/soil",
+				);
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = Release;

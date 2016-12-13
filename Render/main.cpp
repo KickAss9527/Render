@@ -17,6 +17,8 @@
 #else
 #include <windows.h>
 #include <GL/glut.h>
+#include <GL/gl.h>
+#include <GL/glext.h>
 #endif
 
 #include <stdlib.h>
@@ -33,9 +35,9 @@ int sSize = 800;
 CAM4DV1 gCam;
 RENDERLIST4DV2 gRend_list;
 OBJECT4DV2 gAllObjects[100];
-bool isDrawWireframe = 10;
+bool isDrawWireframe = 0;
 int refreshFrequency = 30;
-
+BITMAP_IMAGE myTex;
 #define AMBIENT_LIGHT_INDEX   0 // ambient light index
 #define INFINITE_LIGHT_INDEX  1 // infinite light index
 #define POINT_LIGHT_INDEX     2 // point light index
@@ -43,9 +45,10 @@ int refreshFrequency = 30;
 
 void drawPoint(POINT4D_PTR p, RGBAV1_PTR color)
 {
-    int w = sSize*0.5;
+    float w = sSize*0.5;
     POINT2D np = {(p->x-w)/w, (w-p->y)/w};
     glBegin (GL_POINTS);
+
     glColor3f (color->r/255.0, color->g/255.0, color->b/255.0);
 
     glVertex2f(np.x, np.y);
@@ -93,6 +96,103 @@ void drawTranglePlane(POINT4D_PTR pt, POINT4D_PTR pm, POINT4D_PTR pb)
         drawLine(&p0, &p1);
         xl += dl;
         xr += dr;
+    }
+}
+
+void drawTranglePlaneTexture(VERTEX4DTV1_PTR pt, VERTEX4DTV1_PTR pm, VERTEX4DTV1_PTR pb)
+{
+    float ymt = (pm->y - pt->y);
+    float ybt = (pb->y - pt->y);
+    float dm = (pm->x - pt->x)/ymt;
+    float db = (pb->x - pt->x)/ybt;
+    float xb, xm;
+    xb = xm = pt->x;
+    
+    float mu,mv,bu,bv;
+    float dm_u,dm_v,db_u,db_v;
+    
+    dm_u = (pm->u0 - pt->u0)/ymt;
+    dm_v = (pm->v0 - pt->v0)/ymt;
+    
+    db_u = (pb->u0 - pt->u0)/ybt;
+    db_v = (pb->v0 - pt->v0)/ybt;
+    
+    mu = bu = pt->u0;
+    mv = bv = pt->v0;
+    
+    for(int y=pt->y; y<=pb->y; y++)
+    {
+        bool seqMB = xm < xb;
+        float u,v;
+        
+        if(seqMB)
+        {
+            u = mu;
+            v = mv;
+        }
+        else
+        {
+            u = bu;
+            v = bv;
+        }
+        float startX = MIN(xb,xm);
+        float endX = MAX(xb,xm);
+        for(int x=startX; x<=endX; x++)
+        {
+            POINT4D p0 = {static_cast<float>(x), static_cast<float>(y)};
+            float delX;
+            if(fabs(endX-startX)<0.00001)
+            {
+                delX=1;
+            }
+            else
+            {
+                delX = (x-(int)startX)/(endX-startX);
+            }
+
+            POINT2D uv;
+            delX *= seqMB?1:-1;
+            float tmpU = u + delX*(bu - mu);
+            float tmpV = v + delX*(bv - mv);
+            
+            uv.x = MIN(MAX(0, tmpU), 1);
+            uv.y = MIN(MAX(0, tmpV), 1);
+            
+            uv.x *= myTex.width;
+            uv.y *= myTex.height;
+            
+            uv.x = ceil(uv.x);
+            uv.y = ceil(uv.y);
+            
+            RGBAV1 co;
+            int texIdx = 3*(uv.x + uv.y*myTex.width);
+
+            co.b = myTex.buffer[texIdx];
+            co.g = myTex.buffer[texIdx+1];
+            co.r = myTex.buffer[texIdx+2];
+            
+            drawPoint(&p0, &co);
+        }
+        
+        xb += db;
+        xm += dm;
+        
+        mu += dm_u;
+        mv += dm_v;
+        
+        bu += db_u;
+        bv += db_v;
+        
+        if(y == (int)pm->y)
+        {
+            xm = pm->x;
+            mu = pm->u0;
+            mv = pm->v0;
+            float ybm = pb->y - pm->y;
+            dm = (pb->x - pm->x)/ybm;
+            dm_u = (pb->u0 - pm->u0)/ybm;
+            dm_v = (pb->v0 - pm->v0)/ybm;
+        }
     }
 }
 
@@ -314,6 +414,55 @@ void drawTrangle(POINT4D_PTR p0, POINT4D_PTR p1, POINT4D_PTR p2)
         drawTrangleTopPlane(pb, pm, &pTmp);
     }
 }
+void drawTrangleTexture(VERTEX4DTV1_PTR p0, VERTEX4DTV1_PTR p1, VERTEX4DTV1_PTR p2)
+{
+    
+    VERTEX4DTV1_PTR pt, pm, pb;
+    
+    if(p0->y <= p1->y && p1->y <= p2->y)
+    {
+        pt = p0;
+        pm = p1;
+        pb = p2;
+    }
+    else if(p0->y <= p2->y && p2->y <= p1->y)
+    {
+        pt = p0;
+        pm = p2;
+        pb = p1;
+    }
+    else if(p1->y <= p0->y && p0->y <= p2->y)
+    {
+        pt = p1;
+        pm = p0;
+        pb = p2;
+    }
+    else if(p1->y <= p2->y && p2->y <= p0->y)
+    {
+        pt = p1;
+        pm = p2;
+        pb = p0;
+    }
+    else if(p2->y <= p0->y && p0->y <= p1->y)
+    {
+        pt = p2;
+        pm = p0;
+        pb = p1;
+    }
+    else if(p2->y <= p1->y && p1->y <= p0->y)
+    {
+        pt = p2;
+        pm = p1;
+        pb = p0;
+    }
+//    pt->u0 = 0;
+//    pt->v0 = 0;
+//    pm->u0 = 0;
+//    pm->v0 = 0;
+//    pt->u0 = 0;
+//    pt->v0 = 0;
+    drawTranglePlaneTexture(pt, pm, pb);
+}
 
 void drawTrangleGOURAUD(POINT4D_PTR p0, POINT4D_PTR p1, POINT4D_PTR p2,RGBAV1_PTR c0, RGBAV1_PTR c1, RGBAV1_PTR c2)
 {
@@ -445,6 +594,7 @@ void drawPoly2(RENDERLIST4DV2_PTR rend_list)
         {
             continue;
         }
+        
         if (curr_poly->attr & POLY4DV2_ATTR_SHADE_MODE_GOURAUD)
         {
             RGBAV1 c0, c1, c2;
@@ -454,11 +604,16 @@ void drawPoly2(RENDERLIST4DV2_PTR rend_list)
             //c0 = blue;
             //c1 = red;
             //c2 = green;
-
-            drawTrangleGOURAUD(&curr_poly->tvlist[0].v,
-                               &curr_poly->tvlist[1].v,
-                               &curr_poly->tvlist[2].v, &c0, &c1, &c2);
-
+            
+//            printf("\n %.1f, %.1f; %.1f, %.1f; %.1f, %.1f",
+//                   curr_poly->tvlist[0].t.x,curr_poly->tvlist[0].t.y,
+//                   curr_poly->tvlist[1].t.x,curr_poly->tvlist[1].t.y,
+//                   curr_poly->tvlist[2].t.x,curr_poly->tvlist[2].t.y);
+            drawTrangleTexture(&curr_poly->tvlist[0], &curr_poly->tvlist[1], &curr_poly->tvlist[2]);
+//            drawTrangleGOURAUD(&curr_poly->tvlist[0].v,
+//                               &curr_poly->tvlist[1].v,
+//                               &curr_poly->tvlist[2].v, &c0, &c1, &c2);
+            
         }
         else if(curr_poly->attr & POLY4DV2_ATTR_SHADE_MODE_FLAT)
         {
@@ -628,7 +783,7 @@ void myDisplay ()
         static float ro = 1;
         ro += 0.000001;
 
-        Rotate_XYZ_OBJECT4DV2(obj, 0, ro, ro);
+        Rotate_XYZ_OBJECT4DV2(obj, 0, ro, 0);
         if (!(obj->state & OBJECT4DV2_STATE_ACTIVE))
         {
             break;
@@ -700,8 +855,66 @@ void onTimer(int value)
     glutTimerFunc(refreshFrequency, onTimer, 1);
 }
 
+
+void display(void)
+{
+ //glClear(GL_COLOR_BUFFER_BIT);
+ //绘制像素
+
+glClear (GL_COLOR_BUFFER_BIT);
+ //---------------------------------
+
+ for(int x=0; x<myTex.width; x++)
+ {
+     for(int y=0; y<myTex.height; y++)
+     {
+         int delta = 3*(x*myTex.width + y);
+         POINT4D np = {static_cast<float>(x),static_cast<float>(y),1,1};
+         RGBAV1 c;
+         c.b = myTex.buffer[delta];
+         c.g = myTex.buffer[delta+1];
+         c.r = myTex.buffer[delta+2];
+
+        drawPoint(&np, &c);
+     }
+ }
+glFlush();
+}
+
+void loadTexture()
+{
+#ifdef __APPLE__
+    
+    FILE* pfile=fopen("/MyFiles/Work/GitProject/Render/Render/metal04.bmp","rb");
+#else
+    FILE* pfile=fopen("C:\\Users\\Administrator\\Desktop\\git\\Render\\Render\\metal04.bmp","rb");
+#endif
+    
+     if(pfile == 0) exit(0);
+     //读取图像大小
+
+
+     fseek(pfile,0x0012,SEEK_SET);
+     fread(&myTex.width,sizeof(myTex.width),1,pfile);
+     fread(&myTex.height,sizeof(myTex.height),1,pfile);
+     //计算像素数据长度
+     int pixellength=myTex.width*3;
+     while(pixellength%4 != 0)pixellength++;
+     pixellength *= myTex.height;
+     //读取像素数据
+     myTex.buffer = (GLubyte*)malloc(pixellength);
+     if(myTex.buffer == 0) exit(0);
+     fseek(pfile,54,SEEK_SET);
+     fread(myTex.buffer,pixellength,1,pfile);
+
+     //关闭文件
+     fclose(pfile);
+
+}
+
 int main(int argc, char *argv[])
 {
+    loadTexture();
     POINT4D cam_pos = {0,30,0,1};
     VECTOR4D cam_dir = {0,0,0,1};
 
@@ -737,7 +950,7 @@ int main(int argc, char *argv[])
         float z = 30 + rand()%100;
         float y = 30;
         x = 0;
-        z = 20;
+        z = 10;
         VECTOR4D vscale = {scale,scale,scale,scale}, vpos = {x,y,z,1}, vrot = {r,r,r,1};
 #ifdef __APPLE__
         Load_OBJECT4DV2_PLG(&obj,"/MyFiles/Work/GitProject/Render/Render/cube1.plg", &vscale, &vpos, &vrot);
@@ -745,8 +958,58 @@ int main(int argc, char *argv[])
         Load_OBJECT4DV2_PLG(&obj,"C:\\Users\\Administrator\\Desktop\\git\\Render\\Render\\cube1.plg", &vscale, &vpos, &vrot);
 #endif
         gAllObjects[cube+towerCnt] = obj;
+        obj.texture = &myTex;
+
+    obj.tlist[0].x = 0; obj.tlist[0].y = 0;
+    obj.tlist[1].x = 0; obj.tlist[1].y = 1;
+    obj.tlist[2].x = 1; obj.tlist[2].y = 1;
+    obj.tlist[3].x = 1; obj.tlist[3].y = 0;
+    obj.tlist[4].x = 0; obj.tlist[4].y = 0;
+    obj.tlist[5].x = 0; obj.tlist[5].y = 1;
+
+    obj.tlist[6].x = 1; obj.tlist[6].y = 1;
+    obj.tlist[7].x = 0; obj.tlist[7].y = 1;
+    obj.tlist[8].x = 0; obj.tlist[8].y = 0;
+    obj.tlist[9].x = 0; obj.tlist[9].y = 1;
+    obj.tlist[10].x = 1; obj.tlist[10].y = 0;
+    obj.tlist[11].x = 0; obj.tlist[11].y = 0;
+
+    obj.tlist[12].x = 0; obj.tlist[12].y = 0;
+    obj.tlist[13].x = 1; obj.tlist[13].y = 1;
+    obj.tlist[14].x = 1; obj.tlist[14].y = 0;
+    obj.tlist[15].x = 1; obj.tlist[15].y = 0;
+    obj.tlist[16].x = 0; obj.tlist[16].y = 0;
+    obj.tlist[17].x = 1; obj.tlist[17].y = 1;
+
+    obj.tlist[18].x = 0; obj.tlist[18].y = 0;
+    obj.tlist[19].x = 0; obj.tlist[19].y = 1;
+    obj.tlist[20].x = 1; obj.tlist[20].y = 0;
+    obj.tlist[21].x = 0; obj.tlist[21].y = 1;
+    obj.tlist[22].x = 1; obj.tlist[22].y = 1;
+    obj.tlist[23].x = 1; obj.tlist[23].y = 0;
+
+    obj.tlist[24].x = 0; obj.tlist[24].y = 1;
+    obj.tlist[25].x = 1; obj.tlist[25].y = 1;
+    obj.tlist[26].x = 0; obj.tlist[26].y = 0;
+    obj.tlist[27].x = 1; obj.tlist[27].y = 1;
+    obj.tlist[28].x = 1; obj.tlist[28].y = 0;
+    obj.tlist[29].x = 0; obj.tlist[29].y = 0;
+
+    obj.tlist[30].x = 0; obj.tlist[30].y = 1;
+    obj.tlist[31].x = 1; obj.tlist[31].y = 1;
+    obj.tlist[32].x = 1; obj.tlist[32].y = 0;
+    obj.tlist[33].x = 0; obj.tlist[33].y = 0;
+    obj.tlist[34].x = 0; obj.tlist[34].y = 1;
+    obj.tlist[35].x = 1; obj.tlist[35].y = 1;
 
 
+        for(int i=0; i<12; i++)
+        {
+            obj.plist[i].text[0] = i*3+0;
+            obj.plist[i].text[1] = i*3+1;
+            obj.plist[i].text[2] = i*3+2;
+
+        }
     }
 
     loadLights();

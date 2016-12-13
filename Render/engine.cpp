@@ -1828,7 +1828,7 @@ int Load_OBJECT4DV2_PLG(OBJECT4DV2_PTR obj,
         }
         obj->plist[poly].vlist = obj->vlist_local;
 
-        if((poly_surface_desc & PLX_2SIDED_FLAG))//应该 >> 
+        if((poly_surface_desc & PLX_2SIDED_FLAG))//应该 >>
         {
             SET_BIT(obj->plist[poly].attr, POLY4DV2_ATTR_2SIDED);
         }
@@ -1888,7 +1888,7 @@ int Load_OBJECT4DV2_PLG(OBJECT4DV2_PTR obj,
         SET_BIT(obj->plist[poly].attr, POLY4DV2_ATTR_DISABLE_MATERIAL);
         obj->plist[poly].state = POLY4DV2_STATE_ACTIVE;
         obj->plist[poly].vlist = obj->vlist_local;
-        obj->plist[poly].tvlist = obj->tlist;
+        obj->plist[poly].tlist = obj->tlist;
     }
 
     Compute_OBJECT4DV2_Poly_Normals(obj);
@@ -2338,12 +2338,12 @@ int Insert_POLY4DV2_RENDERLIST4DV2(RENDERLIST4DV2_PTR rend_list, POLY4DV2_PTR po
     VERTEX4DTV1_COPY(&rend_list->poly_data[rend_list->num_polys].vlist[1], &poly->vlist[poly->vert[1]]);
     VERTEX4DTV1_COPY(&rend_list->poly_data[rend_list->num_polys].vlist[2], &poly->vlist[poly->vert[2]]);
 
-    rend_list->poly_data[rend_list->num_polys].tvlist[0].t = poly->tvlist[poly->text[0]];
-    rend_list->poly_data[rend_list->num_polys].tvlist[1].t = poly->tvlist[poly->text[1]];
-    rend_list->poly_data[rend_list->num_polys].tvlist[2].t = poly->tvlist[poly->text[2]];
-    rend_list->poly_data[rend_list->num_polys].vlist[0].t = poly->tvlist[poly->text[0]];
-    rend_list->poly_data[rend_list->num_polys].vlist[1].t = poly->tvlist[poly->text[1]];
-    rend_list->poly_data[rend_list->num_polys].vlist[2].t = poly->tvlist[poly->text[2]];
+    rend_list->poly_data[rend_list->num_polys].tvlist[0].t = poly->tlist[poly->text[0]];
+    rend_list->poly_data[rend_list->num_polys].tvlist[1].t = poly->tlist[poly->text[1]];
+    rend_list->poly_data[rend_list->num_polys].tvlist[2].t = poly->tlist[poly->text[2]];
+    rend_list->poly_data[rend_list->num_polys].vlist[0].t = poly->tlist[poly->text[0]];
+    rend_list->poly_data[rend_list->num_polys].vlist[1].t = poly->tlist[poly->text[1]];
+    rend_list->poly_data[rend_list->num_polys].vlist[2].t = poly->tlist[poly->text[2]];
 
     if(rend_list->num_polys == 0)
     {
