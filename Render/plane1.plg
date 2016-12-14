@@ -12,33 +12,21 @@
 # define PLX_SHADE_MODE_FASTPHONG_FLAG 0x6000  // this poly uses phong shading (alias)
 
 # simple cube
-tri 8 12   
+tri 4 2
 
 # vertex list 
- 5  5 5
--5  5 5
--5  5 -5
- 5  5 -5
- 5 -5 5
--5 -5 5
--5 -5 -5
- 5 -5 -5
+ 10  0 10
+-10  0 10
+-10  0 -10
+ 10  0 -10
+
 
 
 # polygon list
 
-0xc0f0 3 2 1 0 
-0xc0f0 3 3 2 0
-0xc0f0 3 4 7 0 
-0xc0f0 3 7 3 0
-0xc0f0 3 6 7 4 
-0xc0f0 3 5 6 4
-0xc0f0 3 2 6 1 
-0xc0f0 3 6 5 1
-0xc0f0 3 7 6 3 
-0xc0f0 3 6 2 3
-0xc0f0 3 5 4 0 
-0xc0f0 3 1 5 0 
+0xc1111FF 3 2 1 0
+0xcff6622 3 3 2 0
+
 
 # end plg/plx file
 

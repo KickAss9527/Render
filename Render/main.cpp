@@ -35,7 +35,7 @@ int sSize = 800;
 CAM4DV1 gCam;
 RENDERLIST4DV2 gRend_list;
 OBJECT4DV2 gAllObjects[100];
-bool isDrawWireframe = 0;
+bool isDrawWireframe = 10;
 int refreshFrequency = 30;
 BITMAP_IMAGE myTex;
 #define AMBIENT_LIGHT_INDEX   0 // ambient light index
@@ -97,46 +97,89 @@ void drawTranglePlane(POINT4D_PTR pt, POINT4D_PTR pm, POINT4D_PTR pb)
         xl += dl;
         xr += dr;
     }
-}
+}/*
+double x, y, xleft, xright; // 插值x和y，左右线段x
+double oneoverz_left, oneoverz_right; // 左右线段1/z
+double oneoverz_top, oneoverz_bottom; // 上下顶点1/z
+double oneoverz, oneoverz_step;   // 插值1/z以及扫描线步长
+double soverz_top, soverz_bottom; // 上下顶点s/z
 
+double soverz_left, soverz_right; // 左右线段s/z
+
+double soverz, soverz_step; // 插值s/z以及扫描线步长
+
+double s, t; // 要求的原始s和t
+for(y = y0; y < y1; ++y)
+{
+    xleft = 用y和左边的直线方程来求出左边的x
+    xright = 用y和右边的直线方程来求出右边的x
+  
+    oneoverz_top = 1.0 / z0;
+    oneoverz_bottom = 1.0 / z1;
+    oneoverz_left = (y – y0) * (oneoverz_bottom – oneoverz_top) / (y1 – y0) + oneoverz_top;
+    oneoverz_bottom = 1.0 / z2;
+    oneoverz_right = (y – y0) * (oneoverz_bottom – oneoverz_top) / (y2 – y0) + oneoverz_top;
+    oneoverz_step = (oneoverz_right – oneoverz_left) / (xright – xleft);
+   
+    soverz_top = s0 / z0;
+    soverz_bottom = s1 / z1;
+    soverz_left = (y – y0) * (soverz_bottom – soverz_top) / (y1 – y0) + soverz_top;
+    soverz_bottom = s2 / z2;
+    soverz_right = (y – y0) * (soverz_bottom – soverz_top) / (y2 – y0) + soverz_top;
+    soverz_step = (soverz_right – soverz_left) / (xright – xleft);
+        for(x = xleft, oneoverz = oneoverz_left, soverz = soverz_left,
+            x < xright; ++x, oneoverz += oneoverz_step,
+            soverz += soverz_step)
+    {
+        s = soverz / oneoverz;
+        
+        帧缓冲像素[x, y] = 纹理[s, t];
+    }
+}*/
 void drawTranglePlaneTexture(VERTEX4DTV1_PTR pt, VERTEX4DTV1_PTR pm, VERTEX4DTV1_PTR pb)
 {
     float ymt = (pm->y - pt->y);
     float ybt = (pb->y - pt->y);
-    float dm = (pm->x - pt->x)/ymt;
-    float db = (pb->x - pt->x)/ybt;
-    float xb, xm;
+    float dmx = (pm->x - pt->x)/ymt;
+    float dbx = (pb->x - pt->x)/ybt;
+    float dmz = (1/pm->z - 1/pt->z)/ymt;
+    float dbz = (1/pb->z - 1/pt->z)/ybt;
+    float xb, xm, zb, zm;
     xb = xm = pt->x;
+    zb = zm = 1/pt->z;
     
-    float mu,mv,bu,bv;
+    float um,vm,ub,vb;
     float dm_u,dm_v,db_u,db_v;
     
-    dm_u = (pm->u0 - pt->u0)/ymt;
-    dm_v = (pm->v0 - pt->v0)/ymt;
+    dm_u = (pm->u0/pm->z - pt->u0/pt->z)/ymt;
+    dm_v = (pm->v0/pm->z - pt->v0/pt->z)/ymt;
     
-    db_u = (pb->u0 - pt->u0)/ybt;
-    db_v = (pb->v0 - pt->v0)/ybt;
+    db_u = (pb->u0/pb->z - pt->u0/pt->z)/ybt;
+    db_v = (pb->v0/pb->z - pt->v0/pt->z)/ybt;
     
-    mu = bu = pt->u0;
-    mv = bv = pt->v0;
+    um = ub = pt->u0/pt->z;
+    vm = vb = pt->v0/pt->z;
     
     for(int y=pt->y; y<=pb->y; y++)
     {
         bool seqMB = xm < xb;
-        float u,v;
+        float u,v,z;
         
         if(seqMB)
         {
-            u = mu;
-            v = mv;
+            z = zm;
+            u = um;
+            v = vm;
         }
         else
         {
-            u = bu;
-            v = bv;
+            z = zb;
+            u = ub;
+            v = vb;
         }
         float startX = MIN(xb,xm);
         float endX = MAX(xb,xm);
+        float stepX = 1/(endX-startX);
         for(int x=startX; x<=endX; x++)
         {
             POINT4D p0 = {static_cast<float>(x), static_cast<float>(y)};
@@ -152,17 +195,22 @@ void drawTranglePlaneTexture(VERTEX4DTV1_PTR pt, VERTEX4DTV1_PTR pm, VERTEX4DTV1
 
             POINT2D uv;
             delX *= seqMB?1:-1;
-            float tmpU = u + delX*(bu - mu);
-            float tmpV = v + delX*(bv - mv);
-            
+            float tmpZ = z + delX*(zb - zm);
+//            tmpZ = 1;
+//            zb = zm =1;
+            float tmpU = u + delX*(ub - um);
+            float tmpV = v + delX*(vb - vm);
+            tmpU /= tmpZ;
+            tmpV /= tmpZ;
+
             uv.x = MIN(MAX(0, tmpU), 1);
             uv.y = MIN(MAX(0, tmpV), 1);
             
             uv.x *= myTex.width;
             uv.y *= myTex.height;
             
-            uv.x = ceil(uv.x);
-            uv.y = ceil(uv.y);
+            uv.x = floor(uv.x);
+            uv.y = floor(uv.y);
             
             RGBAV1 co;
             int texIdx = 3*(uv.x + uv.y*myTex.width);
@@ -174,24 +222,28 @@ void drawTranglePlaneTexture(VERTEX4DTV1_PTR pt, VERTEX4DTV1_PTR pm, VERTEX4DTV1
             drawPoint(&p0, &co);
         }
         
-        xb += db;
-        xm += dm;
+        xb += dbx;
+        xm += dmx;
+        zb += dbz;
+        zm += dmz;
         
-        mu += dm_u;
-        mv += dm_v;
+        um += dm_u;
+        vm += dm_v;
         
-        bu += db_u;
-        bv += db_v;
+        ub += db_u;
+        vb += db_v;
         
         if(y == (int)pm->y)
         {
             xm = pm->x;
-            mu = pm->u0;
-            mv = pm->v0;
+            zm = 1/pm->z;
+            um = pm->u0/pm->z;
+            vm = pm->v0/pm->z;
             float ybm = pb->y - pm->y;
-            dm = (pb->x - pm->x)/ybm;
-            dm_u = (pb->u0 - pm->u0)/ybm;
-            dm_v = (pb->v0 - pm->v0)/ybm;
+            dmx = (pb->x - pm->x)/ybm;
+            dmz = (1/pb->z - 1/pm->z)/ybm;
+            dm_u = (pb->u0/pb->z - pm->u0/pm->z)/ybm;
+            dm_v = (pb->v0/pb->z - pm->v0/pm->z)/ybm;
         }
     }
 }
@@ -514,7 +566,7 @@ void drawTrangleGOURAUD(POINT4D_PTR p0, POINT4D_PTR p1, POINT4D_PTR p2,RGBAV1_PT
     {
         POINT4D_PTR pt, pm, pb;
         RGBAV1_PTR ct, cm, cb;
-        if(p0->y < p1->y && p1->y < p2->y)
+        if(p0->y <= p1->y && p1->y <= p2->y)
         {
             pt = p0;
             pm = p1;
@@ -523,7 +575,7 @@ void drawTrangleGOURAUD(POINT4D_PTR p0, POINT4D_PTR p1, POINT4D_PTR p2,RGBAV1_PT
             cm = c1;
             cb = c2;
         }
-        else if(p0->y < p2->y && p2->y < p1->y)
+        else if(p0->y <= p2->y && p2->y <= p1->y)
         {
             pt = p0;
             pm = p2;
@@ -532,7 +584,7 @@ void drawTrangleGOURAUD(POINT4D_PTR p0, POINT4D_PTR p1, POINT4D_PTR p2,RGBAV1_PT
             cm = c2;
             cb = c1;
         }
-        else if(p1->y < p0->y && p0->y < p2->y)
+        else if(p1->y <= p0->y && p0->y <= p2->y)
         {
             pt = p1;
             pm = p0;
@@ -541,7 +593,7 @@ void drawTrangleGOURAUD(POINT4D_PTR p0, POINT4D_PTR p1, POINT4D_PTR p2,RGBAV1_PT
             cm = c0;
             cb = c2;
         }
-        else if(p1->y < p2->y && p2->y < p0->y)
+        else if(p1->y <= p2->y && p2->y <= p0->y)
         {
             pt = p1;
             pm = p2;
@@ -550,7 +602,7 @@ void drawTrangleGOURAUD(POINT4D_PTR p0, POINT4D_PTR p1, POINT4D_PTR p2,RGBAV1_PT
             cm = c2;
             cb = c0;
         }
-        else if(p2->y < p0->y && p0->y < p1->y)
+        else if(p2->y <= p0->y && p0->y <= p1->y)
         {
             pt = p2;
             pm = p0;
@@ -559,7 +611,7 @@ void drawTrangleGOURAUD(POINT4D_PTR p0, POINT4D_PTR p1, POINT4D_PTR p2,RGBAV1_PT
             cm = c0;
             cb = c1;
         }
-        else if(p2->y < p1->y && p1->y < p0->y)
+        else if(p2->y <= p1->y && p1->y <= p0->y)
         {
             pt = p2;
             pm = p1;
@@ -782,7 +834,6 @@ void myDisplay ()
 
         static float ro = 1;
         ro += 0.000001;
-
         Rotate_XYZ_OBJECT4DV2(obj, 0, ro, 0);
         if (!(obj->state & OBJECT4DV2_STATE_ACTIVE))
         {
@@ -948,9 +999,9 @@ int main(int argc, char *argv[])
         int xt = 400;
         float x = xt*0.5 - rand()%xt;
         float z = 30 + rand()%100;
-        float y = 30;
+        float y = 24;
         x = 0;
-        z = 10;
+        z = 15;
         VECTOR4D vscale = {scale,scale,scale,scale}, vpos = {x,y,z,1}, vrot = {r,r,r,1};
 #ifdef __APPLE__
         Load_OBJECT4DV2_PLG(&obj,"/MyFiles/Work/GitProject/Render/Render/cube1.plg", &vscale, &vpos, &vrot);
@@ -960,49 +1011,50 @@ int main(int argc, char *argv[])
         gAllObjects[cube+towerCnt] = obj;
         obj.texture = &myTex;
 
-    obj.tlist[0].x = 0; obj.tlist[0].y = 0;
-    obj.tlist[1].x = 0; obj.tlist[1].y = 1;
-    obj.tlist[2].x = 1; obj.tlist[2].y = 1;
-    obj.tlist[3].x = 1; obj.tlist[3].y = 0;
-    obj.tlist[4].x = 0; obj.tlist[4].y = 0;
-    obj.tlist[5].x = 0; obj.tlist[5].y = 1;
+        obj.tlist[0].x = 0; obj.tlist[0].y = 1;
+        obj.tlist[1].x = 0; obj.tlist[1].y = 0;
+        obj.tlist[2].x = 1; obj.tlist[2].y = 0;
+        obj.tlist[3].x = 1; obj.tlist[3].y = 1;
+        obj.tlist[4].x = 0; obj.tlist[4].y = 1;
+        obj.tlist[5].x = 1; obj.tlist[5].y = 0;
 
-    obj.tlist[6].x = 1; obj.tlist[6].y = 1;
-    obj.tlist[7].x = 0; obj.tlist[7].y = 1;
-    obj.tlist[8].x = 0; obj.tlist[8].y = 0;
-    obj.tlist[9].x = 0; obj.tlist[9].y = 1;
-    obj.tlist[10].x = 1; obj.tlist[10].y = 0;
-    obj.tlist[11].x = 0; obj.tlist[11].y = 0;
+        obj.tlist[6].x = 1; obj.tlist[6].y = 1;
+        obj.tlist[7].x = 0; obj.tlist[7].y = 1;
+        obj.tlist[8].x = 1; obj.tlist[8].y = 0;
+        obj.tlist[9].x = 0; obj.tlist[9].y = 1;
+        obj.tlist[10].x = 0; obj.tlist[10].y = 0;
+        obj.tlist[11].x = 1; obj.tlist[11].y = 0;
 
-    obj.tlist[12].x = 0; obj.tlist[12].y = 0;
-    obj.tlist[13].x = 1; obj.tlist[13].y = 1;
-    obj.tlist[14].x = 1; obj.tlist[14].y = 0;
-    obj.tlist[15].x = 1; obj.tlist[15].y = 0;
-    obj.tlist[16].x = 0; obj.tlist[16].y = 0;
-    obj.tlist[17].x = 1; obj.tlist[17].y = 1;
+        obj.tlist[12].x = 0; obj.tlist[12].y = 1;
+        obj.tlist[13].x = 1; obj.tlist[13].y = 1;
+        obj.tlist[14].x = 1; obj.tlist[14].y = 0;
+        obj.tlist[15].x = 0; obj.tlist[15].y = 0;
+        obj.tlist[16].x = 0; obj.tlist[16].y = 1;
+        obj.tlist[17].x = 1; obj.tlist[17].y = 0;
 
-    obj.tlist[18].x = 0; obj.tlist[18].y = 0;
-    obj.tlist[19].x = 0; obj.tlist[19].y = 1;
-    obj.tlist[20].x = 1; obj.tlist[20].y = 0;
-    obj.tlist[21].x = 0; obj.tlist[21].y = 1;
-    obj.tlist[22].x = 1; obj.tlist[22].y = 1;
-    obj.tlist[23].x = 1; obj.tlist[23].y = 0;
+        obj.tlist[18].x = 1; obj.tlist[18].y = 0;
+        obj.tlist[19].x = 1; obj.tlist[19].y = 1;
+        obj.tlist[20].x = 0; obj.tlist[20].y = 0;
+        obj.tlist[21].x = 1; obj.tlist[21].y = 1;
+        obj.tlist[22].x = 0; obj.tlist[22].y = 1;
+        obj.tlist[23].x = 0; obj.tlist[23].y = 0;
 
-    obj.tlist[24].x = 0; obj.tlist[24].y = 1;
-    obj.tlist[25].x = 1; obj.tlist[25].y = 1;
-    obj.tlist[26].x = 0; obj.tlist[26].y = 0;
-    obj.tlist[27].x = 1; obj.tlist[27].y = 1;
-    obj.tlist[28].x = 1; obj.tlist[28].y = 0;
-    obj.tlist[29].x = 0; obj.tlist[29].y = 0;
+        obj.tlist[24].x = 1; obj.tlist[24].y = 1;
+        obj.tlist[25].x = 0; obj.tlist[25].y = 1;
+        obj.tlist[26].x = 1; obj.tlist[26].y = 0;
+        obj.tlist[27].x = 0; obj.tlist[27].y = 1;
+        obj.tlist[28].x = 0; obj.tlist[28].y = 0;
+        obj.tlist[29].x = 1; obj.tlist[29].y = 0;
 
-    obj.tlist[30].x = 0; obj.tlist[30].y = 1;
-    obj.tlist[31].x = 1; obj.tlist[31].y = 1;
-    obj.tlist[32].x = 1; obj.tlist[32].y = 0;
-    obj.tlist[33].x = 0; obj.tlist[33].y = 0;
-    obj.tlist[34].x = 0; obj.tlist[34].y = 1;
-    obj.tlist[35].x = 1; obj.tlist[35].y = 1;
-
-
+        obj.tlist[30].x = 1; obj.tlist[30].y = 1;
+        obj.tlist[31].x = 0; obj.tlist[31].y = 1;
+        obj.tlist[32].x = 0; obj.tlist[32].y = 0;
+        obj.tlist[33].x = 1; obj.tlist[33].y = 0;
+        obj.tlist[34].x = 1; obj.tlist[34].y = 1;
+        obj.tlist[35].x = 0; obj.tlist[35].y = 0;
+            
+        //
+            
         for(int i=0; i<12; i++)
         {
             obj.plist[i].text[0] = i*3+0;
