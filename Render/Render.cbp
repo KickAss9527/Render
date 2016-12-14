@@ -49,6 +49,7 @@
 		<Unit filename="lxMath.cpp" />
 		<Unit filename="lxMath.h" />
 		<Unit filename="main.cpp" />
+		<Unit filename="metal04.bmp" />
 		<Unit filename="tank1.plg" />
 		<Unit filename="tank2.plg" />
 		<Unit filename="tower1.plg" />

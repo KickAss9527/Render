@@ -55,14 +55,14 @@ void drawPoint(POINT4D_PTR p, RGBAV1_PTR color)
     glEnd ();
 }
 
-RGBAV1_PTR getTexture(BITMAP_IMAGE_PTR tex, POINT2D_PTR pos)
+RGBAV1 getTexture(BITMAP_IMAGE_PTR tex, POINT2D_PTR pos)
 {
     int delta = 3*((tex->height - pos->y)*tex->width + pos->x);
     RGBAV1 c;
     c.b = tex->buffer[delta];
     c.g = tex->buffer[delta+1];
     c.r = tex->buffer[delta+2];
-    return &c;
+    return c;
 }
 
 void drawLine(POINT4D_PTR p0, POINT4D_PTR p1)
@@ -123,14 +123,14 @@ for(y = y0; y < y1; ++y)
 {
     xleft = 用y和左边的直线方程来求出左边的x
     xright = 用y和右边的直线方程来求出右边的x
-  
+
     oneoverz_top = 1.0 / z0;
     oneoverz_bottom = 1.0 / z1;
     oneoverz_left = (y – y0) * (oneoverz_bottom – oneoverz_top) / (y1 – y0) + oneoverz_top;
     oneoverz_bottom = 1.0 / z2;
     oneoverz_right = (y – y0) * (oneoverz_bottom – oneoverz_top) / (y2 – y0) + oneoverz_top;
     oneoverz_step = (oneoverz_right – oneoverz_left) / (xright – xleft);
-   
+
     soverz_top = s0 / z0;
     soverz_bottom = s1 / z1;
     soverz_left = (y – y0) * (soverz_bottom – soverz_top) / (y1 – y0) + soverz_top;
@@ -142,7 +142,7 @@ for(y = y0; y < y1; ++y)
             soverz += soverz_step)
     {
         s = soverz / oneoverz;
-        
+
         帧缓冲像素[x, y] = 纹理[s, t];
     }
 }*/
@@ -157,24 +157,24 @@ void drawTranglePlaneTexture(VERTEX4DTV1_PTR pt, VERTEX4DTV1_PTR pm, VERTEX4DTV1
     float xb, xm, zb, zm;
     xb = xm = pt->x;
     zb = zm = 1/pt->z;
-    
+
     float um,vm,ub,vb;
     float dm_u,dm_v,db_u,db_v;
-    
+
     dm_u = (pm->u0/pm->z - pt->u0/pt->z)/ymt;
     dm_v = (pm->v0/pm->z - pt->v0/pt->z)/ymt;
-    
+
     db_u = (pb->u0/pb->z - pt->u0/pt->z)/ybt;
     db_v = (pb->v0/pb->z - pt->v0/pt->z)/ybt;
-    
+
     um = ub = pt->u0/pt->z;
     vm = vb = pt->v0/pt->z;
-    
+
     for(int y=pt->y; y<=pb->y; y++)
     {
         bool seqMB = xm < xb;
         float u,v,z;
-        
+
         if(seqMB)
         {
             z = zm;
@@ -189,7 +189,7 @@ void drawTranglePlaneTexture(VERTEX4DTV1_PTR pt, VERTEX4DTV1_PTR pm, VERTEX4DTV1
         }
         float startX = MIN(xb,xm);
         float endX = MAX(xb,xm);
-        
+
         for(int x=startX; x<=endX; x++)
         {
             POINT4D p0 = {static_cast<float>(x), static_cast<float>(y)};
@@ -215,27 +215,27 @@ void drawTranglePlaneTexture(VERTEX4DTV1_PTR pt, VERTEX4DTV1_PTR pm, VERTEX4DTV1
 
             uv.x = MIN(MAX(0, tmpU), 1);
             uv.y = MIN(MAX(0, tmpV), 1);
-            
+
             uv.x *= myTex.width;
             uv.y *= myTex.height;
-            
+
             uv.x = floor(uv.x);
             uv.y = floor(uv.y);
-            
-            drawPoint(&p0, getTexture(&myTex, &uv));
+            RGBAV1 color = getTexture(&myTex, &uv);
+            drawPoint(&p0, &color);
         }
-        
+
         xb += dbx;
         xm += dmx;
         zb += dbz;
         zm += dmz;
-        
+
         um += dm_u;
         vm += dm_v;
-        
+
         ub += db_u;
         vb += db_v;
-        
+
         if(y == (int)pm->y)
         {
             xm = pm->x;
@@ -471,9 +471,9 @@ void drawTrangle(POINT4D_PTR p0, POINT4D_PTR p1, POINT4D_PTR p2)
 }
 void drawTrangleTexture(VERTEX4DTV1_PTR p0, VERTEX4DTV1_PTR p1, VERTEX4DTV1_PTR p2)
 {
-    
+
     VERTEX4DTV1_PTR pt, pm, pb;
-    
+
     if(p0->y <= p1->y && p1->y <= p2->y)
     {
         pt = p0;
@@ -649,7 +649,7 @@ void drawPoly2(RENDERLIST4DV2_PTR rend_list)
         {
             continue;
         }
-        
+
         if (curr_poly->attr & POLY4DV2_ATTR_SHADE_MODE_GOURAUD)
         {
             RGBAV1 c0, c1, c2;
@@ -659,7 +659,7 @@ void drawPoly2(RENDERLIST4DV2_PTR rend_list)
             //c0 = blue;
             //c1 = red;
             //c2 = green;
-            
+
 //            printf("\n %.1f, %.1f; %.1f, %.1f; %.1f, %.1f",
 //                   curr_poly->tvlist[0].t.x,curr_poly->tvlist[0].t.y,
 //                   curr_poly->tvlist[1].t.x,curr_poly->tvlist[1].t.y,
@@ -668,7 +668,7 @@ void drawPoly2(RENDERLIST4DV2_PTR rend_list)
 //            drawTrangleGOURAUD(&curr_poly->tvlist[0].v,
 //                               &curr_poly->tvlist[1].v,
 //                               &curr_poly->tvlist[2].v, &c0, &c1, &c2);
-            
+
         }
         else if(curr_poly->attr & POLY4DV2_ATTR_SHADE_MODE_FLAT)
         {
@@ -915,7 +915,7 @@ void display(void)
 {
  //glClear(GL_COLOR_BUFFER_BIT);
  //绘制像素
-    
+
 //glDrawPixels(myTex.width,myTex.height,GL_BGR_EXT,GL_UNSIGNED_BYTE,myTex.buffer);
 
  //---------------------------------
@@ -926,7 +926,8 @@ void display(void)
      {
          POINT4D np = {static_cast<float>(x),static_cast<float>(y), 1, 1};
          POINT2D t = {static_cast<float>(x),static_cast<float>(y)};
-         drawPoint(&np, getTexture(&myTex, &t));
+         RGBAV1 c = getTexture(&myTex, &t);
+         drawPoint(&np, &c);
      }
  }
 glFlush();
@@ -935,12 +936,12 @@ glFlush();
 void loadTexture()
 {
 #ifdef __APPLE__
-    
+
     FILE* pfile=fopen("/MyFiles/Work/GitProject/Render/Render/metal04.bmp","rb");
 #else
-    FILE* pfile=fopen("C:\\Users\\Administrator\\Desktop\\git\\Render\\Render\\metal04.bmp","rb");
+    FILE* pfile=fopen("C:\\Users\\Administrator\\Documents\\GitHub\\Render\\Render\\metal04.bmp","rb");
 #endif
-    
+
      if(pfile == 0) exit(0);
      //读取图像大小
 
@@ -985,7 +986,7 @@ int main(int argc, char *argv[])
 #ifdef __APPLE__
         Load_OBJECT4DV2_PLG(&obj, "/MyFiles/Work/GitProject/Render/Render/tower1.plg", &vscale, &vpos, &vrot);
 #else
-        Load_OBJECT4DV2_PLG(&obj,"C:\\Users\\Administrator\\Desktop\\git\\Render\\Render\\tower1.plg", &vscale, &vpos, &vrot);
+        Load_OBJECT4DV2_PLG(&obj,"C:\\Users\\Administrator\\Documents\\GitHub\\Render\\Render\\tower1.plg", &vscale, &vpos, &vrot);
 #endif
 
         gAllObjects[tower] = obj;
@@ -1006,7 +1007,7 @@ int main(int argc, char *argv[])
 #ifdef __APPLE__
         Load_OBJECT4DV2_PLG(&obj,"/MyFiles/Work/GitProject/Render/Render/cube1.plg", &vscale, &vpos, &vrot);
 #else
-        Load_OBJECT4DV2_PLG(&obj,"C:\\Users\\Administrator\\Desktop\\git\\Render\\Render\\cube1.plg", &vscale, &vpos, &vrot);
+        Load_OBJECT4DV2_PLG(&obj,"C:\\Users\\Administrator\\Documents\\GitHub\\Render\\Render\\cube1.plg", &vscale, &vpos, &vrot);
 #endif
         gAllObjects[cube+towerCnt] = obj;
         obj.texture = &myTex;
@@ -1052,9 +1053,9 @@ int main(int argc, char *argv[])
         obj.tlist[33].x = 1; obj.tlist[33].y = 0;
         obj.tlist[34].x = 1; obj.tlist[34].y = 1;
         obj.tlist[35].x = 0; obj.tlist[35].y = 0;
-            
+
         //
-            
+
         for(int i=0; i<12; i++)
         {
             obj.plist[i].text[0] = i*3+0;
