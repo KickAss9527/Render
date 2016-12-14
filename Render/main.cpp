@@ -55,6 +55,16 @@ void drawPoint(POINT4D_PTR p, RGBAV1_PTR color)
     glEnd ();
 }
 
+RGBAV1_PTR getTexture(BITMAP_IMAGE_PTR tex, POINT2D_PTR pos)
+{
+    int delta = 3*((tex->height - pos->y)*tex->width + pos->x);
+    RGBAV1 c;
+    c.b = tex->buffer[delta];
+    c.g = tex->buffer[delta+1];
+    c.r = tex->buffer[delta+2];
+    return &c;
+}
+
 void drawLine(POINT4D_PTR p0, POINT4D_PTR p1)
 {
     int w = sSize*0.5;
@@ -179,7 +189,7 @@ void drawTranglePlaneTexture(VERTEX4DTV1_PTR pt, VERTEX4DTV1_PTR pm, VERTEX4DTV1
         }
         float startX = MIN(xb,xm);
         float endX = MAX(xb,xm);
-        float stepX = 1/(endX-startX);
+        
         for(int x=startX; x<=endX; x++)
         {
             POINT4D p0 = {static_cast<float>(x), static_cast<float>(y)};
@@ -212,14 +222,7 @@ void drawTranglePlaneTexture(VERTEX4DTV1_PTR pt, VERTEX4DTV1_PTR pm, VERTEX4DTV1
             uv.x = floor(uv.x);
             uv.y = floor(uv.y);
             
-            RGBAV1 co;
-            int texIdx = 3*(uv.x + uv.y*myTex.width);
-
-            co.b = myTex.buffer[texIdx];
-            co.g = myTex.buffer[texIdx+1];
-            co.r = myTex.buffer[texIdx+2];
-            
-            drawPoint(&p0, &co);
+            drawPoint(&p0, getTexture(&myTex, &uv));
         }
         
         xb += dbx;
@@ -907,26 +910,23 @@ void onTimer(int value)
 }
 
 
+
 void display(void)
 {
  //glClear(GL_COLOR_BUFFER_BIT);
  //绘制像素
+    
+//glDrawPixels(myTex.width,myTex.height,GL_BGR_EXT,GL_UNSIGNED_BYTE,myTex.buffer);
 
-glClear (GL_COLOR_BUFFER_BIT);
  //---------------------------------
 
- for(int x=0; x<myTex.width; x++)
+ for(int y=0; y<myTex.height; y++)
  {
-     for(int y=0; y<myTex.height; y++)
+     for(int x=0; x<myTex.width; x++)
      {
-         int delta = 3*(x*myTex.width + y);
-         POINT4D np = {static_cast<float>(x),static_cast<float>(y),1,1};
-         RGBAV1 c;
-         c.b = myTex.buffer[delta];
-         c.g = myTex.buffer[delta+1];
-         c.r = myTex.buffer[delta+2];
-
-        drawPoint(&np, &c);
+         POINT4D np = {static_cast<float>(x),static_cast<float>(y), 1, 1};
+         POINT2D t = {static_cast<float>(x),static_cast<float>(y)};
+         drawPoint(&np, getTexture(&myTex, &t));
      }
  }
 glFlush();

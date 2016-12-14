@@ -34,6 +34,7 @@
 		052FE6711DD94F1900A5E04F /* OpenGL.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenGL.framework; path = System/Library/Frameworks/OpenGL.framework; sourceTree = SDKROOT; };
 		052FE6731DD94F1D00A5E04F /* GLUT.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = GLUT.framework; path = System/Library/Frameworks/GLUT.framework; sourceTree = SDKROOT; };
 		0534530E1DF8FF870085515C /* trangle.plg */ = {isa = PBXFileReference; lastKnownFileType = text; path = trangle.plg; sourceTree = "<group>"; };
+		0535B20F1E013754000E1704 /* sa.bmp */ = {isa = PBXFileReference; lastKnownFileType = image.bmp; path = sa.bmp; sourceTree = "<group>"; };
 		0548E0DC1E00D9C10031DAA4 /* Grid.bmp */ = {isa = PBXFileReference; lastKnownFileType = image.bmp; path = Grid.bmp; sourceTree = "<group>"; };
 		0553A3BB1DE52AE500E557A1 /* tower1.plg */ = {isa = PBXFileReference; lastKnownFileType = text; path = tower1.plg; sourceTree = "<group>"; };
 		05A74A6E1DE299EB003E6A66 /* cube1.plg */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = cube1.plg; sourceTree = "<group>"; };
@@ -76,6 +77,7 @@
 		052FE6681DD94EF200A5E04F /* Render */ = {
 			isa = PBXGroup;
 			children = (
+				0535B20F1E013754000E1704 /* sa.bmp */,
 				0548E0DC1E00D9C10031DAA4 /* Grid.bmp */,
 				0534530E1DF8FF870085515C /* trangle.plg */,
 				0553A3BB1DE52AE500E557A1 /* tower1.plg */,
