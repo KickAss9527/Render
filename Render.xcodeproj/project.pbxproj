@@ -37,6 +37,7 @@
 		0535B20F1E013754000E1704 /* sa.bmp */ = {isa = PBXFileReference; lastKnownFileType = image.bmp; path = sa.bmp; sourceTree = "<group>"; };
 		0548E0DC1E00D9C10031DAA4 /* Grid.bmp */ = {isa = PBXFileReference; lastKnownFileType = image.bmp; path = Grid.bmp; sourceTree = "<group>"; };
 		0553A3BB1DE52AE500E557A1 /* tower1.plg */ = {isa = PBXFileReference; lastKnownFileType = text; path = tower1.plg; sourceTree = "<group>"; };
+		05604F601E023A5B00D89EFE /* cubeTex.plg */ = {isa = PBXFileReference; lastKnownFileType = text; path = cubeTex.plg; sourceTree = "<group>"; };
 		05A74A6E1DE299EB003E6A66 /* cube1.plg */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = cube1.plg; sourceTree = "<group>"; };
 		05A74A6F1DE299EB003E6A66 /* engine.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = engine.cpp; sourceTree = "<group>"; };
 		05A74A701DE299EB003E6A66 /* engine.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = engine.h; sourceTree = "<group>"; };
@@ -82,6 +83,7 @@
 				0534530E1DF8FF870085515C /* trangle.plg */,
 				0553A3BB1DE52AE500E557A1 /* tower1.plg */,
 				05A74A6E1DE299EB003E6A66 /* cube1.plg */,
+				05604F601E023A5B00D89EFE /* cubeTex.plg */,
 				05A74A6F1DE299EB003E6A66 /* engine.cpp */,
 				05A74A701DE299EB003E6A66 /* engine.h */,
 				05A74A711DE299EB003E6A66 /* lxMath.cpp */,

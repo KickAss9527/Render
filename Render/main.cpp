@@ -21,7 +21,6 @@
 #include <GL/glext.h>
 #endif
 
-#include <stdlib.h>
 #include "lxMath.h"
 #include "engine.h"
 #include <iostream>
@@ -107,45 +106,8 @@ void drawTranglePlane(POINT4D_PTR pt, POINT4D_PTR pm, POINT4D_PTR pb)
         xl += dl;
         xr += dr;
     }
-}/*
-double x, y, xleft, xright; // 插值x和y，左右线段x
-double oneoverz_left, oneoverz_right; // 左右线段1/z
-double oneoverz_top, oneoverz_bottom; // 上下顶点1/z
-double oneoverz, oneoverz_step;   // 插值1/z以及扫描线步长
-double soverz_top, soverz_bottom; // 上下顶点s/z
+}
 
-double soverz_left, soverz_right; // 左右线段s/z
-
-double soverz, soverz_step; // 插值s/z以及扫描线步长
-
-double s, t; // 要求的原始s和t
-for(y = y0; y < y1; ++y)
-{
-    xleft = 用y和左边的直线方程来求出左边的x
-    xright = 用y和右边的直线方程来求出右边的x
-
-    oneoverz_top = 1.0 / z0;
-    oneoverz_bottom = 1.0 / z1;
-    oneoverz_left = (y – y0) * (oneoverz_bottom – oneoverz_top) / (y1 – y0) + oneoverz_top;
-    oneoverz_bottom = 1.0 / z2;
-    oneoverz_right = (y – y0) * (oneoverz_bottom – oneoverz_top) / (y2 – y0) + oneoverz_top;
-    oneoverz_step = (oneoverz_right – oneoverz_left) / (xright – xleft);
-
-    soverz_top = s0 / z0;
-    soverz_bottom = s1 / z1;
-    soverz_left = (y – y0) * (soverz_bottom – soverz_top) / (y1 – y0) + soverz_top;
-    soverz_bottom = s2 / z2;
-    soverz_right = (y – y0) * (soverz_bottom – soverz_top) / (y2 – y0) + soverz_top;
-    soverz_step = (soverz_right – soverz_left) / (xright – xleft);
-        for(x = xleft, oneoverz = oneoverz_left, soverz = soverz_left,
-            x < xright; ++x, oneoverz += oneoverz_step,
-            soverz += soverz_step)
-    {
-        s = soverz / oneoverz;
-
-        帧缓冲像素[x, y] = 纹理[s, t];
-    }
-}*/
 void drawTranglePlaneTexture(VERTEX4DTV1_PTR pt, VERTEX4DTV1_PTR pm, VERTEX4DTV1_PTR pb)
 {
     float ymt = (pm->y - pt->y);
@@ -510,122 +472,71 @@ void drawTrangleTexture(VERTEX4DTV1_PTR p0, VERTEX4DTV1_PTR p1, VERTEX4DTV1_PTR 
         pm = p1;
         pb = p0;
     }
-//    pt->u0 = 0;
-//    pt->v0 = 0;
-//    pm->u0 = 0;
-//    pm->v0 = 0;
-//    pt->u0 = 0;
-//    pt->v0 = 0;
+
     drawTranglePlaneTexture(pt, pm, pb);
 }
 
 void drawTrangleGOURAUD(POINT4D_PTR p0, POINT4D_PTR p1, POINT4D_PTR p2,RGBAV1_PTR c0, RGBAV1_PTR c1, RGBAV1_PTR c2)
 {
-//    if (p0->y == p1->y)
-//    {
-//        if (p2->y >= p0->y)//top plane
-//        {
-//            if (p2->x > p0->x)
-//            {
-//                drawTrangleGOURAUDTopPlane(NULL, p2, p0, p1, c2, c0, c1);
-//            }
-//            else
-//            {
-//                drawTrangleGOURAUDTopPlane(NULL, p0, p2, p1, c0, c2, c1);
-//            }
-//        }
-//        else//
-//        {
-//            drawTrangleGOURAUDBottomPlane(p2, p0, p1, NULL, c2, c0, c1);
-//        }
-//    }
-//    else if (p0->y == p2->y)
-//    {
-//        if (p1->y >= p0->y)//
-//        {
-//            drawTrangleGOURAUDTopPlane(NULL, p1, p0, p2, c1, c0, c2);
-//        }
-//        else//
-//        {
-//            drawTrangleGOURAUDBottomPlane(p1, p0, p2,NULL,  c1, c0, c2);
-//        }
-//    }
-//    else if (p2->y == p1->y)
-//    {
-//        if (p0->y >= p2->y)//
-//        {
-//            drawTrangleGOURAUDTopPlane(NULL, p0, p2, p1, c0, c2, c1);
-//        }
-//        else//
-//        {
-//            drawTrangleGOURAUDBottomPlane(p0, p2, p1, NULL, c0, c2, c1);
-//        }
-//    }
-    if (0)
+    POINT4D_PTR pt, pm, pb;
+    RGBAV1_PTR ct, cm, cb;
+    if(p0->y <= p1->y && p1->y <= p2->y)
     {
-
+        pt = p0;
+        pm = p1;
+        pb = p2;
+        ct = c0;
+        cm = c1;
+        cb = c2;
     }
-    else
+    else if(p0->y <= p2->y && p2->y <= p1->y)
     {
-        POINT4D_PTR pt, pm, pb;
-        RGBAV1_PTR ct, cm, cb;
-        if(p0->y <= p1->y && p1->y <= p2->y)
-        {
-            pt = p0;
-            pm = p1;
-            pb = p2;
-            ct = c0;
-            cm = c1;
-            cb = c2;
-        }
-        else if(p0->y <= p2->y && p2->y <= p1->y)
-        {
-            pt = p0;
-            pm = p2;
-            pb = p1;
-            ct = c0;
-            cm = c2;
-            cb = c1;
-        }
-        else if(p1->y <= p0->y && p0->y <= p2->y)
-        {
-            pt = p1;
-            pm = p0;
-            pb = p2;
-            ct = c1;
-            cm = c0;
-            cb = c2;
-        }
-        else if(p1->y <= p2->y && p2->y <= p0->y)
-        {
-            pt = p1;
-            pm = p2;
-            pb = p0;
-            ct = c1;
-            cm = c2;
-            cb = c0;
-        }
-        else if(p2->y <= p0->y && p0->y <= p1->y)
-        {
-            pt = p2;
-            pm = p0;
-            pb = p1;
-            ct = c2;
-            cm = c0;
-            cb = c1;
-        }
-        else if(p2->y <= p1->y && p1->y <= p0->y)
-        {
-            pt = p2;
-            pm = p1;
-            pb = p0;
-            ct = c2;
-            cm = c1;
-            cb = c0;
-        }
-
-        drawTranglePlaneGOURAUD(pt, pm, pb, ct, cm, cb);
+        pt = p0;
+        pm = p2;
+        pb = p1;
+        ct = c0;
+        cm = c2;
+        cb = c1;
     }
+    else if(p1->y <= p0->y && p0->y <= p2->y)
+    {
+        pt = p1;
+        pm = p0;
+        pb = p2;
+        ct = c1;
+        cm = c0;
+        cb = c2;
+    }
+    else if(p1->y <= p2->y && p2->y <= p0->y)
+    {
+        pt = p1;
+        pm = p2;
+        pb = p0;
+        ct = c1;
+        cm = c2;
+        cb = c0;
+    }
+    else if(p2->y <= p0->y && p0->y <= p1->y)
+    {
+        pt = p2;
+        pm = p0;
+        pb = p1;
+        ct = c2;
+        cm = c0;
+        cb = c1;
+    }
+    else if(p2->y <= p1->y && p1->y <= p0->y)
+    {
+        pt = p2;
+        pm = p1;
+        pb = p0;
+        ct = c2;
+        cm = c1;
+        cb = c0;
+    }
+
+    drawTranglePlaneGOURAUD(pt, pm, pb, ct, cm, cb);
+    
 }
 
 
@@ -649,25 +560,21 @@ void drawPoly2(RENDERLIST4DV2_PTR rend_list)
         {
             continue;
         }
-
-        if (curr_poly->attr & POLY4DV2_ATTR_SHADE_MODE_GOURAUD)
+        
+        if (curr_poly->attr & POLY4DV2_ATTR_SHADE_MODE_TEXTURE)
+        {
+            drawTrangleTexture(&curr_poly->tvlist[0], &curr_poly->tvlist[1], &curr_poly->tvlist[2]);
+        }
+        else if (curr_poly->attr & POLY4DV2_ATTR_SHADE_MODE_GOURAUD)
         {
             RGBAV1 c0, c1, c2;
             c0.rgba = curr_poly->lit_color[0];
             c1.rgba = curr_poly->lit_color[1];
             c2.rgba = curr_poly->lit_color[2];
-            //c0 = blue;
-            //c1 = red;
-            //c2 = green;
 
-//            printf("\n %.1f, %.1f; %.1f, %.1f; %.1f, %.1f",
-//                   curr_poly->tvlist[0].t.x,curr_poly->tvlist[0].t.y,
-//                   curr_poly->tvlist[1].t.x,curr_poly->tvlist[1].t.y,
-//                   curr_poly->tvlist[2].t.x,curr_poly->tvlist[2].t.y);
-            drawTrangleTexture(&curr_poly->tvlist[0], &curr_poly->tvlist[1], &curr_poly->tvlist[2]);
-//            drawTrangleGOURAUD(&curr_poly->tvlist[0].v,
-//                               &curr_poly->tvlist[1].v,
-//                               &curr_poly->tvlist[2].v, &c0, &c1, &c2);
+            drawTrangleGOURAUD(&curr_poly->tvlist[0].v,
+                               &curr_poly->tvlist[1].v,
+                               &curr_poly->tvlist[2].v, &c0, &c1, &c2);
 
         }
         else if(curr_poly->attr & POLY4DV2_ATTR_SHADE_MODE_FLAT)
@@ -712,36 +619,6 @@ void drawPoly2(RENDERLIST4DV2_PTR rend_list)
         }
     }
 
-}
-
-void drawPoly(RENDERLIST4DV1_PTR rend_list)
-{
-    for(int poly=0; poly<rend_list->num_polys; poly++)
-    {
-        POLYF4DV1 curr_poly = *rend_list->poly_ptrs[poly];
-        if(!(curr_poly.state & POLY4DV1_STATE_ACTIVE) ||
-           (curr_poly.state & POLY4DV1_STATE_CLIPPED) ||
-           (curr_poly.state & POLY4DV1_STATE_BACKFACE))
-        {
-            continue;
-        }
-
-        unsigned int r, g, b;
-        int color = curr_poly.lcolor;
-        RGB888FROM24BIT(color, &r, &g, &b);
-
-//        printf("(%d, %d, %d)\n", r, g, b);
-        glColor3f (r/255.0, g/255.0, b/255.0);//…Ë÷√µ±«∞ª≠± —’…´
-        drawTrangle(&curr_poly.tvlist[0],&curr_poly.tvlist[1],&curr_poly.tvlist[2]);
-        glColor3f (1.0, 1.0, 0.0);//…Ë÷√µ±«∞ª≠± —’…´
-
-        if (isDrawWireframe)
-        {
-            drawLine(&curr_poly.tvlist[0], &curr_poly.tvlist[1]);
-            drawLine(&curr_poly.tvlist[2], &curr_poly.tvlist[1]);
-            drawLine(&curr_poly.tvlist[2], &curr_poly.tvlist[0]);
-        }
-    }
 }
 
 int btnCnt = 6;
@@ -1011,58 +888,6 @@ int main(int argc, char *argv[])
 #endif
         gAllObjects[cube+towerCnt] = obj;
         obj.texture = &myTex;
-
-        obj.tlist[0].x = 0; obj.tlist[0].y = 1;
-        obj.tlist[1].x = 0; obj.tlist[1].y = 0;
-        obj.tlist[2].x = 1; obj.tlist[2].y = 0;
-        obj.tlist[3].x = 1; obj.tlist[3].y = 1;
-        obj.tlist[4].x = 0; obj.tlist[4].y = 1;
-        obj.tlist[5].x = 1; obj.tlist[5].y = 0;
-
-        obj.tlist[6].x = 1; obj.tlist[6].y = 1;
-        obj.tlist[7].x = 0; obj.tlist[7].y = 1;
-        obj.tlist[8].x = 1; obj.tlist[8].y = 0;
-        obj.tlist[9].x = 0; obj.tlist[9].y = 1;
-        obj.tlist[10].x = 0; obj.tlist[10].y = 0;
-        obj.tlist[11].x = 1; obj.tlist[11].y = 0;
-
-        obj.tlist[12].x = 0; obj.tlist[12].y = 1;
-        obj.tlist[13].x = 1; obj.tlist[13].y = 1;
-        obj.tlist[14].x = 1; obj.tlist[14].y = 0;
-        obj.tlist[15].x = 0; obj.tlist[15].y = 0;
-        obj.tlist[16].x = 0; obj.tlist[16].y = 1;
-        obj.tlist[17].x = 1; obj.tlist[17].y = 0;
-
-        obj.tlist[18].x = 1; obj.tlist[18].y = 0;
-        obj.tlist[19].x = 1; obj.tlist[19].y = 1;
-        obj.tlist[20].x = 0; obj.tlist[20].y = 0;
-        obj.tlist[21].x = 1; obj.tlist[21].y = 1;
-        obj.tlist[22].x = 0; obj.tlist[22].y = 1;
-        obj.tlist[23].x = 0; obj.tlist[23].y = 0;
-
-        obj.tlist[24].x = 1; obj.tlist[24].y = 1;
-        obj.tlist[25].x = 0; obj.tlist[25].y = 1;
-        obj.tlist[26].x = 1; obj.tlist[26].y = 0;
-        obj.tlist[27].x = 0; obj.tlist[27].y = 1;
-        obj.tlist[28].x = 0; obj.tlist[28].y = 0;
-        obj.tlist[29].x = 1; obj.tlist[29].y = 0;
-
-        obj.tlist[30].x = 1; obj.tlist[30].y = 1;
-        obj.tlist[31].x = 0; obj.tlist[31].y = 1;
-        obj.tlist[32].x = 0; obj.tlist[32].y = 0;
-        obj.tlist[33].x = 1; obj.tlist[33].y = 0;
-        obj.tlist[34].x = 1; obj.tlist[34].y = 1;
-        obj.tlist[35].x = 0; obj.tlist[35].y = 0;
-
-        //
-
-        for(int i=0; i<12; i++)
-        {
-            obj.plist[i].text[0] = i*3+0;
-            obj.plist[i].text[1] = i*3+1;
-            obj.plist[i].text[2] = i*3+2;
-
-        }
     }
 
     loadLights();

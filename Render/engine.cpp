@@ -5,6 +5,8 @@
 #include <stdlib.h>
 #include <math.h>
 
+using namespace std;
+
 LIGHTV1 gLights[MAX_LIGHTS];
 int gNum_lights;
 int dd_pixel_format;
@@ -1753,6 +1755,38 @@ void Rotate_XYZ_OBJECT4DV2(OBJECT4DV2_PTR obj,
     VECTOR4D_COPY(&obj->uz, &vresult);
 }
 
+void loadTexture(string filename, BITMAP_IMAGE_PTR tex)
+{
+    string path;
+#ifdef __APPLE__
+    path = "/MyFiles/Work/GitProject/Render/Render/";
+#else
+    path = "C:\\Users\\Administrator\\Documents\\GitHub\\Render\\Render\\";
+#endif
+    path = path+filename;
+    
+    FILE* pfile = fopen(path.c_str(),"rb");
+    
+    if(pfile == 0) exit(0);
+    //读取图像大小
+    
+    fseek(pfile,0x0012,SEEK_SET);
+    fread(&tex->width,sizeof(tex->width),1,pfile);
+    fread(&tex->height,sizeof(tex->height),1,pfile);
+    //计算像素数据长度
+    int pixellength=tex->width*3;
+    while(pixellength%4 != 0)pixellength++;
+    pixellength *= tex->height;
+    //读取像素数据
+    tex->buffer = (UCHAR*)malloc(pixellength);
+    if(tex->buffer == 0) exit(0);
+    fseek(pfile,54,SEEK_SET);
+    fread(tex->buffer,pixellength,1,pfile);
+    
+    //关闭文件
+    fclose(pfile);
+}
+
 int Load_OBJECT4DV2_PLG(OBJECT4DV2_PTR obj,
                         char *filename,
                         VECTOR4D_PTR scale,
@@ -1890,7 +1924,42 @@ int Load_OBJECT4DV2_PLG(OBJECT4DV2_PTR obj,
         obj->plist[poly].vlist = obj->vlist_local;
         obj->plist[poly].tlist = obj->tlist;
     }
+    
+    if ((token_string = Get_Line_PLG(buffer, 255, fp)))
+    {
+        char tmpString[50];
+        BITMAP_IMAGE tex;
+        sscanf(token_string, "%s", tmpString);
+        loadTexture(tmpString, &tex);
+        obj->texture = &tex;
+        
+        token_string = Get_Line_PLG(buffer, 255, fp);
+        for (int poly=0; poly<obj->num_polys; poly++)
+        {
+            SET_BIT(obj->plist[poly].attr, POLY4DV2_ATTR_SHADE_MODE_TEXTURE);
+            SET_BIT(obj->vlist_local[obj->plist[poly].vert[0]].attr, VERTEX4DTV1_ATTR_TEXTURE);
+            SET_BIT(obj->vlist_local[obj->plist[poly].vert[1]].attr, VERTEX4DTV1_ATTR_TEXTURE);
+            SET_BIT(obj->vlist_local[obj->plist[poly].vert[2]].attr, VERTEX4DTV1_ATTR_TEXTURE);
+            int idx0, idx1, idx2;
+            idx0 = poly*3 + 0;
+            idx1 = idx0 + 1;
+            idx2 = idx0 + 2;
+            sscanf(token_string, "%f %f %f %f %f %f",
+                   &obj->tlist[idx0].x,
+                   &obj->tlist[idx0].y,
+                   &obj->tlist[idx1].x,
+                   &obj->tlist[idx1].y,
+                   &obj->tlist[idx2].x,
+                   &obj->tlist[idx2].y);
+            
+            obj->plist[poly].text[0] = idx0;
+            obj->plist[poly].text[1] = idx1;
+            obj->plist[poly].text[2] = idx2;
+    }
+    
 
+    }
+    
     Compute_OBJECT4DV2_Poly_Normals(obj);
     Compute_OBJECT4DV2_Vertex_Normals(obj);
     fclose(fp);
