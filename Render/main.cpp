@@ -882,7 +882,7 @@ int main(int argc, char *argv[])
         z = 15;
         VECTOR4D vscale = {scale,scale,scale,scale}, vpos = {x,y,z,1}, vrot = {r,r,r,1};
 #ifdef __APPLE__
-        Load_OBJECT4DV2_PLG(&obj,"/MyFiles/Work/GitProject/Render/Render/cube1.plg", &vscale, &vpos, &vrot);
+        Load_OBJECT4DV2_PLG(&obj,"/MyFiles/Work/GitProject/Render/Render/cubeTex.plg", &vscale, &vpos, &vrot);
 #else
         Load_OBJECT4DV2_PLG(&obj,"C:\\Users\\Administrator\\Documents\\GitHub\\Render\\Render\\cube1.plg", &vscale, &vpos, &vrot);
 #endif
