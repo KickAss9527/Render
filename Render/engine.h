@@ -362,6 +362,10 @@ typedef struct CAM4DV1_TYP{
 #define VERTEX4DTV1_ATTR_NORMAL 0x0002
 #define VERTEX4DTV1_ATTR_TEXTURE 0x0004
 
+#define CLIP_POLY_X_PLANE   0x0001
+#define CLIP_POLY_Y_PLANE   0x0002
+#define CLIP_POLY_Z_PLANE   0x0004
+#define CLIP_POLY_XYZ_PLANE   (CLIP_POLY_X_PLANE|CLIP_POLY_Y_PLANE|CLIP_POLY_Z_PLANE)
 
 int Load_OBJECT4DV1_PLG(OBJECT4DV1_PTR obj, char *filename, VECTOR4D_PTR scale, VECTOR4D_PTR pos, VECTOR4D_PTR rot);
 int Load_OBJECT4DV2_PLG(OBJECT4DV2_PTR obj,
@@ -451,4 +455,5 @@ void Rotate_XYZ_OBJECT4DV2(OBJECT4DV2_PTR obj,
                            int all_frames=0);
 void Sort_RENDERLIST4DV1(RENDERLIST4DV1_PTR rend_list, int sort_method);
 void Sort_RENDERLIST4DV2(RENDERLIST4DV2_PTR rend_list, int sort_method);
+void Clip_Polys_RENDERLIST4DV2(RENDERLIST4DV2_PTR rend_list, CAM4DV1_PTR cam, int clip_flags);
 #endif // ENGINE_H_INCLUDED

@@ -1764,12 +1764,12 @@ void loadTexture(string filename, BITMAP_IMAGE_PTR tex)
     path = "C:\\Users\\Administrator\\Documents\\GitHub\\Render\\Render\\";
 #endif
     path = path+filename;
-    
+
     FILE* pfile = fopen(path.c_str(),"rb");
-    
+
     if(pfile == 0) exit(0);
     //读取图像大小
-    
+
     fseek(pfile,0x0012,SEEK_SET);
     fread(&tex->width,sizeof(tex->width),1,pfile);
     fread(&tex->height,sizeof(tex->height),1,pfile);
@@ -1782,7 +1782,7 @@ void loadTexture(string filename, BITMAP_IMAGE_PTR tex)
     if(tex->buffer == 0) exit(0);
     fseek(pfile,54,SEEK_SET);
     fread(tex->buffer,pixellength,1,pfile);
-    
+
     //关闭文件
     fclose(pfile);
 }
@@ -1924,7 +1924,7 @@ int Load_OBJECT4DV2_PLG(OBJECT4DV2_PTR obj,
         obj->plist[poly].vlist = obj->vlist_local;
         obj->plist[poly].tlist = obj->tlist;
     }
-    
+
     if ((token_string = Get_Line_PLG(buffer, 255, fp)))
     {
         char tmpString[50];
@@ -1932,7 +1932,7 @@ int Load_OBJECT4DV2_PLG(OBJECT4DV2_PTR obj,
         sscanf(token_string, "%s", tmpString);
         loadTexture(tmpString, &tex);
         obj->texture = &tex;
-        
+
         token_string = Get_Line_PLG(buffer, 255, fp);
         for (int poly=0; poly<obj->num_polys; poly++)
         {
@@ -1951,15 +1951,15 @@ int Load_OBJECT4DV2_PLG(OBJECT4DV2_PTR obj,
                    &obj->tlist[idx1].y,
                    &obj->tlist[idx2].x,
                    &obj->tlist[idx2].y);
-            
+
             obj->plist[poly].text[0] = idx0;
             obj->plist[poly].text[1] = idx1;
             obj->plist[poly].text[2] = idx2;
     }
-    
+
 
     }
-    
+
     Compute_OBJECT4DV2_Poly_Normals(obj);
     Compute_OBJECT4DV2_Vertex_Normals(obj);
     fclose(fp);
@@ -2590,8 +2590,7 @@ void World_To_Camera_RENDERLIST4DV2(RENDERLIST4DV2_PTR rend_list, CAM4DV1_PTR ca
         if (curr_poly == NULL ||
             !(curr_poly->state & POLY4DV2_STATE_ACTIVE) ||
             curr_poly->state & POLY4DV2_STATE_CLIPPED ||
-            curr_poly->state & POLY4DV2_STATE_BACKFACE ||
-            curr_poly->attr & POLY4DV2_ATTR_2SIDED)
+            curr_poly->state & POLY4DV2_STATE_BACKFACE)
         {
             continue;
         }
@@ -2622,8 +2621,7 @@ void Camera_To_Perspective_RENDERLIST4DV2(RENDERLIST4DV2_PTR rend_list, CAM4DV1_
         if (curr_poly == NULL ||
             !(curr_poly->state & POLY4DV2_STATE_ACTIVE) ||
             curr_poly->state & POLY4DV2_STATE_CLIPPED ||
-            curr_poly->state & POLY4DV2_STATE_BACKFACE ||
-            curr_poly->attr & POLY4DV2_ATTR_2SIDED)
+            curr_poly->state & POLY4DV2_STATE_BACKFACE)
         {
             continue;
         }
@@ -2927,5 +2925,286 @@ void Sort_RENDERLIST4DV2(RENDERLIST4DV2_PTR rend_list, int sort_method)
         default:
             break;
     }
+}
+
+void Clip_Polys_RENDERLIST4DV2(RENDERLIST4DV2_PTR rend_list, CAM4DV1_PTR cam, int clip_flags)
+{
+    #define CLIP_CODE_GZ    0x0001  //z>zmax,
+    #define CLIP_CODE_LZ    0x0002  //z < zmin
+    #define CLIP_CODE_IZ    0x0004  // zmin<z<zmax
+    #define CLIP_CODE_GX    0x0001
+    #define CLIP_CODE_LX    0x0002
+    #define CLIP_CODE_IX    0x0004
+    #define CLIP_CODE_GY    0x0001
+    #define CLIP_CODE_LY    0x0002
+    #define CLIP_CODE_IY    0x0004
+    #define CLIP_CODE_NULL  0x0000
+
+    int vertex_ccodes[3];
+    int num_verts_in;
+    int v0, v1, v2;
+    float z_factor, z_test;
+    float xi, yi, x01i, y01i, x02i, y02i, t1, t2, ui, vi, u01i, v01i, u02i, v02i;
+    int last_poly_index, insert_poly_index;
+    VECTOR4D u, v, n;
+    POLYF4DV2 temp_poly;
+
+    insert_poly_index = last_poly_index = rend_list->num_polys;
+
+    for(int poly=0; poly<last_poly_index; poly++)
+    {
+        POLYF4DV2_PTR curr_poly = rend_list->poly_ptrs[poly];
+        if(!curr_poly || !(curr_poly->state & POLY4DV2_STATE_ACTIVE) ||
+           curr_poly->state & POLY4DV2_STATE_CLIPPED ||
+           curr_poly->state & POLY4DV2_STATE_BACKFACE)
+            continue;
+
+        if(clip_flags & CLIP_POLY_X_PLANE)
+        {
+            z_factor = 0.5*cam->viewplane_width/cam->view_dist;
+
+            z_test = z_factor*curr_poly->tvlist[0].z;
+            if(curr_poly->tvlist[0].x > z_test)
+                vertex_ccodes[0] = CLIP_CODE_GX;
+            else if(curr_poly->tvlist[0].x < -z_test)
+                vertex_ccodes[0] = CLIP_CODE_LX;
+            else
+                vertex_ccodes[0] = CLIP_CODE_IX;
+
+            z_test = z_factor*curr_poly->tvlist[1].z;
+            if(curr_poly->tvlist[1].x > z_test)
+                vertex_ccodes[1] = CLIP_CODE_GX;
+            else if(curr_poly->tvlist[1].x < -z_test)
+                vertex_ccodes[1] = CLIP_CODE_LX;
+            else
+                vertex_ccodes[1] = CLIP_CODE_IX;
+
+            z_test = z_factor*curr_poly->tvlist[2].z;
+            if(curr_poly->tvlist[2].x > z_test)
+                vertex_ccodes[2] = CLIP_CODE_GX;
+            else if(curr_poly->tvlist[2].x < -z_test)
+                vertex_ccodes[2] = CLIP_CODE_LX;
+            else
+                vertex_ccodes[2] = CLIP_CODE_IX;
+
+            if(((vertex_ccodes[0] == CLIP_CODE_LX) && (vertex_ccodes[1] == CLIP_CODE_LX) && (vertex_ccodes[2] == CLIP_CODE_LX)) ||
+               ((vertex_ccodes[0] == CLIP_CODE_GX) && (vertex_ccodes[1] == CLIP_CODE_GX) && (vertex_ccodes[2] == CLIP_CODE_GX)))
+            {
+                SET_BIT(curr_poly->state, POLY4DV2_STATE_CLIPPED);
+                continue;
+            }
+        }
+
+        if(clip_flags & CLIP_POLY_Y_PLANE)
+        {
+            z_factor = 0.5*cam->viewplane_height/cam->view_dist;
+
+              z_test = z_factor*curr_poly->tvlist[0].z;
+              if(curr_poly->tvlist[0].y > z_test)
+                  vertex_ccodes[0] = CLIP_CODE_GY;
+              else if(curr_poly->tvlist[0].y < -z_test)
+                  vertex_ccodes[0] = CLIP_CODE_LY;
+              else
+                  vertex_ccodes[0] = CLIP_CODE_IY;
+
+              z_test = z_factor*curr_poly->tvlist[1].z;
+              if(curr_poly->tvlist[1].y > z_test)
+                  vertex_ccodes[1] = CLIP_CODE_GY;
+              else if(curr_poly->tvlist[1].y < -z_test)
+                  vertex_ccodes[1] = CLIP_CODE_LY;
+              else
+                  vertex_ccodes[1] = CLIP_CODE_IY;
+
+              z_test = z_factor*curr_poly->tvlist[2].z;
+              if(curr_poly->tvlist[2].y > z_test)
+                  vertex_ccodes[2] = CLIP_CODE_GY;
+              else if(curr_poly->tvlist[2].y < -z_test)
+                  vertex_ccodes[2] = CLIP_CODE_LY;
+              else
+                  vertex_ccodes[2] = CLIP_CODE_IY;
+
+              if((vertex_ccodes[0] == CLIP_CODE_LY && vertex_ccodes[1] == CLIP_CODE_LY && vertex_ccodes[2] == CLIP_CODE_LY) ||
+                 (vertex_ccodes[0] == CLIP_CODE_GY && vertex_ccodes[1] == CLIP_CODE_GY && vertex_ccodes[2] == CLIP_CODE_GY))
+              {
+                  SET_BIT(curr_poly->state, POLY4DV2_STATE_CLIPPED);
+                  continue;
+              }
+        }
+
+        if(clip_flags & CLIP_POLY_Z_PLANE)
+        {
+            printf("\n%.1f, %.1f, %.1f,",curr_poly->tvlist[0].z, curr_poly->tvlist[1].z, curr_poly->tvlist[2].z);
+             num_verts_in = 0;
+             if(curr_poly->tvlist[0].z > cam->far_clip_z)
+             {
+                 vertex_ccodes[0] = CLIP_CODE_GZ;
+             }
+             else if(curr_poly->tvlist[0].z < cam->near_clip_z)
+             {
+                 vertex_ccodes[0] = CLIP_CODE_LZ;
+             }
+             else
+             {
+                 vertex_ccodes[0] = CLIP_CODE_IZ;
+                 num_verts_in++;
+             }
+
+             if(curr_poly->tvlist[1].z > cam->far_clip_z)
+             {
+                 vertex_ccodes[1] = CLIP_CODE_GZ;
+             }
+             else if(curr_poly->tvlist[1].z < cam->near_clip_z)
+             {
+                 vertex_ccodes[1] = CLIP_CODE_LZ;
+             }
+             else
+             {
+                 vertex_ccodes[1] = CLIP_CODE_IZ;
+                 num_verts_in++;
+             }
+
+             if(curr_poly->tvlist[2].z > cam->far_clip_z)
+             {
+                 vertex_ccodes[2] = CLIP_CODE_GZ;
+             }
+             else if(curr_poly->tvlist[2].z < cam->near_clip_z)
+             {
+                 vertex_ccodes[2] = CLIP_CODE_LZ;
+             }
+             else
+             {
+                 vertex_ccodes[2] = CLIP_CODE_IZ;
+                 num_verts_in++;
+             }
+
+             if((vertex_ccodes[0] == CLIP_CODE_LZ && vertex_ccodes[1] == CLIP_CODE_LZ && vertex_ccodes[2] == CLIP_CODE_LZ) ||
+                 (vertex_ccodes[0] == CLIP_CODE_GZ && vertex_ccodes[1] == CLIP_CODE_GZ && vertex_ccodes[2] == CLIP_CODE_GZ))
+             {
+                 SET_BIT(curr_poly->state, POLY4DV2_STATE_CLIPPED);
+                 continue;
+             }
+
+             if((vertex_ccodes[0] | vertex_ccodes[1] | vertex_ccodes[2]) & CLIP_CODE_LZ)
+             {
+                 if(num_verts_in==1)
+                 {
+                     if(vertex_ccodes[0] == CLIP_CODE_IZ)
+                     {
+                         v0 = 0; v1 = 1; v2 = 2;
+                     }
+                     else if(vertex_ccodes[1] == CLIP_CODE_IZ)
+                     {
+                         v0 = 1; v1 = 2; v2 = 0;
+                     }
+                     else
+                     {
+                         v0 = 2; v1 = 0; v2 = 1;
+                     }
+
+                     VECTOR4D_Build(&curr_poly->tvlist[v0].v, &curr_poly->tvlist[v1].v, &v);
+                     t1 = (cam->near_clip_z - curr_poly->tvlist[v0].z) / v.z;
+                     xi = curr_poly->tvlist[v0].x + v.x * t1;
+                     yi = curr_poly->tvlist[v0].y + v.y * t1;
+                     curr_poly->tvlist[v1].x = xi;
+                     curr_poly->tvlist[v1].y = yi;
+                     curr_poly->tvlist[v1].z = cam->near_clip_z;
+
+                     VECTOR4D_Build(&curr_poly->tvlist[v0].v, &curr_poly->tvlist[v2].v, &v);
+                     t2 = (cam->near_clip_z - curr_poly->tvlist[v0].z) / v.z;
+                     xi = curr_poly->tvlist[v0].x + v.x * t2;
+                     yi = curr_poly->tvlist[v0].y + v.y * t2;
+                     curr_poly->tvlist[v2].x = xi;
+                     curr_poly->tvlist[v2].y = yi;
+                     curr_poly->tvlist[v2].z = cam->near_clip_z;
+
+                     if(curr_poly->attr & POLY4DV2_ATTR_SHADE_MODE_TEXTURE)
+                     {
+                         ui = curr_poly->tvlist[v0].u0 + (curr_poly->tvlist[v1].u0 - curr_poly->tvlist[v0].u0)*t1;
+                         vi = curr_poly->tvlist[v0].v0 + (curr_poly->tvlist[v1].v0 - curr_poly->tvlist[v0].v0)*t1;
+                         curr_poly->tvlist[v1].u0 = ui;
+                         curr_poly->tvlist[v1].v0 = vi;
+
+                         ui = curr_poly->tvlist[v0].u0 + (curr_poly->tvlist[v2].u0 - curr_poly->tvlist[v0].u0)*t2;
+                         vi = curr_poly->tvlist[v0].v0 + (curr_poly->tvlist[v2].v0 - curr_poly->tvlist[v0].v0)*t2;
+                         curr_poly->tvlist[v2].u0 = ui;
+                         curr_poly->tvlist[v2].v0 = vi;
+                     }
+
+                     VECTOR4D_Build(&curr_poly->tvlist[v0].v, &curr_poly->tvlist[v1].v, &u);
+                     VECTOR4D_Build(&curr_poly->tvlist[v0].v, &curr_poly->tvlist[v2].v, &v);
+                     VECTOR4D_Cross(&u, &v, &n);
+                     curr_poly->nlength = VECTOR4D_Length(&n);
+                 }
+                 else if(num_verts_in==2)
+                 {
+                    memcpy(&temp_poly, curr_poly, sizeof(POLY4DV2));
+                    if(vertex_ccodes[0] == CLIP_CODE_LZ)
+                    {
+                        v0 = 0; v1 = 1; v2 = 2;
+                    }
+                    else if(vertex_ccodes[1] == CLIP_CODE_IZ)
+                    {
+                        v0 = 1; v1 = 2; v2 = 0;
+                    }
+                    else
+                    {
+                        v0 = 2; v1 = 0; v2 = 1;
+                    }
+
+                    VECTOR4D_Build(&curr_poly->tvlist[v0].v, &curr_poly->tvlist[v1].v, &v);
+                    t1 = (cam->near_clip_z - curr_poly->tvlist[v0].z) / v.z;
+                    x01i = curr_poly->tvlist[v0].x + v.x * t1;
+                    y01i = curr_poly->tvlist[v0].y + v.y * t1;
+
+                    VECTOR4D_Build(&curr_poly->tvlist[v0].v, &curr_poly->tvlist[v2].v, &v);
+                    t2 = (cam->near_clip_z - curr_poly->tvlist[v0].z) / v.z;
+                    x02i = curr_poly->tvlist[v0].x + v.x * t2;
+                    y02i = curr_poly->tvlist[v0].y + v.y * t2;
+
+                    curr_poly->tvlist[v0].x = x01i;
+                    curr_poly->tvlist[v0].y = y01i;
+                    curr_poly->tvlist[v0].z = cam->near_clip_z;
+
+                    temp_poly.tvlist[v1].x = x01i;
+                    temp_poly.tvlist[v1].y = y01i;
+                    temp_poly.tvlist[v1].z = cam->near_clip_z;
+
+                    temp_poly.tvlist[v0].x = x02i;
+                    temp_poly.tvlist[v0].y = y02i;
+                    temp_poly.tvlist[v0].z = cam->near_clip_z;
+
+                    if(curr_poly->attr & POLY4DV2_ATTR_SHADE_MODE_TEXTURE)
+                     {
+                         u01i = curr_poly->tvlist[v0].u0 + (curr_poly->tvlist[v1].u0 - curr_poly->tvlist[v0].u0)*t1;
+                         v01i = curr_poly->tvlist[v0].v0 + (curr_poly->tvlist[v1].v0 - curr_poly->tvlist[v0].v0)*t1;
+
+                         u02i = curr_poly->tvlist[v0].u0 + (curr_poly->tvlist[v2].u0 - curr_poly->tvlist[v0].u0)*t2;
+                         v02i = curr_poly->tvlist[v0].v0 + (curr_poly->tvlist[v2].v0 - curr_poly->tvlist[v0].v0)*t2;
+
+                        curr_poly->tvlist[v2].u0 = u01i;
+                         curr_poly->tvlist[v2].v0 = v01i;
+
+                        temp_poly.tvlist[v0].u0 = u02i;
+                        temp_poly.tvlist[v0].v0 = v02i;
+                        temp_poly.tvlist[v1].u0 = u01i;
+                        temp_poly.tvlist[v1].v0 = v01i;
+                     }
+
+                    VECTOR4D_Build(&curr_poly->tvlist[v0].v, &curr_poly->tvlist[v1].v, &u);
+                    VECTOR4D_Build(&curr_poly->tvlist[v0].v, &curr_poly->tvlist[v2].v, &v);
+                    VECTOR4D_Cross(&u, &v, &n);
+                    curr_poly->nlength = VECTOR4D_Length(&n);
+
+                    VECTOR4D_Build(&temp_poly.tvlist[v0].v, &temp_poly.tvlist[v1].v, &u);
+                    VECTOR4D_Build(&temp_poly.tvlist[v0].v, &temp_poly.tvlist[v2].v, &v);
+                    VECTOR4D_Cross(&u, &v, &n);
+                    temp_poly.nlength = VECTOR4D_Length(&n);
+                    Insert_POLYF4DV2_RENDERLIST4DV2(rend_list, &temp_poly);
+                 }
+            }
+        }
+    }
+
+
 }
 

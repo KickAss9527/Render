@@ -37,6 +37,7 @@ OBJECT4DV2 gAllObjects[100];
 bool isDrawWireframe = 10;
 int refreshFrequency = 30;
 BITMAP_IMAGE myTex;
+
 #define AMBIENT_LIGHT_INDEX   0 // ambient light index
 #define INFINITE_LIGHT_INDEX  1 // infinite light index
 #define POINT_LIGHT_INDEX     2 // point light index
@@ -47,7 +48,7 @@ void drawPoint(POINT4D_PTR p, RGBAV1_PTR color)
     float w = sSize*0.5;
     POINT2D np = {(p->x-w)/w, (w-p->y)/w};
     glBegin (GL_POINTS);
-
+    //if(color->r + color->g  + color->b < 1){printf("\n, p->x:%.2f", p->x);}
     glColor3f (color->r/255.0, color->g/255.0, color->b/255.0);
 
     glVertex2f(np.x, np.y);
@@ -536,7 +537,7 @@ void drawTrangleGOURAUD(POINT4D_PTR p0, POINT4D_PTR p1, POINT4D_PTR p2,RGBAV1_PT
     }
 
     drawTranglePlaneGOURAUD(pt, pm, pb, ct, cm, cb);
-    
+
 }
 
 
@@ -560,7 +561,7 @@ void drawPoly2(RENDERLIST4DV2_PTR rend_list)
         {
             continue;
         }
-        
+
         if (curr_poly->attr & POLY4DV2_ATTR_SHADE_MODE_TEXTURE)
         {
             drawTrangleTexture(&curr_poly->tvlist[0], &curr_poly->tvlist[1], &curr_poly->tvlist[2]);
@@ -618,7 +619,6 @@ void drawPoly2(RENDERLIST4DV2_PTR rend_list)
 
         }
     }
-
 }
 
 int btnCnt = 6;
@@ -708,10 +708,9 @@ void loadLights()
 void myDisplay ()
 {
     Reset_RENDERLIST4DV2(&gRend_list);
-    for (int i=0; i<100; i++)
+    for (int i=0; i<1000; i++)
     {
         OBJECT4DV2_PTR obj = &gAllObjects[i];
-
         static float ro = 1;
         ro += 0.000001;
         Rotate_XYZ_OBJECT4DV2(obj, 0, ro, 0);
@@ -725,6 +724,7 @@ void myDisplay ()
     Remove_Backfaces_RENDERLIST4DV2(&gRend_list, &gCam);
     Light_RENDERLIST4DV2_World16(&gRend_list, &gCam, GetLightList(), 4);
     World_To_Camera_RENDERLIST4DV2(&gRend_list, &gCam);
+    Clip_Polys_RENDERLIST4DV2(&gRend_list, &gCam, CLIP_POLY_Z_PLANE);
     Sort_RENDERLIST4DV2(&gRend_list, SORT_POLYLIST_AVGZ);
     Camera_To_Perspective_RENDERLIST4DV2(&gRend_list, &gCam);
     Perspective_To_Screen_RENDERLIST4DV2(&gRend_list, &gCam);
@@ -841,9 +841,44 @@ void loadTexture()
 
 }
 
+void keyboardEvt(int key, int x, int y)
+{
+    float offset = 1.1;
+    switch(key)
+    {
+        case GLUT_KEY_DOWN:
+        {
+            gCam.pos.y -= offset;
+        }break;
+                case GLUT_KEY_UP:
+        {
+            gCam.pos.y += offset;
+        }break;
+                case GLUT_KEY_LEFT:
+        {
+            gCam.pos.x -= offset;
+        }break;
+                case GLUT_KEY_RIGHT:
+        {
+            gCam.pos.x += offset;
+        }break;
+                        case GLUT_KEY_HOME:
+        {
+            gCam.pos.z -= offset;
+        }break;
+                case GLUT_KEY_END:
+        {
+            gCam.pos.z += offset;
+        }break;
+    }
+
+    Build_CAM4DV1_Matrix_Euler(&gCam, CAM_ROT_SEQ_ZYX);
+}
+
 int main(int argc, char *argv[])
 {
     loadTexture();
+
     POINT4D cam_pos = {0,30,0,1};
     VECTOR4D cam_dir = {0,0,0,1};
 
@@ -884,7 +919,7 @@ int main(int argc, char *argv[])
 #ifdef __APPLE__
         Load_OBJECT4DV2_PLG(&obj,"/MyFiles/Work/GitProject/Render/Render/cubeTex.plg", &vscale, &vpos, &vrot);
 #else
-        Load_OBJECT4DV2_PLG(&obj,"C:\\Users\\Administrator\\Documents\\GitHub\\Render\\Render\\cube1.plg", &vscale, &vpos, &vrot);
+        Load_OBJECT4DV2_PLG(&obj,"C:\\Users\\Administrator\\Documents\\GitHub\\Render\\Render\\sphere.plg", &vscale, &vpos, &vrot);
 #endif
         gAllObjects[cube+towerCnt] = obj;
         obj.texture = &myTex;
@@ -899,7 +934,7 @@ int main(int argc, char *argv[])
     glutCreateWindow ("hello word!");//¥¥Ω®√˚≥∆Œ™"hello word!"µƒ¥∞ø⁄,¥∞ø⁄¥¥Ω®∫Û≤ªª·¡¢º¥œ‘ æµΩ∆¡ƒª…œ,“™µ˜”√∫Û√ÊµƒglutMainLoop()≤≈ª·œ‘ æ
     glutDisplayFunc(myDisplay);//µ˜”√ªÊ÷∆∫Ø ˝ πÀ¸œ‘ æ‘⁄∏’¥¥Ω®µƒ¥∞ø⁄…œ
    glutTimerFunc(refreshFrequency, onTimer, 1);
-
+    glutSpecialFunc(keyboardEvt);
     glutMouseFunc(myMouse);
     glutMainLoop();//œ˚œ¢—≠ª∑,¥∞ø⁄πÿ±’≤≈ª·∑µªÿ
 

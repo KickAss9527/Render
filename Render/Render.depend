@@ -339,7 +339,7 @@
 	<stdlib.h>
 	<math.h>
 
-1481724780 source:c:\users\administrator\documents\github\render\render\engine.cpp
+1482062297 source:c:\users\administrator\documents\github\render\render\engine.cpp
 	<iostream>
 	<string.h>
 	<stdio.h>
@@ -347,7 +347,7 @@
 	<stdlib.h>
 	<math.h>
 
-1481724780 c:\users\administrator\documents\github\render\render\engine.h
+1482063609 c:\users\administrator\documents\github\render\render\engine.h
 	"lxMath.h"
 
 1481724781 c:\users\administrator\documents\github\render\render\lxmath.h
@@ -358,13 +358,12 @@
 	<iostream>
 	"lxMath.h"
 
-1481725775 source:c:\users\administrator\documents\github\render\render\main.cpp
+1482063855 source:c:\users\administrator\documents\github\render\render\main.cpp
 	<GLUT/glut.h>
 	<windows.h>
 	<GL/glut.h>
 	<GL/gl.h>
 	<GL/glext.h>
-	<stdlib.h>
 	"lxMath.h"
 	"engine.h"
 	<iostream>
