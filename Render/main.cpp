@@ -843,7 +843,7 @@ void loadTexture()
 
 void keyboardEvt(int key, int x, int y)
 {
-    float offset = 1.1;
+    float offset = 0.1;
     switch(key)
     {
         case GLUT_KEY_DOWN:
@@ -882,7 +882,7 @@ int main(int argc, char *argv[])
     POINT4D cam_pos = {0,30,0,1};
     VECTOR4D cam_dir = {0,0,0,1};
 
-    Init_CAM4DV1(&gCam, &cam_pos, &cam_dir, 50,sSize,90, sSize,sSize);
+    Init_CAM4DV1(&gCam, &cam_pos, &cam_dir, 10,sSize,90, sSize,sSize);
     Build_CAM4DV1_Matrix_Euler(&gCam, CAM_ROT_SEQ_ZYX);
 
     int towerCnt = 0;
@@ -911,10 +911,11 @@ int main(int argc, char *argv[])
         float r = rand()%100;
         int xt = 400;
         float x = xt*0.5 - rand()%xt;
-        float z = 30 + rand()%100;
+        float z = 20 + rand()%100;
         float y = 24;
         x = 0;
         z = 15;
+        scale = 3;
         VECTOR4D vscale = {scale,scale,scale,scale}, vpos = {x,y,z,1}, vrot = {r,r,r,1};
 #ifdef __APPLE__
         Load_OBJECT4DV2_PLG(&obj,"/MyFiles/Work/GitProject/Render/Render/cubeTex.plg", &vscale, &vpos, &vrot);
