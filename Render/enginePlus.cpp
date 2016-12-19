@@ -86,7 +86,8 @@ void showBmpInforHead(tagBITMAPINFOHEADER pBmpInforHead){
     cout<<"重要颜色数:"<<pBmpInforHead.biClrImportant<<endl;
 }
 
-void ReadFile(char *strFile, BITMAP_IMAGE_PTR tex){
+void LoadBitmap(char *strFile, BITMAP_IMAGE_PTR tex)
+{
     
     FILE *fpi,*fpw;
     fpi=fopen(strFile,"rb");
@@ -117,9 +118,7 @@ void ReadFile(char *strFile, BITMAP_IMAGE_PTR tex){
                 fread((char *)&strPla[nCounti].rgbBlue,1,sizeof(BYTE),fpi);
                 fread((char *)&strPla[nCounti].rgbGreen,1,sizeof(BYTE),fpi);
                 fread((char *)&strPla[nCounti].rgbRed,1,sizeof(BYTE),fpi);
-//                cout<<"strPla[nCounti].rgbBlue"<<strPla[nCounti].rgbBlue<<endl;
-//                cout<<"strPla[nCounti].rgbGreen"<<strPla[nCounti].rgbGreen<<endl;
-//                cout<<"strPla[nCounti].rgbRed"<<strPla[nCounti].rgbRed<<endl;
+                fread((char *)&strPla[nCounti].rgbReserved,1,sizeof(BYTE),fpi);
             }
             int length = tex->width*tex->height;
             tex->buffer = (UCHAR*)malloc(length*3);
@@ -129,8 +128,8 @@ void ReadFile(char *strFile, BITMAP_IMAGE_PTR tex){
                 int idx = tex->buffer[i];
                 printf("\ni : %d", idx);
                 tagRGBQUAD rgba = strPla[idx];
-                tex->buffer[i*3] = rgba.rgbGreen;
-                tex->buffer[i*3 + 1] = rgba.rgbBlue;
+                tex->buffer[i*3] = rgba.rgbBlue;
+                tex->buffer[i*3 + 1] = rgba.rgbGreen;
                 tex->buffer[i*3 + 2] = rgba.rgbRed;
             }
             tex->bitCnt = 8*3;
@@ -168,7 +167,7 @@ void ReadFile(char *strFile, BITMAP_IMAGE_PTR tex){
 
 }
 
-static int TerrainHeightMax = 40;
+static int TerrainHeightMax = 60;
 static float TerrainSizeScale = 4;
 void GenerateTerrain(OBJECT4DV2_PTR obj)
 {
@@ -184,7 +183,7 @@ void GenerateTerrain(OBJECT4DV2_PTR obj)
     obj->attr = OBJECT4DV2_ATTR_SINGLE_FRAME;
     
     BITMAP_IMAGE texture;
-    ReadFile("/MyFiles/Work/GitProject/Render/Render/earthheightmap03.bmp", &texture);
+    LoadBitmap("/MyFiles/Work/GitProject/Render/Render/earthheightmap03.bmp", &texture);
     
     int deltaX = texture.width*0.5*TerrainSizeScale;
     int deltaZ = texture.height*0.5*TerrainSizeScale;
@@ -204,7 +203,8 @@ void GenerateTerrain(OBJECT4DV2_PTR obj)
         for (int x=0; x<=tmpX; x++)
         {
             POINT2D p = {x*texture.width/tmpX, z*texture.height/tmpZ};
-            RGBAV1 c = getTextureColor(&texture, &p);
+            POINT2D texP = {p.x, texture.height - p.y};
+            RGBAV1 c = getTextureColor(&texture, &texP);
             POINT3D coord;
             coord.x = p.x*TerrainSizeScale - deltaX;
             coord.z = p.y*TerrainSizeScale - deltaZ;

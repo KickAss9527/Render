@@ -809,37 +809,6 @@ void display(void)
 glFlush();
 }
 
-void loadTexture()
-{
-#ifdef __APPLE__
-
-    FILE* pfile=fopen("/MyFiles/Work/GitProject/Render/Render/metal04.bmp","rb");
-#else
-    FILE* pfile=fopen("C:\\Users\\Administrator\\Documents\\GitHub\\Render\\Render\\metal04.bmp","rb");
-#endif
-
-     if(pfile == 0) exit(0);
-     //读取图像大小
-
-
-     fseek(pfile,0x0012,SEEK_SET);
-     fread(&myTex.width,sizeof(myTex.width),1,pfile);
-     fread(&myTex.height,sizeof(myTex.height),1,pfile);
-     //计算像素数据长度
-     int pixellength=myTex.width*3;
-     while(pixellength%4 != 0)pixellength++;
-     pixellength *= myTex.height;
-     //读取像素数据
-     myTex.buffer = (GLubyte*)malloc(pixellength);
-     if(myTex.buffer == 0) exit(0);
-     fseek(pfile,54,SEEK_SET);
-     fread(myTex.buffer,pixellength,1,pfile);
-
-     //关闭文件
-     fclose(pfile);
-
-}
-
 void keyboardEvt(int key, int x, int y)
 {
     float offset = keyboardMovingOffset;
@@ -876,7 +845,7 @@ void keyboardEvt(int key, int x, int y)
 
 int main(int argc, char *argv[])
 {
-    loadTexture();
+    LoadBitmap("/MyFiles/Work/GitProject/Render/Render/earthheightmap03.bmp", &myTex);
     
     POINT4D cam_pos = {0,30,0,1};
     VECTOR4D cam_dir = {0,0,0,1};

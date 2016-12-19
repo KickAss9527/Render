@@ -12,7 +12,7 @@
 #include <stdio.h>
 #include <math.h>
 #include "engine.h"
-
+void LoadBitmap(char *strFile, BITMAP_IMAGE_PTR tex);
 void GenerateTerrain(OBJECT4DV2_PTR obj);
 
 #endif /* enginePlus_h */
