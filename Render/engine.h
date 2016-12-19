@@ -27,6 +27,7 @@ typedef struct BITMAP_IMAGE_TYP{
     int width,height;
     int num_bytes;
     int bpp;
+    int bitCnt;
     UCHAR *buffer;
 }BITMAP_IMAGE, *BITMAP_IMAGE_PTR;
 

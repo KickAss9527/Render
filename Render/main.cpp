@@ -37,7 +37,7 @@ RENDERLIST4DV2 gRend_list;
 OBJECT4DV2 gAllObjects[100];
 bool isDrawWireframe = 10;
 int refreshFrequency = 30;
-bool isRotate = 0;
+bool isRotate = 10;
 float keyboardMovingOffset = 2;
 BITMAP_IMAGE myTex;
 
@@ -710,7 +710,8 @@ void myDisplay ()
         ro += 0.000001;
         if(isRotate)
         {
-            Rotate_XYZ_OBJECT4DV2(obj, ro, ro, 0);
+            Rotate_XYZ_OBJECT4DV2(obj, -30, 0, 0);
+            isRotate = false;
         }
         if (!(obj->state & OBJECT4DV2_STATE_ACTIVE))
         {

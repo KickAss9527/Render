@@ -1754,11 +1754,19 @@ void Rotate_XYZ_OBJECT4DV2(OBJECT4DV2_PTR obj,
 
 RGBAV1 getTextureColor(BITMAP_IMAGE_PTR tex, POINT2D_PTR pos)
 {
-    int delta = 3*((tex->height - pos->y)*tex->width + pos->x);
     RGBAV1 c;
-    c.b = tex->buffer[delta];
-    c.g = tex->buffer[delta+1];
-    c.r = tex->buffer[delta+2];
+    if (tex->bitCnt==8)
+    {
+        printf("impossible");
+    }
+    else
+    {
+        int delta = tex->bitCnt*((tex->height - pos->y)*tex->width + pos->x)/8;
+        
+        c.b = tex->buffer[delta];
+        c.g = tex->buffer[delta+1];
+        c.r = tex->buffer[delta+2];
+    }
     return c;
 }
 
