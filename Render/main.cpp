@@ -28,6 +28,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
+#include "enginePlus.h"
 static int slices = 16;
 static int stacks = 16;
 int sSize = 800;
@@ -36,6 +37,8 @@ RENDERLIST4DV2 gRend_list;
 OBJECT4DV2 gAllObjects[100];
 bool isDrawWireframe = 10;
 int refreshFrequency = 30;
+bool isRotate = 0;
+float keyboardMovingOffset = 2;
 BITMAP_IMAGE myTex;
 
 #define AMBIENT_LIGHT_INDEX   0 // ambient light index
@@ -55,15 +58,7 @@ void drawPoint(POINT4D_PTR p, RGBAV1_PTR color)
     glEnd ();
 }
 
-RGBAV1 getTexture(BITMAP_IMAGE_PTR tex, POINT2D_PTR pos)
-{
-    int delta = 3*((tex->height - pos->y)*tex->width + pos->x);
-    RGBAV1 c;
-    c.b = tex->buffer[delta];
-    c.g = tex->buffer[delta+1];
-    c.r = tex->buffer[delta+2];
-    return c;
-}
+
 
 void drawLine(POINT4D_PTR p0, POINT4D_PTR p1)
 {
@@ -109,7 +104,7 @@ void drawTranglePlane(POINT4D_PTR pt, POINT4D_PTR pm, POINT4D_PTR pb)
     }
 }
 
-void drawTranglePlaneTexture(VERTEX4DTV1_PTR pt, VERTEX4DTV1_PTR pm, VERTEX4DTV1_PTR pb)
+void drawTranglePlaneTexture(VERTEX4DTV1_PTR pt, VERTEX4DTV1_PTR pm, VERTEX4DTV1_PTR pb, BITMAP_IMAGE_PTR tex)
 {
     float ymt = (pm->y - pt->y);
     float ybt = (pb->y - pt->y);
@@ -179,12 +174,12 @@ void drawTranglePlaneTexture(VERTEX4DTV1_PTR pt, VERTEX4DTV1_PTR pm, VERTEX4DTV1
             uv.x = MIN(MAX(0, tmpU), 1);
             uv.y = MIN(MAX(0, tmpV), 1);
 
-            uv.x *= myTex.width;
-            uv.y *= myTex.height;
+            uv.x *= tex->width;
+            uv.y *= tex->height;
 
             uv.x = floor(uv.x);
             uv.y = floor(uv.y);
-            RGBAV1 color = getTexture(&myTex, &uv);
+            RGBAV1 color = getTextureColor(tex, &uv);
             drawPoint(&p0, &color);
         }
 
@@ -432,7 +427,7 @@ void drawTrangle(POINT4D_PTR p0, POINT4D_PTR p1, POINT4D_PTR p2)
         drawTrangleTopPlane(pb, pm, &pTmp);
     }
 }
-void drawTrangleTexture(VERTEX4DTV1_PTR p0, VERTEX4DTV1_PTR p1, VERTEX4DTV1_PTR p2)
+void drawTrangleTexture(VERTEX4DTV1_PTR p0, VERTEX4DTV1_PTR p1, VERTEX4DTV1_PTR p2, BITMAP_IMAGE_PTR tex)
 {
 
     VERTEX4DTV1_PTR pt, pm, pb;
@@ -474,7 +469,7 @@ void drawTrangleTexture(VERTEX4DTV1_PTR p0, VERTEX4DTV1_PTR p1, VERTEX4DTV1_PTR 
         pb = p0;
     }
 
-    drawTranglePlaneTexture(pt, pm, pb);
+    drawTranglePlaneTexture(pt, pm, pb, tex);
 }
 
 void drawTrangleGOURAUD(POINT4D_PTR p0, POINT4D_PTR p1, POINT4D_PTR p2,RGBAV1_PTR c0, RGBAV1_PTR c1, RGBAV1_PTR c2)
@@ -564,7 +559,7 @@ void drawPoly2(RENDERLIST4DV2_PTR rend_list)
 
         if (curr_poly->attr & POLY4DV2_ATTR_SHADE_MODE_TEXTURE)
         {
-            drawTrangleTexture(&curr_poly->tvlist[0], &curr_poly->tvlist[1], &curr_poly->tvlist[2]);
+            drawTrangleTexture(&curr_poly->tvlist[0], &curr_poly->tvlist[1], &curr_poly->tvlist[2], &myTex);
         }
         else if (curr_poly->attr & POLY4DV2_ATTR_SHADE_MODE_GOURAUD)
         {
@@ -612,7 +607,7 @@ void drawPoly2(RENDERLIST4DV2_PTR rend_list)
                 continue;
             }
 
-            glColor3f (1.0, 1.0, 0.0);//…Ë÷√µ±«∞ª≠± —’…´
+            glColor3f (0.5, 0.5, 0);//…Ë÷√µ±«∞ª≠± —’…´
             drawLine(&curr_poly->tvlist[0].v, &curr_poly->tvlist[1].v);
             drawLine(&curr_poly->tvlist[2].v, &curr_poly->tvlist[1].v);
             drawLine(&curr_poly->tvlist[2].v, &curr_poly->tvlist[0].v);
@@ -713,7 +708,10 @@ void myDisplay ()
         OBJECT4DV2_PTR obj = &gAllObjects[i];
         static float ro = 1;
         ro += 0.000001;
-        Rotate_XYZ_OBJECT4DV2(obj, 0, ro, 0);
+        if(isRotate)
+        {
+            Rotate_XYZ_OBJECT4DV2(obj, ro, ro, 0);
+        }
         if (!(obj->state & OBJECT4DV2_STATE_ACTIVE))
         {
             break;
@@ -724,7 +722,7 @@ void myDisplay ()
     Remove_Backfaces_RENDERLIST4DV2(&gRend_list, &gCam);
     Light_RENDERLIST4DV2_World16(&gRend_list, &gCam, GetLightList(), 4);
     World_To_Camera_RENDERLIST4DV2(&gRend_list, &gCam);
-    Clip_Polys_RENDERLIST4DV2(&gRend_list, &gCam, CLIP_POLY_Z_PLANE);
+//    Clip_Polys_RENDERLIST4DV2(&gRend_list, &gCam, CLIP_POLY_Z_PLANE);
     Sort_RENDERLIST4DV2(&gRend_list, SORT_POLYLIST_AVGZ);
     Camera_To_Perspective_RENDERLIST4DV2(&gRend_list, &gCam);
     Perspective_To_Screen_RENDERLIST4DV2(&gRend_list, &gCam);
@@ -803,7 +801,7 @@ void display(void)
      {
          POINT4D np = {static_cast<float>(x),static_cast<float>(y), 1, 1};
          POINT2D t = {static_cast<float>(x),static_cast<float>(y)};
-         RGBAV1 c = getTexture(&myTex, &t);
+         RGBAV1 c = getTextureColor(&myTex, &t);
          drawPoint(&np, &c);
      }
  }
@@ -843,7 +841,7 @@ void loadTexture()
 
 void keyboardEvt(int key, int x, int y)
 {
-    float offset = 1.1;
+    float offset = keyboardMovingOffset;
     switch(key)
     {
         case GLUT_KEY_DOWN:
@@ -878,11 +876,11 @@ void keyboardEvt(int key, int x, int y)
 int main(int argc, char *argv[])
 {
     loadTexture();
-
+    
     POINT4D cam_pos = {0,30,0,1};
     VECTOR4D cam_dir = {0,0,0,1};
 
-    Init_CAM4DV1(&gCam, &cam_pos, &cam_dir, 50,sSize,90, sSize,sSize);
+    Init_CAM4DV1(&gCam, &cam_pos, &cam_dir, 10,sSize,90, sSize,sSize);
     Build_CAM4DV1_Matrix_Euler(&gCam, CAM_ROT_SEQ_ZYX);
 
     int towerCnt = 0;
@@ -904,7 +902,7 @@ int main(int argc, char *argv[])
         gAllObjects[tower] = obj;
     }
 
-    for (int cube=0; cube < 1; cube++)
+    for (int cube=0; cube < 0; cube++)
     {
         OBJECT4DV2 obj;
         float scale = (50 + rand()%50)*0.01;
@@ -915,6 +913,7 @@ int main(int argc, char *argv[])
         float y = 24;
         x = 0;
         z = 15;
+        scale = 2;
         VECTOR4D vscale = {scale,scale,scale,scale}, vpos = {x,y,z,1}, vrot = {r,r,r,1};
 #ifdef __APPLE__
         Load_OBJECT4DV2_PLG(&obj,"/MyFiles/Work/GitProject/Render/Render/cubeTex.plg", &vscale, &vpos, &vrot);
@@ -922,9 +921,12 @@ int main(int argc, char *argv[])
         Load_OBJECT4DV2_PLG(&obj,"C:\\Users\\Administrator\\Documents\\GitHub\\Render\\Render\\sphere.plg", &vscale, &vpos, &vrot);
 #endif
         gAllObjects[cube+towerCnt] = obj;
-        obj.texture = &myTex;
+        
     }
-
+    
+    OBJECT4DV2 terrain;
+    GenerateTerrain(&terrain);
+    gAllObjects[0] = terrain;
     loadLights();
 
     glutInit(&argc, argv);//≥ı ºªØ,±ÿ–Î‘⁄µ˜”√∆‰À˚GLUT∫Ø ˝«∞µ˜”√“ªœ¬

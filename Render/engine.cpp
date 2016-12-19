@@ -1,11 +1,8 @@
 #include <iostream>
-#include <string.h>
-#include <stdio.h>
 #include "engine.h"
-#include <stdlib.h>
 #include <math.h>
 
-using namespace std;
+
 
 LIGHTV1 gLights[MAX_LIGHTS];
 int gNum_lights;
@@ -1384,7 +1381,7 @@ int Init_OBJECT4DV2(OBJECT4DV2_PTR obj,
                     int _num_vertices,
                     int _num_polys,
                     int _num_frames,
-                    int destroy=0)
+                    int destroy)
 {
     if (destroy)
     {
@@ -1755,7 +1752,17 @@ void Rotate_XYZ_OBJECT4DV2(OBJECT4DV2_PTR obj,
     VECTOR4D_COPY(&obj->uz, &vresult);
 }
 
-void loadTexture(string filename, BITMAP_IMAGE_PTR tex)
+RGBAV1 getTextureColor(BITMAP_IMAGE_PTR tex, POINT2D_PTR pos)
+{
+    int delta = 3*((tex->height - pos->y)*tex->width + pos->x);
+    RGBAV1 c;
+    c.b = tex->buffer[delta];
+    c.g = tex->buffer[delta+1];
+    c.r = tex->buffer[delta+2];
+    return c;
+}
+
+void loadTexture(const char* filename, BITMAP_IMAGE_PTR tex)
 {
     string path;
 #ifdef __APPLE__
@@ -1929,6 +1936,7 @@ int Load_OBJECT4DV2_PLG(OBJECT4DV2_PTR obj,
     {
         char tmpString[50];
         BITMAP_IMAGE tex;
+        
         sscanf(token_string, "%s", tmpString);
         loadTexture(tmpString, &tex);
         obj->texture = &tex;
@@ -1936,6 +1944,7 @@ int Load_OBJECT4DV2_PLG(OBJECT4DV2_PTR obj,
         token_string = Get_Line_PLG(buffer, 255, fp);
         for (int poly=0; poly<obj->num_polys; poly++)
         {
+            obj->plist[poly].texture = obj->texture;
             SET_BIT(obj->plist[poly].attr, POLY4DV2_ATTR_SHADE_MODE_TEXTURE);
             SET_BIT(obj->vlist_local[obj->plist[poly].vert[0]].attr, VERTEX4DTV1_ATTR_TEXTURE);
             SET_BIT(obj->vlist_local[obj->plist[poly].vert[1]].attr, VERTEX4DTV1_ATTR_TEXTURE);
@@ -3033,7 +3042,7 @@ void Clip_Polys_RENDERLIST4DV2(RENDERLIST4DV2_PTR rend_list, CAM4DV1_PTR cam, in
 
         if(clip_flags & CLIP_POLY_Z_PLANE)
         {
-            printf("\n%.1f, %.1f, %.1f,",curr_poly->tvlist[0].z, curr_poly->tvlist[1].z, curr_poly->tvlist[2].z);
+//            printf("\n%.1f, %.1f, %.1f,",curr_poly->tvlist[0].z, curr_poly->tvlist[1].z, curr_poly->tvlist[2].z);
              num_verts_in = 0;
              if(curr_poly->tvlist[0].z > cam->far_clip_z)
              {
