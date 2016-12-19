@@ -468,10 +468,10 @@ void drawTrangleTexture(VERTEX4DTV1_PTR p0, VERTEX4DTV1_PTR p1, VERTEX4DTV1_PTR 
         pm = p1;
         pb = p0;
     }
-/*    printf("\nt x:%.1f, y:%.1f, uv:(%.1f, %.1f)", pt->x, pt->y, pt->u0, pt->v0);
+    printf("\nt x:%.1f, y:%.1f, uv:(%.1f, %.1f)", pt->x, pt->y, pt->u0, pt->v0);
     printf("\nm x:%.1f, y:%.1f, uv:(%.1f, %.1f)", pm->x, pm->y, pm->u0, pm->v0);
     printf("\nb x:%.1f, y:%.1f, uv:(%.1f, %.1f)", pb->x, pb->y, pb->u0, pb->v0);
-*/    drawTranglePlaneTexture(pt, pm, pb, tex);
+    drawTranglePlaneTexture(pt, pm, pb, tex);
 }
 
 void drawTrangleGOURAUD(POINT4D_PTR p0, POINT4D_PTR p1, POINT4D_PTR p2,RGBAV1_PTR c0, RGBAV1_PTR c1, RGBAV1_PTR c2)
