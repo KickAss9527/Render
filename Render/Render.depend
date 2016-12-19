@@ -339,16 +339,17 @@
 	<stdlib.h>
 	<math.h>
 
-1482067648 source:c:\users\administrator\documents\github\render\render\engine.cpp
+1482151977 source:c:\users\administrator\documents\github\render\render\engine.cpp
 	<iostream>
+	"engine.h"
+	<math.h>
+	"enginePlus.h"
+
+1482148030 c:\users\administrator\documents\github\render\render\engine.h
+	"lxMath.h"
 	<string.h>
 	<stdio.h>
-	"engine.h"
 	<stdlib.h>
-	<math.h>
-
-1482063609 c:\users\administrator\documents\github\render\render\engine.h
-	"lxMath.h"
 
 1481724781 c:\users\administrator\documents\github\render\render\lxmath.h
 	<string.h>
@@ -358,7 +359,7 @@
 	<iostream>
 	"lxMath.h"
 
-1482067795 source:c:\users\administrator\documents\github\render\render\main.cpp
+1482153960 source:c:\users\administrator\documents\github\render\render\main.cpp
 	<GLUT/glut.h>
 	<windows.h>
 	<GL/glut.h>
@@ -371,7 +372,20 @@
 	<stdio.h>
 	<stdlib.h>
 	<math.h>
+	"enginePlus.h"
 
 1474400738 c:\mingw\include\gl\glext.h
 	<windows.h>
+
+1482148575 c:\users\administrator\documents\github\render\render\engineplus.h
+	<stdio.h>
+	<math.h>
+	"engine.h"
+
+1482148848 source:c:\users\administrator\documents\github\render\render\engineplus.cpp
+	"enginePlus.h"
+	<iostream>
+	<string.h>
+	<stdio.h>
+	<stdlib.h>
 

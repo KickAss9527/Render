@@ -10,6 +10,7 @@
 		052FE66A1DD94EF200A5E04F /* main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 052FE6691DD94EF200A5E04F /* main.cpp */; };
 		052FE6721DD94F1900A5E04F /* OpenGL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 052FE6711DD94F1900A5E04F /* OpenGL.framework */; };
 		052FE6741DD94F1D00A5E04F /* GLUT.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 052FE6731DD94F1D00A5E04F /* GLUT.framework */; };
+		0591DAD61E076EA400591DCA /* enginePlus.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 0591DAD41E076EA400591DCA /* enginePlus.cpp */; };
 		05A74A731DE299EB003E6A66 /* engine.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 05A74A6F1DE299EB003E6A66 /* engine.cpp */; };
 		05A74A741DE299EB003E6A66 /* lxMath.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 05A74A711DE299EB003E6A66 /* lxMath.cpp */; };
 /* End PBXBuildFile section */
@@ -38,6 +39,10 @@
 		0548E0DC1E00D9C10031DAA4 /* Grid.bmp */ = {isa = PBXFileReference; lastKnownFileType = image.bmp; path = Grid.bmp; sourceTree = "<group>"; };
 		0553A3BB1DE52AE500E557A1 /* tower1.plg */ = {isa = PBXFileReference; lastKnownFileType = text; path = tower1.plg; sourceTree = "<group>"; };
 		05604F601E023A5B00D89EFE /* cubeTex.plg */ = {isa = PBXFileReference; lastKnownFileType = text; path = cubeTex.plg; sourceTree = "<group>"; };
+		0591DAD31E076BDF00591DCA /* sphere.plg */ = {isa = PBXFileReference; lastKnownFileType = text; path = sphere.plg; sourceTree = "<group>"; };
+		0591DAD41E076EA400591DCA /* enginePlus.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = enginePlus.cpp; sourceTree = "<group>"; };
+		0591DAD51E076EA400591DCA /* enginePlus.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = enginePlus.h; sourceTree = "<group>"; };
+		0591DAD71E07709500591DCA /* earthheightmap03.bmp */ = {isa = PBXFileReference; lastKnownFileType = image.bmp; path = earthheightmap03.bmp; sourceTree = "<group>"; };
 		05A74A6E1DE299EB003E6A66 /* cube1.plg */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = cube1.plg; sourceTree = "<group>"; };
 		05A74A6F1DE299EB003E6A66 /* engine.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = engine.cpp; sourceTree = "<group>"; };
 		05A74A701DE299EB003E6A66 /* engine.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = engine.h; sourceTree = "<group>"; };
@@ -84,6 +89,7 @@
 				0553A3BB1DE52AE500E557A1 /* tower1.plg */,
 				05A74A6E1DE299EB003E6A66 /* cube1.plg */,
 				05604F601E023A5B00D89EFE /* cubeTex.plg */,
+				0591DAD31E076BDF00591DCA /* sphere.plg */,
 				05A74A6F1DE299EB003E6A66 /* engine.cpp */,
 				05A74A701DE299EB003E6A66 /* engine.h */,
 				05A74A711DE299EB003E6A66 /* lxMath.cpp */,
@@ -91,6 +97,9 @@
 				052FE6691DD94EF200A5E04F /* main.cpp */,
 				051A40FC1DFE5157001DD94C /* metal04.bmp */,
 				051A40FE1DFE55C0001DD94C /* Wood.bmp */,
+				0591DAD41E076EA400591DCA /* enginePlus.cpp */,
+				0591DAD51E076EA400591DCA /* enginePlus.h */,
+				0591DAD71E07709500591DCA /* earthheightmap03.bmp */,
 			);
 			path = Render;
 			sourceTree = "<group>";
@@ -164,6 +173,7 @@
 				05A74A741DE299EB003E6A66 /* lxMath.cpp in Sources */,
 				052FE66A1DD94EF200A5E04F /* main.cpp in Sources */,
 				05A74A731DE299EB003E6A66 /* engine.cpp in Sources */,
+				0591DAD61E076EA400591DCA /* enginePlus.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

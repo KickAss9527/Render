@@ -28,6 +28,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
+#include "enginePlus.h"
 static int slices = 16;
 static int stacks = 16;
 int sSize = 800;
@@ -36,6 +37,8 @@ RENDERLIST4DV2 gRend_list;
 OBJECT4DV2 gAllObjects[100];
 bool isDrawWireframe = 10;
 int refreshFrequency = 30;
+bool isRotate = 0;
+float keyboardMovingOffset = 2;
 BITMAP_IMAGE myTex;
 
 #define AMBIENT_LIGHT_INDEX   0 // ambient light index
@@ -55,15 +58,7 @@ void drawPoint(POINT4D_PTR p, RGBAV1_PTR color)
     glEnd ();
 }
 
-RGBAV1 getTexture(BITMAP_IMAGE_PTR tex, POINT2D_PTR pos)
-{
-    int delta = 3*((tex->height - pos->y)*tex->width + pos->x);
-    RGBAV1 c;
-    c.b = tex->buffer[delta];
-    c.g = tex->buffer[delta+1];
-    c.r = tex->buffer[delta+2];
-    return c;
-}
+
 
 void drawLine(POINT4D_PTR p0, POINT4D_PTR p1)
 {
@@ -109,7 +104,7 @@ void drawTranglePlane(POINT4D_PTR pt, POINT4D_PTR pm, POINT4D_PTR pb)
     }
 }
 
-void drawTranglePlaneTexture(VERTEX4DTV1_PTR pt, VERTEX4DTV1_PTR pm, VERTEX4DTV1_PTR pb)
+void drawTranglePlaneTexture(VERTEX4DTV1_PTR pt, VERTEX4DTV1_PTR pm, VERTEX4DTV1_PTR pb, BITMAP_IMAGE_PTR tex)
 {
     float ymt = (pm->y - pt->y);
     float ybt = (pb->y - pt->y);
@@ -179,12 +174,12 @@ void drawTranglePlaneTexture(VERTEX4DTV1_PTR pt, VERTEX4DTV1_PTR pm, VERTEX4DTV1
             uv.x = MIN(MAX(0, tmpU), 1);
             uv.y = MIN(MAX(0, tmpV), 1);
 
-            uv.x *= myTex.width;
-            uv.y *= myTex.height;
+            uv.x *= tex->width;
+            uv.y *= tex->height;
 
             uv.x = floor(uv.x);
             uv.y = floor(uv.y);
-            RGBAV1 color = getTexture(&myTex, &uv);
+            RGBAV1 color = getTextureColor(tex, &uv);
             drawPoint(&p0, &color);
         }
 
@@ -432,7 +427,7 @@ void drawTrangle(POINT4D_PTR p0, POINT4D_PTR p1, POINT4D_PTR p2)
         drawTrangleTopPlane(pb, pm, &pTmp);
     }
 }
-void drawTrangleTexture(VERTEX4DTV1_PTR p0, VERTEX4DTV1_PTR p1, VERTEX4DTV1_PTR p2)
+void drawTrangleTexture(VERTEX4DTV1_PTR p0, VERTEX4DTV1_PTR p1, VERTEX4DTV1_PTR p2, BITMAP_IMAGE_PTR tex)
 {
 
     VERTEX4DTV1_PTR pt, pm, pb;
@@ -473,8 +468,10 @@ void drawTrangleTexture(VERTEX4DTV1_PTR p0, VERTEX4DTV1_PTR p1, VERTEX4DTV1_PTR 
         pm = p1;
         pb = p0;
     }
-
-    drawTranglePlaneTexture(pt, pm, pb);
+/*    printf("\nt x:%.1f, y:%.1f, uv:(%.1f, %.1f)", pt->x, pt->y, pt->u0, pt->v0);
+    printf("\nm x:%.1f, y:%.1f, uv:(%.1f, %.1f)", pm->x, pm->y, pm->u0, pm->v0);
+    printf("\nb x:%.1f, y:%.1f, uv:(%.1f, %.1f)", pb->x, pb->y, pb->u0, pb->v0);
+*/    drawTranglePlaneTexture(pt, pm, pb, tex);
 }
 
 void drawTrangleGOURAUD(POINT4D_PTR p0, POINT4D_PTR p1, POINT4D_PTR p2,RGBAV1_PTR c0, RGBAV1_PTR c1, RGBAV1_PTR c2)
@@ -564,7 +561,7 @@ void drawPoly2(RENDERLIST4DV2_PTR rend_list)
 
         if (curr_poly->attr & POLY4DV2_ATTR_SHADE_MODE_TEXTURE)
         {
-            drawTrangleTexture(&curr_poly->tvlist[0], &curr_poly->tvlist[1], &curr_poly->tvlist[2]);
+            drawTrangleTexture(&curr_poly->tvlist[0], &curr_poly->tvlist[1], &curr_poly->tvlist[2], &myTex);
         }
         else if (curr_poly->attr & POLY4DV2_ATTR_SHADE_MODE_GOURAUD)
         {
@@ -612,7 +609,7 @@ void drawPoly2(RENDERLIST4DV2_PTR rend_list)
                 continue;
             }
 
-            glColor3f (1.0, 1.0, 0.0);//…Ë÷√µ±«∞ª≠± —’…´
+            glColor3f (0.5, 0.5, 0);//…Ë÷√µ±«∞ª≠± —’…´
             drawLine(&curr_poly->tvlist[0].v, &curr_poly->tvlist[1].v);
             drawLine(&curr_poly->tvlist[2].v, &curr_poly->tvlist[1].v);
             drawLine(&curr_poly->tvlist[2].v, &curr_poly->tvlist[0].v);
@@ -713,7 +710,11 @@ void myDisplay ()
         OBJECT4DV2_PTR obj = &gAllObjects[i];
         static float ro = 1;
         ro += 0.000001;
-        Rotate_XYZ_OBJECT4DV2(obj, 0, ro, 0);
+        if(isRotate)
+        {
+            Rotate_XYZ_OBJECT4DV2(obj, ro, ro, ro);
+            //isRotate = false;
+        }
         if (!(obj->state & OBJECT4DV2_STATE_ACTIVE))
         {
             break;
@@ -724,7 +725,7 @@ void myDisplay ()
     Remove_Backfaces_RENDERLIST4DV2(&gRend_list, &gCam);
     Light_RENDERLIST4DV2_World16(&gRend_list, &gCam, GetLightList(), 4);
     World_To_Camera_RENDERLIST4DV2(&gRend_list, &gCam);
-    Clip_Polys_RENDERLIST4DV2(&gRend_list, &gCam, CLIP_POLY_Z_PLANE);
+//    Clip_Polys_RENDERLIST4DV2(&gRend_list, &gCam, CLIP_POLY_Z_PLANE);
     Sort_RENDERLIST4DV2(&gRend_list, SORT_POLYLIST_AVGZ);
     Camera_To_Perspective_RENDERLIST4DV2(&gRend_list, &gCam);
     Perspective_To_Screen_RENDERLIST4DV2(&gRend_list, &gCam);
@@ -778,8 +779,6 @@ void myMouse(int button,int state,int x,int y)
     }
 }
 
-
-
 void onTimer(int value)
 {
     glutPostRedisplay();
@@ -803,47 +802,18 @@ void display(void)
      {
          POINT4D np = {static_cast<float>(x),static_cast<float>(y), 1, 1};
          POINT2D t = {static_cast<float>(x),static_cast<float>(y)};
-         RGBAV1 c = getTexture(&myTex, &t);
+         RGBAV1 c = getTextureColor(&myTex, &t);
          drawPoint(&np, &c);
      }
  }
 glFlush();
 }
 
-void loadTexture()
-{
-#ifdef __APPLE__
-
-    FILE* pfile=fopen("/MyFiles/Work/GitProject/Render/Render/metal04.bmp","rb");
-#else
-    FILE* pfile=fopen("C:\\Users\\Administrator\\Documents\\GitHub\\Render\\Render\\metal04.bmp","rb");
-#endif
-
-     if(pfile == 0) exit(0);
-     //读取图像大小
-
-
-     fseek(pfile,0x0012,SEEK_SET);
-     fread(&myTex.width,sizeof(myTex.width),1,pfile);
-     fread(&myTex.height,sizeof(myTex.height),1,pfile);
-     //计算像素数据长度
-     int pixellength=myTex.width*3;
-     while(pixellength%4 != 0)pixellength++;
-     pixellength *= myTex.height;
-     //读取像素数据
-     myTex.buffer = (GLubyte*)malloc(pixellength);
-     if(myTex.buffer == 0) exit(0);
-     fseek(pfile,54,SEEK_SET);
-     fread(myTex.buffer,pixellength,1,pfile);
-
-     //关闭文件
-     fclose(pfile);
-
-}
-
 void keyboardEvt(int key, int x, int y)
 {
-    float offset = 0.1;
+
+    float offset = keyboardMovingOffset;
+
     switch(key)
     {
         case GLUT_KEY_DOWN:
@@ -877,7 +847,12 @@ void keyboardEvt(int key, int x, int y)
 
 int main(int argc, char *argv[])
 {
-    loadTexture();
+#ifdef __APPLE__
+        LoadMyBitmap("/MyFiles/Work/GitProject/Render/Render/earthheightmap03.bmp", &myTex);
+#else
+        LoadMyBitmap("C:\\Users\\Administrator\\Documents\\GitHub\\Render\\Render\\Wood.bmp", &myTex);
+#endif
+
 
     POINT4D cam_pos = {0,30,0,1};
     VECTOR4D cam_dir = {0,0,0,1};
@@ -914,18 +889,24 @@ int main(int argc, char *argv[])
         float z = 20 + rand()%100;
         float y = 24;
         x = 0;
-        z = 15;
-        scale = 3;
+        z = 45;
+
+        scale = 1;
+
         VECTOR4D vscale = {scale,scale,scale,scale}, vpos = {x,y,z,1}, vrot = {r,r,r,1};
 #ifdef __APPLE__
         Load_OBJECT4DV2_PLG(&obj,"/MyFiles/Work/GitProject/Render/Render/cubeTex.plg", &vscale, &vpos, &vrot);
 #else
-        Load_OBJECT4DV2_PLG(&obj,"C:\\Users\\Administrator\\Documents\\GitHub\\Render\\Render\\sphere.plg", &vscale, &vpos, &vrot);
+        Load_OBJECT4DV2_PLG(&obj,"C:\\Users\\Administrator\\Documents\\GitHub\\Render\\Render\\cubeTex.plg", &vscale, &vpos, &vrot);
 #endif
         gAllObjects[cube+towerCnt] = obj;
-        obj.texture = &myTex;
-    }
 
+    }
+/*  terrain
+    OBJECT4DV2 terrain;
+    GenerateTerrain(&terrain);
+    gAllObjects[0] = terrain;
+*/
     loadLights();
 
     glutInit(&argc, argv);//≥ı ºªØ,±ÿ–Î‘⁄µ˜”√∆‰À˚GLUT∫Ø ˝«∞µ˜”√“ªœ¬

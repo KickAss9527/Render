@@ -42,10 +42,16 @@
 			<Add library="gdi32" />
 			<Add directory="C:/MinGW/lib" />
 		</Linker>
+		<Unit filename="Grid.bmp" />
+		<Unit filename="Wood.bmp" />
 		<Unit filename="cube1.plg" />
 		<Unit filename="cube2.plg" />
+		<Unit filename="cubeTex.plg" />
+		<Unit filename="earthheightmap03.bmp" />
 		<Unit filename="engine.cpp" />
 		<Unit filename="engine.h" />
+		<Unit filename="enginePlus.cpp" />
+		<Unit filename="enginePlus.h" />
 		<Unit filename="lxMath.cpp" />
 		<Unit filename="lxMath.h" />
 		<Unit filename="main.cpp" />

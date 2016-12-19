@@ -1,7 +1,10 @@
 #ifndef ENGINE_H_INCLUDED
 #define ENGINE_H_INCLUDED
 #include "lxMath.h"
-
+#include <string.h>
+#include <stdio.h>
+#include <stdlib.h>
+using namespace std;
 typedef unsigned short USHORT;
 typedef unsigned short WORD;
 typedef unsigned char UCHAR;
@@ -24,6 +27,7 @@ typedef struct BITMAP_IMAGE_TYP{
     int width,height;
     int num_bytes;
     int bpp;
+    int bitCnt;
     UCHAR *buffer;
 }BITMAP_IMAGE, *BITMAP_IMAGE_PTR;
 
@@ -112,8 +116,8 @@ typedef struct POLYF4DV2_TYP{
 #define POLY4DV1_STATE_ACTIVE   0x001
 #define POLY4DV1_STATE_CLIPPED  0x002
 #define POLY4DV1_STATE_BACKFACE 0x004
-#define OBJECT4DV1_MAX_VERTICES      640
-#define OBJECT4DV1_MAX_POLYS       1280
+#define OBJECT4DV1_MAX_VERTICES      6400
+#define OBJECT4DV1_MAX_POLYS       12800
 #define RENDERLIST4DV1_MAX_POLYS   OBJECT4DV1_MAX_POLYS
 
 #define DD_PIXEL_FORMAT8 8
@@ -345,8 +349,8 @@ typedef struct CAM4DV1_TYP{
 #define VERTEXT_FLAGS_OVERRIDE_INVERT_TEXTURE_V 0x0100
 #define VERTEXT_FLAGS_OVERRIDE_INVERT_SWAP_UV 0x0800
 
-#define OBJECT4DV2_MAX_VERTICES 1024
-#define OBJECT4DV2_MAX_POLYS    2048
+#define OBJECT4DV2_MAX_VERTICES 10240
+#define OBJECT4DV2_MAX_POLYS    20480
 #define OBJECT4DV2_STATE_NULL 0x0000
 #define OBJECT4DV2_STATE_ACTIVE 0x0001
 #define OBJECT4DV2_STATE_VISIBLE 0x0002
@@ -456,4 +460,14 @@ void Rotate_XYZ_OBJECT4DV2(OBJECT4DV2_PTR obj,
 void Sort_RENDERLIST4DV1(RENDERLIST4DV1_PTR rend_list, int sort_method);
 void Sort_RENDERLIST4DV2(RENDERLIST4DV2_PTR rend_list, int sort_method);
 void Clip_Polys_RENDERLIST4DV2(RENDERLIST4DV2_PTR rend_list, CAM4DV1_PTR cam, int clip_flags);
+RGBAV1 getTextureColor(BITMAP_IMAGE_PTR tex, POINT2D_PTR pos);
+void loadTexture(const char* filename, BITMAP_IMAGE_PTR tex);
+int Init_OBJECT4DV2(OBJECT4DV2_PTR obj,
+                    int _num_vertices,
+                    int _num_polys,
+                    int _num_frames,
+                    int destroy=0);
+float Compute_OBJECT4DV2_Radius(OBJECT4DV2_PTR obj);
+int Compute_OBJECT4DV2_Poly_Normals(OBJECT4DV2_PTR obj);
+int Compute_OBJECT4DV2_Vertex_Normals(OBJECT4DV2_PTR obj);
 #endif // ENGINE_H_INCLUDED
