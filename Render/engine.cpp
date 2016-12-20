@@ -1949,9 +1949,10 @@ int Load_OBJECT4DV2_PLG(OBJECT4DV2_PTR obj,
         LoadMyBitmap(tmpString, &tex);
         obj->texture = &tex;
 
-        token_string = Get_Line_PLG(buffer, 255, fp);
+        
         for (int poly=0; poly<obj->num_polys; poly++)
         {
+            token_string = Get_Line_PLG(buffer, 255, fp);
             obj->plist[poly].texture = obj->texture;
             SET_BIT(obj->plist[poly].attr, POLY4DV2_ATTR_SHADE_MODE_TEXTURE);
             SET_BIT(obj->vlist_local[obj->plist[poly].vert[0]].attr, VERTEX4DTV1_ATTR_TEXTURE);
