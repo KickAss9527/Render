@@ -973,7 +973,7 @@ void Init_CAM4DV1(CAM4DV1_PTR cam,
     MAT_IDENTITY_4X4(&cam->mscr);
     cam->viewplane_width = 2/cam->aspect_ratio;
     float tan_fov_div2 = tan(DEG_TO_RAD(fov/2));
-    cam->view_dist = 0.5*cam->viewplane_width*tan_fov_div2;
+    cam->view_dist = 0.5*cam->viewplane_width/tan_fov_div2;
 }
 
 int Light_RENDERLIST4DV1_World16(RENDERLIST4DV1_PTR rend_list,
@@ -1803,7 +1803,7 @@ void loadTexture(const char* filename, BITMAP_IMAGE_PTR tex)
 }
 
 int Load_OBJECT4DV2_PLG(OBJECT4DV2_PTR obj,
-                        char *filename,
+                        const char *filename,
                         VECTOR4D_PTR scale,
                         VECTOR4D_PTR pos,
                         VECTOR4D_PTR rot,

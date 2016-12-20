@@ -16,7 +16,7 @@ typedef struct RGBAV1_TYP{
     union{
         int rgba;
         UCHAR rgba_M[4];
-        struct{UCHAR b, g, r, a;};//大端, 低地址高位
+        struct{UCHAR b, g, r, a;};
     };
 } RGBAV1, *RGBAV1_PTR;
 
@@ -373,7 +373,7 @@ typedef struct CAM4DV1_TYP{
 
 int Load_OBJECT4DV1_PLG(OBJECT4DV1_PTR obj, char *filename, VECTOR4D_PTR scale, VECTOR4D_PTR pos, VECTOR4D_PTR rot);
 int Load_OBJECT4DV2_PLG(OBJECT4DV2_PTR obj,
-                        char *filename,
+                        const char *filename,
                         VECTOR4D_PTR scale,
                         VECTOR4D_PTR pos,
                         VECTOR4D_PTR rot,

@@ -31,14 +31,18 @@
 #include "enginePlus.h"
 static int slices = 16;
 static int stacks = 16;
-int sSize = 800;
+
+VECTOR2D sizeScreen = {500, 500};
 CAM4DV1 gCam;
 RENDERLIST4DV2 gRend_list;
 OBJECT4DV2 gAllObjects[100];
+float *ZBuffer;
 bool isDrawWireframe = 10;
 int refreshFrequency = 30;
 bool isRotate = 0;
 float keyboardMovingOffset = 2;
+int towerCnt = 0;
+int cubeCnt = 0;
 BITMAP_IMAGE myTex;
 
 #define AMBIENT_LIGHT_INDEX   0 // ambient light index
@@ -46,9 +50,43 @@ BITMAP_IMAGE myTex;
 #define POINT_LIGHT_INDEX     2 // point light index
 #define SPOT_LIGHT_INDEX      3 // spot light index
 
+const char *getFilePath(const char* fileName)
+{
+    string path;
+#ifdef __APPLE__
+    path = "/MyFiles/Work/GitProject/Render/Render/";
+#else
+    path = "C:\\Users\\Administrator\\Documents\\GitHub\\Render\\Render\\";
+#endif
+    
+    path += fileName;
+    return path.c_str();
+}
+
+const char *getModelPath_Cube(){return getFilePath("cube1.plg");}
+const char *getModelPath_CubeTexture(){return getFilePath("cubeTex.plg");}
+const char *getModelPath_Tower(){return getFilePath("tower1.plg");}
+
+void resetZBuffer()
+{
+    memset((void*)ZBuffer, 0, sizeof(float)*sizeScreen.x*sizeScreen.y);
+}
+
+bool testZBuffer(float z, POINT4D_PTR scrPos)
+{
+    int idx = scrPos->x + scrPos->y*sizeScreen.x;
+    if (z > ZBuffer[idx])
+    {
+        ZBuffer[idx] = z;
+        return true;
+    }
+    
+    return false;
+}
+
 void drawPoint(POINT4D_PTR p, RGBAV1_PTR color)
 {
-    float w = sSize*0.5;
+    float w = sizeScreen.x*0.5;
     POINT2D np = {(p->x-w)/w, (w-p->y)/w};
     glBegin (GL_POINTS);
     //if(color->r + color->g  + color->b < 1){printf("\n, p->x:%.2f", p->x);}
@@ -62,7 +100,7 @@ void drawPoint(POINT4D_PTR p, RGBAV1_PTR color)
 
 void drawLine(POINT4D_PTR p0, POINT4D_PTR p1)
 {
-    int w = sSize*0.5;
+    int w = sizeScreen.x*0.5;
     POINT2D np0 = {(p0->x-w)/w, (w-p0->y)/w};
     POINT2D np1 = {(p1->x-w)/w, (w-p1->y)/w};
     glBegin (GL_LINES);
@@ -164,6 +202,10 @@ void drawTranglePlaneTexture(VERTEX4DTV1_PTR pt, VERTEX4DTV1_PTR pm, VERTEX4DTV1
             POINT2D uv;
             delX *= seqMB?1:-1;
             float tmpZ = z + delX*(zb - zm);
+            if (!testZBuffer(tmpZ, &p0))
+            {
+                continue;
+            }
 //            tmpZ = 1;
 //            zb = zm =1;
             float tmpU = u + delX*(ub - um);
@@ -583,15 +625,6 @@ void drawPoly2(RENDERLIST4DV2_PTR rend_list)
                         &curr_poly->tvlist[2].v);
 
         }
-
-
-
-
-        //        printf("\n(v1 : %.1f, %.1f;  v2 : %.1f, %.1f;  v3 : %.1f, %.1f)",
-        //               curr_poly->tvlist[0].v.x, curr_poly->tvlist[0].v.y,
-        //               curr_poly->tvlist[1].v.x, curr_poly->tvlist[1].v.y,
-        //               curr_poly->tvlist[2].v.x, curr_poly->tvlist[2].v.y);
-
     }
 
     if (isDrawWireframe)
@@ -606,11 +639,10 @@ void drawPoly2(RENDERLIST4DV2_PTR rend_list)
                 continue;
             }
 
-            glColor3f (0.5, 0.5, 0);//…Ë÷√µ±«∞ª≠± —’…´
+            glColor3f (0.8, 0.8, 0);//…Ë÷√µ±«∞ª≠± —’…´
             drawLine(&curr_poly->tvlist[0].v, &curr_poly->tvlist[1].v);
             drawLine(&curr_poly->tvlist[2].v, &curr_poly->tvlist[1].v);
             drawLine(&curr_poly->tvlist[2].v, &curr_poly->tvlist[0].v);
-
         }
     }
 }
@@ -621,7 +653,7 @@ float btnSize = 60.0;
 void drawDebugBtn()
 {
 
-    float tmpBtnS = btnSize*2/sSize;
+    float tmpBtnS = btnSize*2/sizeScreen.x;
     for (int i=0; i<btnCnt; i++)
     {
         glBegin (GL_POLYGON);
@@ -702,6 +734,7 @@ void loadLights()
 void myDisplay ()
 {
     Reset_RENDERLIST4DV2(&gRend_list);
+    resetZBuffer();
     for (int i=0; i<1000; i++)
     {
         OBJECT4DV2_PTR obj = &gAllObjects[i];
@@ -733,17 +766,6 @@ void myDisplay ()
     drawDebugBtn();
     glFlush();
 
-//    print zOrder
-//    for (int i=0; i<OBJECT4DV1_MAX_POLYS; i++)
-//    {
-//        POLYF4DV1_PTR p = gRend_list.poly_ptrs[i];
-//        if (!p)
-//        {
-//            break;
-//        }
-//        float z = p->tvlist[0].z+p->tvlist[1].z+p->tvlist[2].z;
-//        printf("idx : %d  z:%.2f \n", p->idx, z);
-//    }
 }
 
 void btnClick(int idx, LIGHTV1_PTR lights)
@@ -768,7 +790,7 @@ void myMouse(int button,int state,int x,int y)
     if(state==GLUT_DOWN)
     {
 
-        if (sSize - y <= btnSize)
+        if (sizeScreen.x - y <= btnSize)
         {
             int idx = x/btnSize;
             btnClick(idx, GetLightList());
@@ -782,28 +804,26 @@ void onTimer(int value)
     glutTimerFunc(refreshFrequency, onTimer, 1);
 }
 
-
-
 void display(void)
 {
- //glClear(GL_COLOR_BUFFER_BIT);
- //绘制像素
+     //glClear(GL_COLOR_BUFFER_BIT);
+     //绘制像素
 
-//glDrawPixels(myTex.width,myTex.height,GL_BGR_EXT,GL_UNSIGNED_BYTE,myTex.buffer);
+    //glDrawPixels(myTex.width,myTex.height,GL_BGR_EXT,GL_UNSIGNED_BYTE,myTex.buffer);
 
- //---------------------------------
+     //---------------------------------
 
- for(int y=0; y<myTex.height; y++)
- {
-     for(int x=0; x<myTex.width; x++)
+     for(int y=0; y<myTex.height; y++)
      {
-         POINT4D np = {static_cast<float>(x),static_cast<float>(y), 1, 1};
-         POINT2D t = {static_cast<float>(x),static_cast<float>(y)};
-         RGBAV1 c = getTextureColor(&myTex, &t);
-         drawPoint(&np, &c);
+         for(int x=0; x<myTex.width; x++)
+         {
+             POINT4D np = {static_cast<float>(x),static_cast<float>(y), 1, 1};
+             POINT2D t = {static_cast<float>(x),static_cast<float>(y)};
+             RGBAV1 c = getTextureColor(&myTex, &t);
+             drawPoint(&np, &c);
+         }
      }
- }
-glFlush();
+    glFlush();
 }
 
 void keyboardEvt(int key, int x, int y)
@@ -817,26 +837,27 @@ void keyboardEvt(int key, int x, int y)
         {
             gCam.pos.y -= offset;
         }break;
-                case GLUT_KEY_UP:
+        case GLUT_KEY_UP:
         {
             gCam.pos.y += offset;
         }break;
-                case GLUT_KEY_LEFT:
+        case GLUT_KEY_LEFT:
         {
             gCam.pos.x -= offset;
         }break;
-                case GLUT_KEY_RIGHT:
+        case GLUT_KEY_RIGHT:
         {
             gCam.pos.x += offset;
         }break;
-                        case GLUT_KEY_HOME:
+        case GLUT_KEY_HOME:
         {
             gCam.pos.z -= offset;
         }break;
-                case GLUT_KEY_END:
+        case GLUT_KEY_END:
         {
             gCam.pos.z += offset;
         }break;
+        default:break;
     }
 
     Build_CAM4DV1_Matrix_Euler(&gCam, CAM_ROT_SEQ_ZYX);
@@ -844,20 +865,14 @@ void keyboardEvt(int key, int x, int y)
 
 int main(int argc, char *argv[])
 {
-#ifdef __APPLE__
-        LoadMyBitmap("/MyFiles/Work/GitProject/Render/Render/Wood.bmp", &myTex);
-#else
-        LoadMyBitmap("C:\\Users\\Administrator\\Documents\\GitHub\\Render\\Render\\Wood.bmp", &myTex);
-#endif
-
-
+    LoadMyBitmap(getFilePath("Wood.bmp"), &myTex);
+    ZBuffer = (float*)malloc(sizeof(float)*sizeScreen.x*sizeScreen.y);
+    
     POINT4D cam_pos = {0,30,0,1};
     VECTOR4D cam_dir = {0,0,0,1};
-
-    Init_CAM4DV1(&gCam, &cam_pos, &cam_dir, 10,sSize,90, sSize,sSize);
+    Init_CAM4DV1(&gCam, &cam_pos, &cam_dir, 10,sizeScreen.x,90, sizeScreen.x,sizeScreen.y);
     Build_CAM4DV1_Matrix_Euler(&gCam, CAM_ROT_SEQ_ZYX);
 
-    int towerCnt = 0;
     for (int tower=0; tower<towerCnt; tower++)
     {
         OBJECT4DV2 obj;
@@ -867,16 +882,11 @@ int main(int argc, char *argv[])
         float x = xt*0.5 - rand()%xt;
         float z = 50 + rand()%100;
         VECTOR4D vscale = {scale,scale,scale,scale}, vpos = {x,0,z,1}, vrot = {0,0,0,1};
-#ifdef __APPLE__
-        Load_OBJECT4DV2_PLG(&obj, "/MyFiles/Work/GitProject/Render/Render/tower1.plg", &vscale, &vpos, &vrot);
-#else
-        Load_OBJECT4DV2_PLG(&obj,"C:\\Users\\Administrator\\Documents\\GitHub\\Render\\Render\\tower1.plg", &vscale, &vpos, &vrot);
-#endif
-
+        Load_OBJECT4DV2_PLG(&obj, getModelPath_Tower(), &vscale, &vpos, &vrot);
         gAllObjects[tower] = obj;
     }
 
-    for (int cube=0; cube < 1; cube++)
+    for (int cube=0; cube < cubeCnt; cube++)
     {
         OBJECT4DV2 obj;
         float scale = (50 + rand()%50)*0.01;
@@ -887,38 +897,30 @@ int main(int argc, char *argv[])
         float y = 24;
         x = 0;
         z = 45;
-
         scale = 1;
-
         VECTOR4D vscale = {scale,scale,scale,scale}, vpos = {x,y,z,1}, vrot = {r,r,r,1};
-#ifdef __APPLE__
-        Load_OBJECT4DV2_PLG(&obj,"/MyFiles/Work/GitProject/Render/Render/cubeTex.plg", &vscale, &vpos, &vrot);
-#else
-        Load_OBJECT4DV2_PLG(&obj,"C:\\Users\\Administrator\\Documents\\GitHub\\Render\\Render\\cubeTex.plg", &vscale, &vpos, &vrot);
-#endif
+        Load_OBJECT4DV2_PLG(&obj, getModelPath_CubeTexture(), &vscale, &vpos, &vrot);
         gAllObjects[cube+towerCnt] = obj;
 
     }
-/*  terrain
+    
+//  terrain
     OBJECT4DV2 terrain;
-    GenerateTerrain(&terrain);
+    GeneratePool(&terrain);
     gAllObjects[0] = terrain;
-*/
+
     loadLights();
 
     glutInit(&argc, argv);//≥ı ºªØ,±ÿ–Î‘⁄µ˜”√∆‰À˚GLUT∫Ø ˝«∞µ˜”√“ªœ¬
     glutInitDisplayMode (GLUT_RGBA | GLUT_SINGLE);//…Ë∂®ƒ£ Ω,RGBA…´≤ ,∫Õµ•ª∫≥Â«¯
     glutInitWindowPosition (100, 100);//…Ë÷√¥∞ø⁄Œª÷√,»Áπ˚…Ë-1,-1æÕ «ƒ¨»œŒª÷√
-    glutInitWindowSize (sSize, sSize);//…Ë÷√¥∞ø⁄¥Û–°
+    glutInitWindowSize (sizeScreen.x, sizeScreen.y);//…Ë÷√¥∞ø⁄¥Û–°
     glutCreateWindow ("hello word!");//¥¥Ω®√˚≥∆Œ™"hello word!"µƒ¥∞ø⁄,¥∞ø⁄¥¥Ω®∫Û≤ªª·¡¢º¥œ‘ æµΩ∆¡ƒª…œ,“™µ˜”√∫Û√ÊµƒglutMainLoop()≤≈ª·œ‘ æ
     glutDisplayFunc(myDisplay);//µ˜”√ªÊ÷∆∫Ø ˝ πÀ¸œ‘ æ‘⁄∏’¥¥Ω®µƒ¥∞ø⁄…œ
    glutTimerFunc(refreshFrequency, onTimer, 1);
     glutSpecialFunc(keyboardEvt);
     glutMouseFunc(myMouse);
     glutMainLoop();//œ˚œ¢—≠ª∑,¥∞ø⁄πÿ±’≤≈ª·∑µªÿ
-
-
-
     return 0;
 }
 
