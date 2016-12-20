@@ -37,7 +37,7 @@ RENDERLIST4DV2 gRend_list;
 OBJECT4DV2 gAllObjects[100];
 bool isDrawWireframe = 10;
 int refreshFrequency = 30;
-bool isRotate = 10;
+bool isRotate = 0;
 float keyboardMovingOffset = 2;
 BITMAP_IMAGE myTex;
 
@@ -468,7 +468,9 @@ void drawTrangleTexture(VERTEX4DTV1_PTR p0, VERTEX4DTV1_PTR p1, VERTEX4DTV1_PTR 
         pm = p1;
         pb = p0;
     }
-
+    printf("\nt x:%.1f, y:%.1f, uv:(%.1f, %.1f)", pt->x, pt->y, pt->u0, pt->v0);
+    printf("\nm x:%.1f, y:%.1f, uv:(%.1f, %.1f)", pm->x, pm->y, pm->u0, pm->v0);
+    printf("\nb x:%.1f, y:%.1f, uv:(%.1f, %.1f)", pb->x, pb->y, pb->u0, pb->v0);
     drawTranglePlaneTexture(pt, pm, pb, tex);
 }
 
@@ -710,8 +712,8 @@ void myDisplay ()
         ro += 0.000001;
         if(isRotate)
         {
-            Rotate_XYZ_OBJECT4DV2(obj, -30, 0, 0);
-            isRotate = false;
+            Rotate_XYZ_OBJECT4DV2(obj, ro, ro, ro);
+            //isRotate = false;
         }
         if (!(obj->state & OBJECT4DV2_STATE_ACTIVE))
         {
@@ -777,8 +779,6 @@ void myMouse(int button,int state,int x,int y)
     }
 }
 
-
-
 void onTimer(int value)
 {
     glutPostRedisplay();
@@ -811,7 +811,9 @@ glFlush();
 
 void keyboardEvt(int key, int x, int y)
 {
+
     float offset = keyboardMovingOffset;
+
     switch(key)
     {
         case GLUT_KEY_DOWN:
@@ -845,8 +847,13 @@ void keyboardEvt(int key, int x, int y)
 
 int main(int argc, char *argv[])
 {
-    LoadBitmap("/MyFiles/Work/GitProject/Render/Render/earthheightmap03.bmp", &myTex);
-    
+#ifdef __APPLE__
+        LoadMyBitmap("/MyFiles/Work/GitProject/Render/Render/earthheightmap03.bmp", &myTex);
+#else
+        LoadMyBitmap("C:\\Users\\Administrator\\Documents\\GitHub\\Render\\Render\\Wood.bmp", &myTex);
+#endif
+
+
     POINT4D cam_pos = {0,30,0,1};
     VECTOR4D cam_dir = {0,0,0,1};
 
@@ -872,31 +879,34 @@ int main(int argc, char *argv[])
         gAllObjects[tower] = obj;
     }
 
-    for (int cube=0; cube < 0; cube++)
+    for (int cube=0; cube < 1; cube++)
     {
         OBJECT4DV2 obj;
         float scale = (50 + rand()%50)*0.01;
         float r = rand()%100;
         int xt = 400;
         float x = xt*0.5 - rand()%xt;
-        float z = 30 + rand()%100;
+        float z = 20 + rand()%100;
         float y = 24;
         x = 0;
-        z = 15;
-        scale = 2;
+        z = 45;
+
+        scale = 1;
+
         VECTOR4D vscale = {scale,scale,scale,scale}, vpos = {x,y,z,1}, vrot = {r,r,r,1};
 #ifdef __APPLE__
         Load_OBJECT4DV2_PLG(&obj,"/MyFiles/Work/GitProject/Render/Render/cubeTex.plg", &vscale, &vpos, &vrot);
 #else
-        Load_OBJECT4DV2_PLG(&obj,"C:\\Users\\Administrator\\Documents\\GitHub\\Render\\Render\\sphere.plg", &vscale, &vpos, &vrot);
+        Load_OBJECT4DV2_PLG(&obj,"C:\\Users\\Administrator\\Documents\\GitHub\\Render\\Render\\cubeTex.plg", &vscale, &vpos, &vrot);
 #endif
         gAllObjects[cube+towerCnt] = obj;
-        
+
     }
-    
+/*  terrain
     OBJECT4DV2 terrain;
     GenerateTerrain(&terrain);
     gAllObjects[0] = terrain;
+*/
     loadLights();
 
     glutInit(&argc, argv);//≥ı ºªØ,±ÿ–Î‘⁄µ˜”√∆‰À˚GLUT∫Ø ˝«∞µ˜”√“ªœ¬

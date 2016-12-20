@@ -1,7 +1,7 @@
 #include <iostream>
 #include "engine.h"
 #include <math.h>
-
+#include "enginePlus.h"
 
 
 LIGHTV1 gLights[MAX_LIGHTS];
@@ -1762,7 +1762,7 @@ RGBAV1 getTextureColor(BITMAP_IMAGE_PTR tex, POINT2D_PTR pos)
     else
     {
         int delta = tex->bitCnt*((tex->height - pos->y)*tex->width + pos->x)/8;
-        
+
         c.b = tex->buffer[delta];
         c.g = tex->buffer[delta+1];
         c.r = tex->buffer[delta+2];
@@ -1944,9 +1944,9 @@ int Load_OBJECT4DV2_PLG(OBJECT4DV2_PTR obj,
     {
         char tmpString[50];
         BITMAP_IMAGE tex;
-        
+
         sscanf(token_string, "%s", tmpString);
-        loadTexture(tmpString, &tex);
+        LoadMyBitmap(tmpString, &tex);
         obj->texture = &tex;
 
         token_string = Get_Line_PLG(buffer, 255, fp);
@@ -2956,7 +2956,7 @@ void Clip_Polys_RENDERLIST4DV2(RENDERLIST4DV2_PTR rend_list, CAM4DV1_PTR cam, in
     #define CLIP_CODE_LY    0x0002
     #define CLIP_CODE_IY    0x0004
     #define CLIP_CODE_NULL  0x0000
-
+    int vCnt = 0;
     int vertex_ccodes[3];
     int num_verts_in;
     int v0, v1, v2;
@@ -3050,7 +3050,6 @@ void Clip_Polys_RENDERLIST4DV2(RENDERLIST4DV2_PTR rend_list, CAM4DV1_PTR cam, in
 
         if(clip_flags & CLIP_POLY_Z_PLANE)
         {
-//            printf("\n%.1f, %.1f, %.1f,",curr_poly->tvlist[0].z, curr_poly->tvlist[1].z, curr_poly->tvlist[2].z);
              num_verts_in = 0;
              if(curr_poly->tvlist[0].z > cam->far_clip_z)
              {
@@ -3093,6 +3092,7 @@ void Clip_Polys_RENDERLIST4DV2(RENDERLIST4DV2_PTR rend_list, CAM4DV1_PTR cam, in
                  vertex_ccodes[2] = CLIP_CODE_IZ;
                  num_verts_in++;
              }
+            vCnt += num_verts_in;
 
              if((vertex_ccodes[0] == CLIP_CODE_LZ && vertex_ccodes[1] == CLIP_CODE_LZ && vertex_ccodes[2] == CLIP_CODE_LZ) ||
                  (vertex_ccodes[0] == CLIP_CODE_GZ && vertex_ccodes[1] == CLIP_CODE_GZ && vertex_ccodes[2] == CLIP_CODE_GZ))
@@ -3154,12 +3154,12 @@ void Clip_Polys_RENDERLIST4DV2(RENDERLIST4DV2_PTR rend_list, CAM4DV1_PTR cam, in
                  }
                  else if(num_verts_in==2)
                  {
-                    memcpy(&temp_poly, curr_poly, sizeof(POLY4DV2));
+                    memcpy(&temp_poly, curr_poly, sizeof(POLYF4DV2));
                     if(vertex_ccodes[0] == CLIP_CODE_LZ)
                     {
                         v0 = 0; v1 = 1; v2 = 2;
                     }
-                    else if(vertex_ccodes[1] == CLIP_CODE_IZ)
+                    else if(vertex_ccodes[1] == CLIP_CODE_LZ)
                     {
                         v0 = 1; v1 = 2; v2 = 0;
                     }
@@ -3199,7 +3199,7 @@ void Clip_Polys_RENDERLIST4DV2(RENDERLIST4DV2_PTR rend_list, CAM4DV1_PTR cam, in
                          v02i = curr_poly->tvlist[v0].v0 + (curr_poly->tvlist[v2].v0 - curr_poly->tvlist[v0].v0)*t2;
 
                         curr_poly->tvlist[v2].u0 = u01i;
-                         curr_poly->tvlist[v2].v0 = v01i;
+                        curr_poly->tvlist[v2].v0 = v01i;
 
                         temp_poly.tvlist[v0].u0 = u02i;
                         temp_poly.tvlist[v0].v0 = v02i;
@@ -3222,6 +3222,6 @@ void Clip_Polys_RENDERLIST4DV2(RENDERLIST4DV2_PTR rend_list, CAM4DV1_PTR cam, in
         }
     }
 
-
+    printf("\n clip vCnt:%d", vCnt);
 }
 

@@ -1,7 +1,7 @@
 # begin plg/plx file
 
 # define PLX_COLOR_MODE_RGB_FLAG     0x8000   // this poly uses RGB color
-# define PLX_COLOR_MODE_INDEXED_FLAG 0x0000   // this poly uses an indexed 8-bit color 
+# define PLX_COLOR_MODE_INDEXED_FLAG 0x0000   // this poly uses an indexed 8-bit color
 # define PLX_2SIDED_FLAG              0x1000   // this poly is double sided
 # define PLX_1SIDED_FLAG              0x0000   // this poly is single sided
 # define PLX_SHADE_MODE_PURE_FLAG      0x0000  // this poly is a constant color
@@ -14,7 +14,7 @@
 # simple cube
 tri 8 12
 
-# vertex list 
+# vertex list
  5  5 5
 -5  5 5
 -5  5 -5
@@ -27,18 +27,18 @@ tri 8 12
 
 # polygon list
 
-0xc992200 3 2 1 0
-0xc992200 3 3 2 0
-0xc992200 3 4 7 0
-0xc992200 3 7 3 0
-0xc992200 3 6 7 4
-0xc992200 3 5 6 4
-0xc992200 3 2 6 1
-0xc992200 3 6 5 1
-0xc992200 3 7 6 3
-0xc992200 3 6 2 3
-0xc992200 3 5 4 0
-0xc992200 3 1 5 0
+0xcFFFFFF 3 2 1 0
+0xcFFFFFF 3 3 2 0
+0xcFFFFFF 3 4 7 0
+0xcFFFFFF 3 7 3 0
+0xcFFFFFF 3 6 7 4
+0xcFFFFFF 3 5 6 4
+0xcFFFFFF 3 2 6 1
+0xcFFFFFF 3 6 5 1
+0xcFF0000 3 7 6 3
+0xc0000FF 3 6 2 3
+0xcFFFFFF 3 5 4 0
+0xcFFFFFF 3 1 5 0
 
 # end plg/plx file
 
