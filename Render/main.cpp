@@ -39,7 +39,7 @@ OBJECT4DV2 gAllObjects[100];
 float *ZBuffer;
 bool isDrawWireframe = 10;
 int refreshFrequency = 30;
-bool isRotate = 0;
+bool isRotate = 110;
 float keyboardMovingOffset = 2;
 int towerCnt = 0;
 int cubeCnt = 0;
@@ -742,16 +742,19 @@ void myDisplay ()
         ro += 0.000001;
         if(isRotate)
         {
-            Rotate_XYZ_OBJECT4DV2(obj, ro, ro, ro);
-            //isRotate = false;
+            Rotate_XYZ_OBJECT4DV2(obj, -30, 0, 0);
+            isRotate = false;
         }
         if (!(obj->state & OBJECT4DV2_STATE_ACTIVE))
         {
             break;
         }
+        UpdatePool(clock()*0.00001, obj);
+        
         Model_To_World_OBJECT4DV2(obj);
         Insert_OBJECT4DV2_RENDERLIST4DV2(&gRend_list, obj, 0);
     }
+    
     Remove_Backfaces_RENDERLIST4DV2(&gRend_list, &gCam);
     Light_RENDERLIST4DV2_World16(&gRend_list, &gCam, GetLightList(), 4);
     World_To_Camera_RENDERLIST4DV2(&gRend_list, &gCam);

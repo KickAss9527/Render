@@ -268,11 +268,11 @@ void GenerateTerrain(OBJECT4DV2_PTR obj)
 
 }
 
+int gridCnt = 50;
+int poolMaxHeight = 10;
 void GeneratePool(OBJECT4DV2_PTR obj)
 {
-    int gridCnt = 50;
-    int gridLength = 5;
-    int y = 20;
+    int gridLength = 2;
     memset(obj, 0, sizeof(OBJECT4DV2));
     obj->state = OBJECT4DV2_STATE_ACTIVE | OBJECT4DV2_STATE_VISIBLE;
     obj->world_pos.x = 0;
@@ -295,11 +295,11 @@ void GeneratePool(OBJECT4DV2_PTR obj)
         int x = gridLength*xC - halfLength;
         int z = halfLength - (gridLength*zC);
         obj->vlist_local[vertex].x = x;
-        obj->vlist_local[vertex].y = z;
-        float distance = pow(xC - gridCnt, 2)+pow(zC - gridCnt, 2);
+        obj->vlist_local[vertex].z = z;
+        float distance = pow(xC - gridCnt*0.5, 2)+pow(zC - gridCnt*0.5, 2);
         distance = sqrtf(distance);
-        distance/=3;
-        obj->vlist_local[vertex].z = y*sin(distance);
+//        distance/=3;
+        obj->vlist_local[vertex].y = 0.3*poolMaxHeight*cos(distance);
         obj->vlist_local[vertex].w = 1;
     
         SET_BIT(obj->vlist_local[vertex].attr, VERTEX4DTV1_ATTR_POINT);
@@ -342,6 +342,27 @@ void GeneratePool(OBJECT4DV2_PTR obj)
     Compute_OBJECT4DV2_Poly_Normals(obj);
     Compute_OBJECT4DV2_Vertex_Normals(obj);
     
+}
+
+void UpdatePool(float delta, OBJECT4DV2_PTR obj)
+{
+    for (int vertex=0; vertex<obj->num_vertices; vertex++)
+    {
+        int xC = vertex%(gridCnt+1);
+        int zC = vertex/(gridCnt+1);
+        float distance = pow(xC - gridCnt*0.5, 2)+pow(zC - gridCnt*0.5, 2);
+        distance = sqrtf(distance);
+        //        distance/=3;
+        distance += delta;
+        distance *= 0.7;
+        obj->vlist_local[vertex].y = 0.3*poolMaxHeight*cos(distance);
+        obj->vlist_local[vertex].w = 1;
+        
+        SET_BIT(obj->vlist_local[vertex].attr, VERTEX4DTV1_ATTR_POINT);
+    }
+    Compute_OBJECT4DV2_Radius(obj);
+    Compute_OBJECT4DV2_Poly_Normals(obj);
+    Compute_OBJECT4DV2_Vertex_Normals(obj);
 }
 
 
