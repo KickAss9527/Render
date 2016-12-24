@@ -1,7 +1,7 @@
 # begin plg/plx file
 
 # define PLX_COLOR_MODE_RGB_FLAG     0x8000   // this poly uses RGB color
-# define PLX_COLOR_MODE_INDEXED_FLAG 0x0000   // this poly uses an indexed 8-bit color 
+# define PLX_COLOR_MODE_INDEXED_FLAG 0x0000   // this poly uses an indexed 8-bit color
 # define PLX_2SIDED_FLAG              0x1000   // this poly is double sided
 # define PLX_1SIDED_FLAG              0x0000   // this poly is single sided
 # define PLX_SHADE_MODE_PURE_FLAG      0x0000  // this poly is a constant color
@@ -13,7 +13,7 @@
 
 # name num_verts num_polys
 
-tower 16 18
+tower 16 20
 
 #vertex list
 

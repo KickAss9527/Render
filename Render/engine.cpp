@@ -7,11 +7,63 @@
 LIGHTV1 gLights[MAX_LIGHTS];
 int gNum_lights;
 int dd_pixel_format;
+BITMAP_IMAGE Materials[MAX_LIGHTS];
+
+bool isBitmapLoaded(string name)
+{
+    return getBitmap(name)!=nullptr;
+}
+
+BITMAP_IMAGE_PTR getNewBitmap(void)
+{
+    for(int i=0; i<8; i++)
+    {
+        BITMAP_IMAGE_PTR b = &Materials[i];
+        if(b->name.length() == 0)
+        {
+            return b;
+        }
+    }
+
+    return nullptr;
+}
+
+BITMAP_IMAGE_PTR getBitmap(string name)
+{
+    for(int i=0; i<8; i++)
+    {
+        BITMAP_IMAGE_PTR b = &Materials[i];
+        if(b->name == name)
+        {
+            return b;
+        }
+    }
+
+    return nullptr;
+}
+
+void Init_Materials(void)
+{
+    memset(Materials, 0, MAX_LIGHTS*sizeof(BITMAP_IMAGE));
+}
+
+string getFilePath(const char* fileName)
+{
+    string path;
+#ifdef __APPLE__
+    path = "/MyFiles/Work/GitProject/Render/Render/";
+#else
+    path = "C:\\Users\\Administrator\\Documents\\GitHub\\Render\\Render\\";
+#endif
+    path += fileName;
+    return path;
+}
 
 LIGHTV1_PTR GetLightList(void)
 {
     return gLights;
 }
+
 int Reset_Lights_LIGHTV1(void)
 {
     dd_pixel_format = DD_PIXEL_FORMAT888;
@@ -19,6 +71,7 @@ int Reset_Lights_LIGHTV1(void)
     memset(gLights, 0, MAX_LIGHTS*sizeof(LIGHTV1));
     gNum_lights = 0;
     first_time = 0;
+
     return 1;
 }
 
@@ -1770,40 +1823,8 @@ RGBAV1 getTextureColor(BITMAP_IMAGE_PTR tex, POINT2D_PTR pos)
     return c;
 }
 
-void loadTexture(const char* filename, BITMAP_IMAGE_PTR tex)
-{
-    string path;
-#ifdef __APPLE__
-    path = "/MyFiles/Work/GitProject/Render/Render/";
-#else
-    path = "C:\\Users\\Administrator\\Documents\\GitHub\\Render\\Render\\";
-#endif
-    path = path+filename;
-
-    FILE* pfile = fopen(path.c_str(),"rb");
-
-    if(pfile == 0) exit(0);
-    //读取图像大小
-
-    fseek(pfile,0x0012,SEEK_SET);
-    fread(&tex->width,sizeof(tex->width),1,pfile);
-    fread(&tex->height,sizeof(tex->height),1,pfile);
-    //计算像素数据长度
-    int pixellength=tex->width*3;
-    while(pixellength%4 != 0)pixellength++;
-    pixellength *= tex->height;
-    //读取像素数据
-    tex->buffer = (UCHAR*)malloc(pixellength);
-    if(tex->buffer == 0) exit(0);
-    fseek(pfile,54,SEEK_SET);
-    fread(tex->buffer,pixellength,1,pfile);
-
-    //关闭文件
-    fclose(pfile);
-}
-
 int Load_OBJECT4DV2_PLG(OBJECT4DV2_PTR obj,
-                        const char *filename,
+                        string filename,
                         VECTOR4D_PTR scale,
                         VECTOR4D_PTR pos,
                         VECTOR4D_PTR rot,
@@ -1821,8 +1842,7 @@ int Load_OBJECT4DV2_PLG(OBJECT4DV2_PTR obj,
     obj->num_frames = 1;
     obj->curr_frame = 0;
     obj->attr = OBJECT4DV2_ATTR_SINGLE_FRAME;
-
-    if(!(fp = fopen(filename, "r"))) return 0;
+    if(!(fp = fopen(filename.c_str(), "r"))) return 0;
     if (!(token_string = Get_Line_PLG(buffer, 255, fp))) return 0;
     sscanf(token_string, "%s %d %d", obj->name, &obj->num_vertices, &obj->num_polys);
 
@@ -1943,13 +1963,8 @@ int Load_OBJECT4DV2_PLG(OBJECT4DV2_PTR obj,
     if ((token_string = Get_Line_PLG(buffer, 255, fp)))
     {
         char tmpString[50];
-        BITMAP_IMAGE tex;
-
         sscanf(token_string, "%s", tmpString);
-        LoadMyBitmap(tmpString, &tex);
-        obj->texture = &tex;
-
-        
+        obj->texture = LoadMyBitmap(tmpString);
         for (int poly=0; poly<obj->num_polys; poly++)
         {
             token_string = Get_Line_PLG(buffer, 255, fp);
@@ -3199,8 +3214,8 @@ void Clip_Polys_RENDERLIST4DV2(RENDERLIST4DV2_PTR rend_list, CAM4DV1_PTR cam, in
                          u02i = curr_poly->tvlist[v0].u0 + (curr_poly->tvlist[v2].u0 - curr_poly->tvlist[v0].u0)*t2;
                          v02i = curr_poly->tvlist[v0].v0 + (curr_poly->tvlist[v2].v0 - curr_poly->tvlist[v0].v0)*t2;
 
-                        curr_poly->tvlist[v2].u0 = u01i;
-                        curr_poly->tvlist[v2].v0 = v01i;
+                        curr_poly->tvlist[v0].u0 = u01i;
+                        curr_poly->tvlist[v0].v0 = v01i;
 
                         temp_poly.tvlist[v0].u0 = u02i;
                         temp_poly.tvlist[v0].v0 = v02i;
@@ -3223,6 +3238,6 @@ void Clip_Polys_RENDERLIST4DV2(RENDERLIST4DV2_PTR rend_list, CAM4DV1_PTR cam, in
         }
     }
 
-    printf("\n clip vCnt:%d", vCnt);
+    //printf("\n clip vCnt:%d", vCnt);
 }
 
