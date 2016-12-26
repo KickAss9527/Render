@@ -12,7 +12,7 @@
 # define PLX_SHADE_MODE_FASTPHONG_FLAG 0x6000  // this poly uses phong shading (alias)
 
 # simple cube
-tri 8 12
+tri 255 8 12
 
 # vertex list
  5  5 5

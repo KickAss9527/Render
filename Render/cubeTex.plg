@@ -12,7 +12,7 @@
 # define PLX_SHADE_MODE_FASTPHONG_FLAG 0x6000  // this poly uses phong shading (alias)
 
 # simple cube
-tri 8 12
+tri 200 8 12
 
 # vertex list
  5  5  5
@@ -27,18 +27,18 @@ tri 8 12
 
 # polygon list
 
-0xFFFFFF 3 2 1 0
-0xFFFFFF 3 3 2 0
-0xFFFFFF 3 4 7 0
-0xFFFFFF 3 7 3 0
-0xFFFFFF 3 6 7 4
-0xFFFFFF 3 5 6 4
-0xFFFFFF 3 2 6 1
-0xFFFFFF 3 6 5 1
-0xFFFFFF 3 7 6 3
-0xFFFFFF 3 6 2 3
-0xFFFFFF 3 5 4 0
-0xFFFFFF 3 1 5 0
+0xaFFFFFF 3 2 1 0
+0xaFFFFFF 3 3 2 0
+0xaFFFFFF 3 4 7 0
+0xaFFFFFF 3 7 3 0
+0xaFFFFFF 3 6 7 4
+0xaFFFFFF 3 5 6 4
+0xaFFFFFF 3 2 6 1
+0xaFFFFFF 3 6 5 1
+0xaFFFFFF 3 7 6 3
+0xaFFFFFF 3 6 2 3
+0xaFFFFFF 3 5 4 0
+0xaFFFFFF 3 1 5 0
 
 #uv list
 metal04.bmp

@@ -13,7 +13,7 @@
 
 # name num_verts num_polys
 
-tower 16 20
+tower 255 16 20
 
 #vertex list
 

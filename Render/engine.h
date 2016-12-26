@@ -274,6 +274,7 @@ typedef struct CAM4DV1_TYP{
 #define PLX_SHADE_MODE_FLAT_FLAG    0x2000000
 #define PLX_SHADE_MODE_GOURAUD_FLAG    0x4000000
 #define PLX_SHADE_MODE_PHONG_FLAG    0x6000000
+#define RGB888FROM32BIT(RGB,a, r,g,b){*a = ( ((RGB) >> 24) & 0xff); *r = ( ((RGB) >> 16) & 0xff); *g = (((RGB) >> 8) & 0xff); *b = ( (RGB) & 0xff); }
 #define RGB888FROM24BIT(RGB,r,g,b){ *r = ( ((RGB) >> 16) & 0xff); *g = (((RGB) >> 8) & 0xff); *b = ( (RGB) & 0xff); }
 #define _RGB565FROM16BIT(RGB, r,g,b) { *r = ( ((RGB) >> 11) & 0x1f); *g = (((RGB) >> 5) & 0x3f); *b = ((RGB) & 0x1f); }
 #define _RGB555FROM16BIT(RGB, r,g,b) { *r = ( ((RGB) >> 10) & 0x1f); *g = (((RGB) >> 5) & 0x1f); *b = ( (RGB) & 0x1f); }
@@ -296,7 +297,7 @@ typedef struct CAM4DV1_TYP{
 #define POLY4DV2_ATTR_TRANSPARENT      0x0002
 #define POLY4DV2_ATTR_8BITCOLOR       0x0004
 #define POLY4DV2_ATTR_RGB16         0x0008
-#define POLY4DV2_ATTR_RGB24         0x0010
+#define POLY4DV2_ATTR_RGB24         0x0010//32bit
 #define POLY4DV2_ATTR_SHADE_MODE_PURE    0x0020
 #define POLY4DV2_ATTR_SHADE_MODE_CONSTANT  0x0020 // (alias)
 #define POLY4DV2_ATTR_SHADE_MODE_EMISSIVE  0x0020 // (alias)

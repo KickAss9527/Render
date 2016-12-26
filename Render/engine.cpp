@@ -354,7 +354,7 @@ int Load_OBJECT4DV1_PLG(OBJECT4DV1_PTR obj, char *filename, VECTOR4D_PTR scale, 
             int red = ((poly_surface_desc & 0xff0000) >> 16);
             int green = ((poly_surface_desc & 0x00ff00) >> 8);
             int blue = (poly_surface_desc & 0x000ff);
-            obj->plist[poly].color = RGB24BIT(0,red, green, blue);
+            obj->plist[poly].color = RGB32BIT(0,red, green, blue);
         }
         else
         {
@@ -1173,7 +1173,7 @@ int Light_RENDERLIST4DV1_World16(RENDERLIST4DV1_PTR rend_list,
             r_sum = MIN(255, r_sum);
             g_sum = MIN(255, g_sum);
             b_sum = MIN(255, b_sum);
-            shared_color = RGB24BIT(0, r_sum, g_sum, b_sum);
+            shared_color = RGB32BIT(0, r_sum, g_sum, b_sum);
             curr_poly->lcolor = shared_color;
 
         }
@@ -1341,7 +1341,7 @@ int Light_OBJECT4DV1_World16(OBJECT4DV1_PTR obj,
             r_sum = MIN(255, r_sum);
             g_sum = MIN(255, g_sum);
             b_sum = MIN(255, b_sum);
-            shared_color = RGB24BIT(0, r_sum, g_sum, b_sum);
+            shared_color = RGB32BIT(0, r_sum, g_sum, b_sum);
             curr_poly->lcolor = shared_color;
 
         }
@@ -1808,6 +1808,7 @@ void Rotate_XYZ_OBJECT4DV2(OBJECT4DV2_PTR obj,
 RGBAV1 getTextureColor(BITMAP_IMAGE_PTR tex, POINT2D_PTR pos)
 {
     RGBAV1 c;
+    c.rgba = 0;
     if (tex->bitCnt==8)
     {
         printf("impossible");
@@ -1844,21 +1845,21 @@ int Load_OBJECT4DV2_PLG(OBJECT4DV2_PTR obj,
     obj->attr = OBJECT4DV2_ATTR_SINGLE_FRAME;
     if(!(fp = fopen(filename.c_str(), "r"))) return 0;
     if (!(token_string = Get_Line_PLG(buffer, 255, fp))) return 0;
-    sscanf(token_string, "%s %d %d", obj->name, &obj->num_vertices, &obj->num_polys);
+    int alpha = 255;
+    sscanf(token_string, "%s %d %d %d", obj->name, &alpha, &obj->num_vertices, &obj->num_polys);
 
     if (!Init_OBJECT4DV2(obj, obj->num_vertices, obj->num_polys, obj->num_frames))
     {
-        printf("\nPLG file error with file %s can't allocate memory", filename);
+        printf("\nPLG file error with file %s can't allocate memory", filename.c_str());
     }
 
     for (int vertex=0; vertex<obj->num_vertices; vertex++)
     {
         if (!(token_string = Get_Line_PLG(buffer, 255, fp)))
         {
-            printf("plg file error with file %s vertex list invalid", filename);
+            printf("plg file error with file %s vertex list invalid", filename.c_str());
             return 0;
         }
-
         sscanf(token_string, "%f %f %f", &obj->vlist_local[vertex].x, &obj->vlist_local[vertex].y, &obj->vlist_local[vertex].z);
         obj->vlist_local[vertex].w = 1;
 
@@ -1867,6 +1868,7 @@ int Load_OBJECT4DV2_PLG(OBJECT4DV2_PTR obj,
         obj->vlist_local[vertex].z *= scale->z;
 
         SET_BIT(obj->vlist_local[vertex].attr, VERTEX4DTV1_ATTR_POINT);
+
     }
 
     Compute_OBJECT4DV2_Radius(obj);
@@ -1879,7 +1881,7 @@ int Load_OBJECT4DV2_PLG(OBJECT4DV2_PTR obj,
     {
         if (!(token_string = Get_Line_PLG(buffer, 255, fp)))
         {
-            printf("plg file error with file %s polygon descriptor invalid", filename);
+            printf("plg file error with file %s polygon descriptor invalid", filename.c_str());
             return 0;
         }
 
@@ -1912,7 +1914,7 @@ int Load_OBJECT4DV2_PLG(OBJECT4DV2_PTR obj,
             int red = ((poly_surface_desc & 0xff0000) >> 16);
             int green = ((poly_surface_desc & 0x00ff00) >> 8);
             int blue = (poly_surface_desc & 0x000ff);
-            obj->plist[poly].color = RGB24BIT(0,red, green, blue);
+            obj->plist[poly].color = RGB32BIT(alpha ,red, green, blue);
         }
         else
         {
@@ -2036,6 +2038,7 @@ int Light_RENDERLIST4DV2_World16(RENDERLIST4DV2_PTR rend_list, CAM4DV1_PTR cam, 
                  r_sum1, g_sum1, b_sum1,
                  r_sum2, g_sum2, b_sum2,
                  ri, gi, bi,
+                 alpha,
                  shared_color;
     float dp, dist, dists, i, nl, atten;
     VECTOR4D u, v, n, l, d, s;
@@ -2055,7 +2058,7 @@ int Light_RENDERLIST4DV2_World16(RENDERLIST4DV2_PTR rend_list, CAM4DV1_PTR cam, 
 
         if (curr_poly->attr & POLY4DV2_ATTR_SHADE_MODE_FLAT)
         {
-            RGB888FROM24BIT(curr_poly->color, &r_base, &g_base, &b_base);
+            RGB888FROM32BIT(curr_poly->color, &alpha, &r_base, &g_base, &b_base);
             r_sum = g_sum = b_sum = 0;
             n.z = __FLT_MAX__;
             for (int curr_light=0; curr_light < max_lights; curr_light++)
@@ -2164,11 +2167,11 @@ int Light_RENDERLIST4DV2_World16(RENDERLIST4DV2_PTR rend_list, CAM4DV1_PTR cam, 
             r_sum = MIN(255, r_sum);
             g_sum = MIN(255, g_sum);
             b_sum = MIN(255, b_sum);
-            curr_poly->lit_color[0] = RGB24BIT(0, r_sum, g_sum, b_sum);
+            curr_poly->lit_color[0] = RGB32BIT(alpha, r_sum, g_sum, b_sum);
         }
         else if(curr_poly->attr & POLY4DV2_ATTR_SHADE_MODE_GOURAUD) // gouraud
         {
-            RGB888FROM24BIT(curr_poly->color, &r_base, &g_base, &b_base);
+            RGB888FROM32BIT(curr_poly->color, &alpha, &r_base, &g_base, &b_base);
             r_sum0 = g_sum0 = b_sum0 = r_sum1 = g_sum1 = b_sum1 =r_sum2 = g_sum2 = b_sum2 =0;
             n.z = __FLT_MAX__;
             for (int curr_light=0; curr_light < max_lights; curr_light++)
@@ -2361,9 +2364,9 @@ int Light_RENDERLIST4DV2_World16(RENDERLIST4DV2_PTR rend_list, CAM4DV1_PTR cam, 
             r_sum2 = MIN(255, r_sum2);
             g_sum2 = MIN(255, g_sum2);
             b_sum2 = MIN(255, b_sum2);
-            curr_poly->lit_color[0] = RGB24BIT(0, r_sum0, g_sum0, b_sum0);
-            curr_poly->lit_color[1] = RGB24BIT(0, r_sum1, g_sum1, b_sum1);
-            curr_poly->lit_color[2] = RGB24BIT(0, r_sum2, g_sum2, b_sum2);
+            curr_poly->lit_color[0] = RGB32BIT(alpha, r_sum0, g_sum0, b_sum0);
+            curr_poly->lit_color[1] = RGB32BIT(alpha, r_sum1, g_sum1, b_sum1);
+            curr_poly->lit_color[2] = RGB32BIT(alpha, r_sum2, g_sum2, b_sum2);
         }
         else //constant
         {

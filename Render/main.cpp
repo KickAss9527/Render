@@ -38,6 +38,7 @@ CAM4DV1 gCam;
 RENDERLIST4DV2 gRend_list;
 OBJECT4DV2 gAllObjects[100];
 float *ZBuffer;
+RGBAV1 *ZBufferColor;
 bool isDrawWireframe = 0;
 int refreshFrequency = 30;
 bool isRotate = 0;
@@ -64,14 +65,57 @@ bool testPointInScreen(POINT4D_PTR scrPos)
 
 void resetZBuffer()
 {
-    memset((void*)ZBuffer, 0, sizeof(float)*sizeScreen.x*sizeScreen.y);
+    int cnt = sizeScreen.x*sizeScreen.y;
+    memset((void*)ZBuffer, 0, sizeof(float)*cnt);
+    memset((void*)ZBufferColor, 0, sizeof(RGBAV1)*cnt);
+}
+
+RGBAV1_PTR getZBufferColor(POINT4D_PTR scrPos)
+{
+    if (!testPointInScreen(scrPos))
+    {
+        return nullptr;
+    }
+    int idx = scrPos->x + scrPos->y*sizeScreen.x;
+    return &ZBufferColor[idx];
+}
+
+void blendWithZBufferColor(POINT4D_PTR scrPos, RGBAV1_PTR color)
+{
+    if (!testPointInScreen(scrPos))
+    {
+        return;
+    }
+    
+    if (color->a == 0)
+    {
+        color->rgba = getZBufferColor(scrPos)->rgba;
+    }
+    else if (color->a == 255)
+    {
+        return;
+    }
+    else
+    {
+        float alpha = color->a/255.0;
+        RGBAV1_PTR src = getZBufferColor(scrPos);
+        color->r = color->r*alpha + src->r*(1-alpha);
+        color->g = color->g*alpha + src->g*(1-alpha);
+        color->b = color->b*alpha + src->b*(1-alpha);
+    }
+}
+
+void writeToZBufferColor(POINT4D_PTR scrPos, RGBAV1_PTR color)
+{
+    RGBAV1_PTR c = getZBufferColor(scrPos);
+    c->rgba = color->rgba;
 }
 
 bool testZBuffer(float z, POINT4D_PTR scrPos)
 {
-
     int idx = scrPos->x + scrPos->y*sizeScreen.x;
-    if (z > ZBuffer[idx])
+    
+    if (testPointInScreen(scrPos) && z > ZBuffer[idx])
     {
         ZBuffer[idx] = z;
         return true;
@@ -151,7 +195,7 @@ void drawTranglePlaneFlat(POINT4D_PTR pt, POINT4D_PTR pm, POINT4D_PTR pb, RGBAV1
     for(int y=pt->y; y<=pb->y; y++)
     {
         bool seqMB = xm < xb;
-        float u,v,z;
+        float z;
 
         if(seqMB)
         {
@@ -187,6 +231,8 @@ void drawTranglePlaneFlat(POINT4D_PTR pt, POINT4D_PTR pm, POINT4D_PTR pb, RGBAV1
             {
                 continue;
             }
+            blendWithZBufferColor(&p0, color);
+            writeToZBufferColor(&p0, color);
             drawPoint(&p0, color);
         }
 
@@ -206,7 +252,7 @@ void drawTranglePlaneFlat(POINT4D_PTR pt, POINT4D_PTR pm, POINT4D_PTR pb, RGBAV1
     }
 }
 
-void drawTranglePlaneTexture(VERTEX4DTV1_PTR pt, VERTEX4DTV1_PTR pm, VERTEX4DTV1_PTR pb, BITMAP_IMAGE_PTR tex)
+void drawTranglePlaneTexture(VERTEX4DTV1_PTR pt, VERTEX4DTV1_PTR pm, VERTEX4DTV1_PTR pb, BITMAP_IMAGE_PTR tex, int alpha)
 {
     float ymt = (pm->y - pt->y);
     float ybt = (pb->y - pt->y);
@@ -290,6 +336,9 @@ void drawTranglePlaneTexture(VERTEX4DTV1_PTR pt, VERTEX4DTV1_PTR pm, VERTEX4DTV1
             uv.x = floor(uv.x);
             uv.y = floor(uv.y);
             RGBAV1 color = getTextureColor(tex, &uv);
+            color.a = alpha;
+            blendWithZBufferColor(&p0, &color);
+            writeToZBufferColor(&p0, &color);
             drawPoint(&p0, &color);
         }
 
@@ -397,6 +446,8 @@ void drawTranglePlaneGOURAUD(POINT4D_PTR pt, POINT4D_PTR pm, POINT4D_PTR pb, RGB
             co.r = MIN(MAX(0, tmpR), 255);
             co.g = MIN(MAX(0, tmpG), 255);
             co.b = MIN(MAX(0, tmpB), 255);
+            blendWithZBufferColor(&p0, &co);
+            writeToZBufferColor(&p0, &co);
             drawPoint(&p0, &co);
         }
 
@@ -470,7 +521,7 @@ void drawTrangleFlat(POINT4D_PTR p0, POINT4D_PTR p1, POINT4D_PTR p2, RGBAV1_PTR 
     }
     drawTranglePlaneFlat(pt, pm, pb, color);
 }
-void drawTrangleTexture(VERTEX4DTV1_PTR p0, VERTEX4DTV1_PTR p1, VERTEX4DTV1_PTR p2, BITMAP_IMAGE_PTR tex)
+void drawTrangleTexture(VERTEX4DTV1_PTR p0, VERTEX4DTV1_PTR p1, VERTEX4DTV1_PTR p2, BITMAP_IMAGE_PTR tex, int alpha)
 {
     VERTEX4DTV1_PTR pt, pm, pb;
 
@@ -510,7 +561,7 @@ void drawTrangleTexture(VERTEX4DTV1_PTR p0, VERTEX4DTV1_PTR p1, VERTEX4DTV1_PTR 
         pm = p1;
         pb = p0;
     }
-    drawTranglePlaneTexture(pt, pm, pb, tex);
+    drawTranglePlaneTexture(pt, pm, pb, tex, alpha);
 }
 
 void drawTrangleGOURAUD(POINT4D_PTR p0, POINT4D_PTR p1, POINT4D_PTR p2,RGBAV1_PTR c0, RGBAV1_PTR c1, RGBAV1_PTR c2)
@@ -600,7 +651,9 @@ void drawPoly2(RENDERLIST4DV2_PTR rend_list)
 
         if (curr_poly->attr & POLY4DV2_ATTR_SHADE_MODE_TEXTURE)
         {
-            drawTrangleTexture(&curr_poly->tvlist[0], &curr_poly->tvlist[1], &curr_poly->tvlist[2], curr_poly->texture);
+            RGBAV1 c;
+            c.rgba = curr_poly->lit_color[0];
+            drawTrangleTexture(&curr_poly->tvlist[0], &curr_poly->tvlist[1], &curr_poly->tvlist[2], curr_poly->texture, c.a);
         }
         else if (curr_poly->attr & POLY4DV2_ATTR_SHADE_MODE_GOURAUD)
         {
@@ -845,6 +898,7 @@ void keyboardEvt(int key, int x, int y)
 int main(int argc, char *argv[])
 {
     ZBuffer = (float*)malloc(sizeof(float)*sizeScreen.x*sizeScreen.y);
+    ZBufferColor = (RGBAV1*)malloc(sizeof(RGBAV1)*sizeScreen.x*sizeScreen.y);
     Init_Materials();
     POINT4D cam_pos = {0,30,0,1};
     VECTOR4D cam_dir = {0,0,0,1};
@@ -881,7 +935,7 @@ int main(int argc, char *argv[])
 
     }
 
-    VECTOR4D terScale = {1,1,1,1}, vpos = {0,0,50,1}, vrot = {0,0,0,1};
+    VECTOR4D terScale = {3,3,3,1}, vpos = {0,0,200,1}, vrot = {0,0,0,1};
     OBJECT4DV2 obj;
     Load_OBJECT4DV2_PLG(&obj, getFilePath("tank2.plg"), &terScale, &vpos, &vrot);
     gAllObjects[cubeCnt+towerCnt] = obj;

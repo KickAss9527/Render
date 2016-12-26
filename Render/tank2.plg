@@ -12,7 +12,7 @@
 # define PLX_SHADE_MODE_FASTPHONG_FLAG 0x6000  // this poly uses phong shading (alias)
 
 # simple cube
-tri 4 2
+tri 255 4 2
 
 # vertex list
  100  0  100
@@ -22,8 +22,8 @@ tri 4 2
 
 
 # polygon list
-0xFFFFFF 3 2 1 0
-0xFFFFFF 3 3 2 0
+0xaFFFFFF 3 2 1 0
+0xaFFFFFF 3 3 2 0
 
 #uv list
 Wood.bmp

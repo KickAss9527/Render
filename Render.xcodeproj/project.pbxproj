@@ -30,6 +30,7 @@
 /* Begin PBXFileReference section */
 		051A40FC1DFE5157001DD94C /* metal04.bmp */ = {isa = PBXFileReference; lastKnownFileType = image.bmp; path = metal04.bmp; sourceTree = "<group>"; };
 		051A40FE1DFE55C0001DD94C /* Wood.bmp */ = {isa = PBXFileReference; lastKnownFileType = image.bmp; path = Wood.bmp; sourceTree = "<group>"; };
+		052009401E10BC9C00AF220B /* tank2.plg */ = {isa = PBXFileReference; lastKnownFileType = text; path = tank2.plg; sourceTree = "<group>"; };
 		052FE6661DD94EF200A5E04F /* Render */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = Render; sourceTree = BUILT_PRODUCTS_DIR; };
 		052FE6691DD94EF200A5E04F /* main.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = main.cpp; sourceTree = "<group>"; };
 		052FE6711DD94F1900A5E04F /* OpenGL.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenGL.framework; path = System/Library/Frameworks/OpenGL.framework; sourceTree = SDKROOT; };
@@ -120,6 +121,7 @@
 		053F348B1E08CA40007D6CAF /* plg */ = {
 			isa = PBXGroup;
 			children = (
+				052009401E10BC9C00AF220B /* tank2.plg */,
 				0534530E1DF8FF870085515C /* trangle.plg */,
 				0553A3BB1DE52AE500E557A1 /* tower1.plg */,
 				05A74A6E1DE299EB003E6A66 /* cube1.plg */,
