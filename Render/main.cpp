@@ -28,44 +28,39 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
+#include <time.h>
 #include "enginePlus.h"
 static int slices = 16;
 static int stacks = 16;
 
-VECTOR2D sizeScreen = {500, 500};
+VECTOR2D sizeScreen = {800, 800};
 CAM4DV1 gCam;
 RENDERLIST4DV2 gRend_list;
 OBJECT4DV2 gAllObjects[100];
 float *ZBuffer;
-bool isDrawWireframe = 10;
+bool isDrawWireframe = 0;
 int refreshFrequency = 30;
-bool isRotate = 110;
+bool isRotate = 0;
 float keyboardMovingOffset = 2;
-int towerCnt = 0;
-int cubeCnt = 0;
-BITMAP_IMAGE myTex;
+int towerCnt = 10;
+int cubeCnt = 50;
+
 
 #define AMBIENT_LIGHT_INDEX   0 // ambient light index
 #define INFINITE_LIGHT_INDEX  1 // infinite light index
 #define POINT_LIGHT_INDEX     2 // point light index
 #define SPOT_LIGHT_INDEX      3 // spot light index
 
-const char *getFilePath(const char* fileName)
-{
-    string path;
-#ifdef __APPLE__
-    path = "/MyFiles/Work/GitProject/Render/Render/";
-#else
-    path = "C:\\Users\\Administrator\\Documents\\GitHub\\Render\\Render\\";
-#endif
-    
-    path += fileName;
-    return path.c_str();
-}
 
-const char *getModelPath_Cube(){return getFilePath("cube1.plg");}
-const char *getModelPath_CubeTexture(){return getFilePath("cubeTex.plg");}
-const char *getModelPath_Tower(){return getFilePath("tower1.plg");}
+
+string getModelPath_Cube(){return getFilePath("cube1.plg");}
+string getModelPath_CubeTexture(){return getFilePath("cubeTex.plg");}
+string getModelPath_Tower(){return getFilePath("tower1.plg");}
+
+bool testPointInScreen(POINT4D_PTR scrPos)
+{
+    return scrPos->x >= 0 && scrPos->y >= 0 && scrPos->x < sizeScreen.x && scrPos->y < sizeScreen.y;
+}
 
 void resetZBuffer()
 {
@@ -74,13 +69,14 @@ void resetZBuffer()
 
 bool testZBuffer(float z, POINT4D_PTR scrPos)
 {
+
     int idx = scrPos->x + scrPos->y*sizeScreen.x;
     if (z > ZBuffer[idx])
     {
         ZBuffer[idx] = z;
         return true;
     }
-    
+
     return false;
 }
 
@@ -95,8 +91,6 @@ void drawPoint(POINT4D_PTR p, RGBAV1_PTR color)
     glVertex2f(np.x, np.y);
     glEnd ();
 }
-
-
 
 void drawLine(POINT4D_PTR p0, POINT4D_PTR p1)
 {
@@ -139,6 +133,76 @@ void drawTranglePlane(POINT4D_PTR pt, POINT4D_PTR pm, POINT4D_PTR pb)
         drawLine(&p0, &p1);
         xl += dl;
         xr += dr;
+    }
+}
+
+void drawTranglePlaneFlat(POINT4D_PTR pt, POINT4D_PTR pm, POINT4D_PTR pb, RGBAV1_PTR color)
+{
+    float ymt = (pm->y - pt->y);
+    float ybt = (pb->y - pt->y);
+    float dmx = (pm->x - pt->x)/ymt;
+    float dbx = (pb->x - pt->x)/ybt;
+    float dmz = (1/pm->z - 1/pt->z)/ymt;
+    float dbz = (1/pb->z - 1/pt->z)/ybt;
+    float xb, xm, zb, zm;
+    xb = xm = pt->x;
+    zb = zm = 1/pt->z;
+
+    for(int y=pt->y; y<=pb->y; y++)
+    {
+        bool seqMB = xm < xb;
+        float u,v,z;
+
+        if(seqMB)
+        {
+            z = zm;
+        }
+        else
+        {
+            z = zb;
+        }
+        float startX = MIN(xb,xm);
+        float endX = MAX(xb,xm);
+
+        for(int x=startX; x<=endX; x++)
+        {
+            POINT4D p0 = {static_cast<float>(x), static_cast<float>(y)};
+            if(!testPointInScreen(&p0))
+            {
+                 continue;
+            }
+            float delX;
+            if(fabs(endX-startX)<0.00001)
+            {
+                delX=1;
+            }
+            else
+            {
+                delX = (x-(int)startX)/(endX-startX);
+            }
+
+            delX *= seqMB?1:-1;
+            float tmpZ = z + delX*(zb - zm);
+            if (!testZBuffer(tmpZ, &p0))
+            {
+                continue;
+            }
+            drawPoint(&p0, color);
+        }
+
+        xb += dbx;
+        xm += dmx;
+        zb += dbz;
+        zm += dmz;
+
+        if(y == (int)pm->y)
+        {
+            xm = pm->x;
+            zm = 1/pm->z;
+            float ybm = pb->y - pm->y;
+            dmx = (pb->x - pm->x)/ybm;
+            dmz = (1/pb->z - 1/pm->z)/ybm;
+        }
     }
 }
 
@@ -189,6 +253,10 @@ void drawTranglePlaneTexture(VERTEX4DTV1_PTR pt, VERTEX4DTV1_PTR pm, VERTEX4DTV1
         for(int x=startX; x<=endX; x++)
         {
             POINT4D p0 = {static_cast<float>(x), static_cast<float>(y)};
+            if(!testPointInScreen(&p0))
+            {
+                 continue;
+            }
             float delX;
             if(fabs(endX-startX)<0.00001)
             {
@@ -257,8 +325,11 @@ void drawTranglePlaneGOURAUD(POINT4D_PTR pt, POINT4D_PTR pm, POINT4D_PTR pb, RGB
     float ybt = (pb->y - pt->y);
     float dm = (pm->x - pt->x)/ymt;
     float db = (pb->x - pt->x)/ybt;
-    float xb, xm;
+    float dmz = (1/pm->z - 1/pt->z)/ymt;
+    float dbz = (1/pb->z - 1/pt->z)/ybt;
+    float xb, xm, zb, zm;
     xb = xm = pt->x;
+    zb = zm = 1/pt->z;
 
     float cm_r,cm_g,cm_b,cb_r,cb_g,cb_b;
     float dm_r,dm_g,dm_b,db_r,db_g,db_b;
@@ -278,25 +349,31 @@ void drawTranglePlaneGOURAUD(POINT4D_PTR pt, POINT4D_PTR pm, POINT4D_PTR pb, RGB
     for(int y=pt->y; y<=pb->y; y++)
     {
         bool seqMB = xm < xb;
-        float r,g,b;
+        float r,g,b,z;
 
         if(seqMB)
         {
             r = cm_r;
             g = cm_g;
             b = cm_b;
+            z = zm;
         }
         else
         {
             r = cb_r;
             g = cb_g;
             b = cb_b;
+            z = zb;
         }
         float startX = MIN(xb,xm);
         float endX = MAX(xb,xm);
         for(int x=startX; x<=endX; x++)
         {
             POINT4D p0 = {static_cast<float>(x), static_cast<float>(y)};
+            if(!testPointInScreen(&p0))
+            {
+                 continue;
+            }
             float delX;
             if(fabs(endX-startX)<0.00001)
             {
@@ -308,6 +385,11 @@ void drawTranglePlaneGOURAUD(POINT4D_PTR pt, POINT4D_PTR pm, POINT4D_PTR pb, RGB
             }
             RGBAV1 co;
             delX *= seqMB?1:-1;
+            float tmpZ = z + delX*(zb - zm);
+            if (!testZBuffer(tmpZ, &p0))
+            {
+                continue;
+            }
             float tmpR = r + delX*(cb_r - cm_r);
             float tmpG = g + delX*(cb_g - cm_g);
             float tmpB = b + delX*(cb_b - cm_b);
@@ -335,143 +417,61 @@ void drawTranglePlaneGOURAUD(POINT4D_PTR pt, POINT4D_PTR pm, POINT4D_PTR pb, RGB
             cm_r = cm->r;
             cm_g = cm->g;
             cm_b = cm->b;
+            zm = 1/pm->z;
             float ybm = pb->y - pm->y;
             dm = (pb->x - pm->x)/ybm;
             dm_r = (cb->r - cm->r)/ybm;
             dm_g = (cb->g - cm->g)/ybm;
             dm_b = (cb->b - cm->b)/ybm;
+            dmz = (1/pb->z - 1/pm->z)/ybm;
         }
     }
 }
 
-void drawTrangleBottomPlane(POINT4D_PTR pt, POINT4D_PTR pl, POINT4D_PTR pr)
+void drawTrangleFlat(POINT4D_PTR p0, POINT4D_PTR p1, POINT4D_PTR p2, RGBAV1_PTR color)
 {
-    float dl = (pl->x - pt->x)/(pl->y - pt->y);
-    float dr = (pr->x - pt->x)/(pr->y - pt->y);
-    float xl=pt->x, xr=pt->x;
-    for (int y=pt->y; y<=(int)pl->y; y++)
-    {
-        if ((xl < pl->x && xl < pr->x && xl < pt->x) ||
-            (xr < pl->x && xr < pr->x && xr < pt->x) ||
-            (xl > pl->x && xl > pr->x && xl > pt->x) ||
-            (xr > pl->x && xr > pr->x && xr > pt->x)) {
-            continue;
-        }
-        POINT4D p0 = {static_cast<float>(xl), static_cast<float>(y)};
-        POINT4D p1 = {static_cast<float>(xr), static_cast<float>(y)};
-        drawLine(&p0, &p1);
-        xl += dl;
-        xr += dr;
-    }
-}
+    POINT4D_PTR pt, pm, pb;
 
-void drawTrangleTopPlane(POINT4D_PTR pb, POINT4D_PTR pl, POINT4D_PTR pr)
-{
-    float dl = (pb->x - pl->x)/(pb->y - pl->y);
-    float dr = (pb->x - pr->x)/(pb->y - pr->y);
-    float xl=pl->x, xr=pr->x;
-    for (int y=pl->y; y<(int)pb->y; y++)
+    if(p0->y <= p1->y && p1->y <= p2->y)
     {
-        if ((xl < pl->x && xl < pr->x && xl < pb->x) ||
-            (xr < pl->x && xr < pr->x && xr < pb->x) ||
-            (xl > pl->x && xl > pr->x && xl > pb->x) ||
-            (xr > pl->x && xr > pr->x && xr > pb->x)) {
-            continue;
-        }
-        POINT4D p0 = {static_cast<float>(xl), static_cast<float>(y)};
-        POINT4D p1 = {static_cast<float>(xr), static_cast<float>(y)};
-        drawLine(&p0, &p1);
-        xl += dl;
-        xr += dr;
+        pt = p0;
+        pm = p1;
+        pb = p2;
     }
-}
-
-void drawTrangle(POINT4D_PTR p0, POINT4D_PTR p1, POINT4D_PTR p2)
-{
-    if (p0->y == p1->y)
+    else if(p0->y <= p2->y && p2->y <= p1->y)
     {
-        if (p2->y >= p0->y)//top plane
-        {
-            drawTrangleTopPlane(p2, p0, p1);
-        }
-        else//
-        {
-            drawTrangleBottomPlane(p2, p0, p1);
-        }
+        pt = p0;
+        pm = p2;
+        pb = p1;
     }
-    else if (p0->y == p2->y)
+    else if(p1->y <= p0->y && p0->y <= p2->y)
     {
-        if (p1->y >= p0->y)//
-        {
-            drawTrangleTopPlane(p1, p0, p2);
-        }
-        else//
-        {
-            drawTrangleBottomPlane(p1, p0, p2);
-        }
+        pt = p1;
+        pm = p0;
+        pb = p2;
     }
-    else if (p2->y == p1->y)
+    else if(p1->y <= p2->y && p2->y <= p0->y)
     {
-        if (p0->y >= p2->y)//
-        {
-            drawTrangleTopPlane(p0, p2, p1);
-        }
-        else//
-        {
-            drawTrangleBottomPlane(p0, p2, p1);
-        }
+        pt = p1;
+        pm = p2;
+        pb = p0;
     }
-    else
+    else if(p2->y <= p0->y && p0->y <= p1->y)
     {
-        POINT4D_PTR pt, pm, pb;
-        if(p0->y < p1->y && p1->y < p2->y)
-        {
-            pt = p0;
-            pm = p1;
-            pb = p2;
-        }
-        else if(p0->y < p2->y && p2->y < p1->y)
-        {
-            pt = p0;
-            pm = p2;
-            pb = p1;
-        }
-        else if(p1->y < p0->y && p0->y < p2->y)
-        {
-            pt = p1;
-            pm = p0;
-            pb = p2;
-        }
-        else if(p1->y < p2->y && p2->y < p0->y)
-        {
-            pt = p1;
-            pm = p2;
-            pb = p0;
-        }
-        else if(p2->y < p0->y && p0->y < p1->y)
-        {
-            pt = p2;
-            pm = p0;
-            pb = p1;
-        }
-        else if(p2->y < p1->y && p1->y < p0->y)
-        {
-            pt = p2;
-            pm = p1;
-            pb = p0;
-        }
-//        drawTranglePlane(pt, pm, pb);
-        int xline = (pm->y - pt->y)*(pb->x - pt->x)/(pb->y - pt->y);
-        xline += pt->x;//get x of mid point
-
-        POINT4D pTmp = {static_cast<float>(xline), pm->y,1,1};
-        drawTrangleBottomPlane(pt, pm, &pTmp);
-        drawTrangleTopPlane(pb, pm, &pTmp);
+        pt = p2;
+        pm = p0;
+        pb = p1;
     }
+    else if(p2->y <= p1->y && p1->y <= p0->y)
+    {
+        pt = p2;
+        pm = p1;
+        pb = p0;
+    }
+    drawTranglePlaneFlat(pt, pm, pb, color);
 }
 void drawTrangleTexture(VERTEX4DTV1_PTR p0, VERTEX4DTV1_PTR p1, VERTEX4DTV1_PTR p2, BITMAP_IMAGE_PTR tex)
 {
-
     VERTEX4DTV1_PTR pt, pm, pb;
 
     if(p0->y <= p1->y && p1->y <= p2->y)
@@ -600,7 +600,7 @@ void drawPoly2(RENDERLIST4DV2_PTR rend_list)
 
         if (curr_poly->attr & POLY4DV2_ATTR_SHADE_MODE_TEXTURE)
         {
-            drawTrangleTexture(&curr_poly->tvlist[0], &curr_poly->tvlist[1], &curr_poly->tvlist[2], &myTex);
+            drawTrangleTexture(&curr_poly->tvlist[0], &curr_poly->tvlist[1], &curr_poly->tvlist[2], curr_poly->texture);
         }
         else if (curr_poly->attr & POLY4DV2_ATTR_SHADE_MODE_GOURAUD)
         {
@@ -616,13 +616,11 @@ void drawPoly2(RENDERLIST4DV2_PTR rend_list)
         }
         else if(curr_poly->attr & POLY4DV2_ATTR_SHADE_MODE_FLAT)
         {
-            unsigned int r, g, b;
-            int color = curr_poly->lit_color[0];
-            RGB888FROM24BIT(color, &r, &g, &b);
-            glColor3f (r/255.0, g/255.0, b/255.0);//…Ë÷√µ±«∞ª≠± —’…´
-            drawTrangle(&curr_poly->tvlist[0].v,
-                        &curr_poly->tvlist[1].v,
-                        &curr_poly->tvlist[2].v);
+            RGBAV1 c;
+            c.rgba = curr_poly->lit_color[0];
+            drawTrangleFlat(&curr_poly->tvlist[0].v,
+                            &curr_poly->tvlist[1].v,
+                            &curr_poly->tvlist[2].v, &c);
 
         }
     }
@@ -749,16 +747,16 @@ void myDisplay ()
         {
             break;
         }
-        UpdatePool(clock()*0.00001, obj);
-        
+        //UpdatePool(clock()*0.005, obj);
+
         Model_To_World_OBJECT4DV2(obj);
         Insert_OBJECT4DV2_RENDERLIST4DV2(&gRend_list, obj, 0);
     }
-    
+
     Remove_Backfaces_RENDERLIST4DV2(&gRend_list, &gCam);
     Light_RENDERLIST4DV2_World16(&gRend_list, &gCam, GetLightList(), 4);
     World_To_Camera_RENDERLIST4DV2(&gRend_list, &gCam);
-//    Clip_Polys_RENDERLIST4DV2(&gRend_list, &gCam, CLIP_POLY_Z_PLANE);
+    Clip_Polys_RENDERLIST4DV2(&gRend_list, &gCam, CLIP_POLY_Z_PLANE);
     Sort_RENDERLIST4DV2(&gRend_list, SORT_POLYLIST_AVGZ);
     Camera_To_Perspective_RENDERLIST4DV2(&gRend_list, &gCam);
     Perspective_To_Screen_RENDERLIST4DV2(&gRend_list, &gCam);
@@ -807,28 +805,6 @@ void onTimer(int value)
     glutTimerFunc(refreshFrequency, onTimer, 1);
 }
 
-void display(void)
-{
-     //glClear(GL_COLOR_BUFFER_BIT);
-     //绘制像素
-
-    //glDrawPixels(myTex.width,myTex.height,GL_BGR_EXT,GL_UNSIGNED_BYTE,myTex.buffer);
-
-     //---------------------------------
-
-     for(int y=0; y<myTex.height; y++)
-     {
-         for(int x=0; x<myTex.width; x++)
-         {
-             POINT4D np = {static_cast<float>(x),static_cast<float>(y), 1, 1};
-             POINT2D t = {static_cast<float>(x),static_cast<float>(y)};
-             RGBAV1 c = getTextureColor(&myTex, &t);
-             drawPoint(&np, &c);
-         }
-     }
-    glFlush();
-}
-
 void keyboardEvt(int key, int x, int y)
 {
 
@@ -868,9 +844,8 @@ void keyboardEvt(int key, int x, int y)
 
 int main(int argc, char *argv[])
 {
-    LoadMyBitmap(getFilePath("Wood.bmp"), &myTex);
     ZBuffer = (float*)malloc(sizeof(float)*sizeScreen.x*sizeScreen.y);
-    
+    Init_Materials();
     POINT4D cam_pos = {0,30,0,1};
     VECTOR4D cam_dir = {0,0,0,1};
     Init_CAM4DV1(&gCam, &cam_pos, &cam_dir, 10,sizeScreen.x,90, sizeScreen.x,sizeScreen.y);
@@ -881,9 +856,10 @@ int main(int argc, char *argv[])
         OBJECT4DV2 obj;
         float scale = (50 + rand()%50)*0.01;
         scale = 0.5;
-        int xt = 300;
+        int xt = 200;
         float x = xt*0.5 - rand()%xt;
         float z = 50 + rand()%100;
+
         VECTOR4D vscale = {scale,scale,scale,scale}, vpos = {x,0,z,1}, vrot = {0,0,0,1};
         Load_OBJECT4DV2_PLG(&obj, getModelPath_Tower(), &vscale, &vpos, &vrot);
         gAllObjects[tower] = obj;
@@ -892,25 +868,28 @@ int main(int argc, char *argv[])
     for (int cube=0; cube < cubeCnt; cube++)
     {
         OBJECT4DV2 obj;
-        float scale = (50 + rand()%50)*0.01;
+        float scale = (10 + rand()%200)*0.01;
         float r = rand()%100;
         int xt = 400;
         float x = xt*0.5 - rand()%xt;
-        float z = 20 + rand()%100;
-        float y = 24;
-        x = 0;
-        z = 45;
-        scale = 1;
+        float z = 50 + rand()%100;
+        float y = 0 + rand()%40;
+
         VECTOR4D vscale = {scale,scale,scale,scale}, vpos = {x,y,z,1}, vrot = {r,r,r,1};
         Load_OBJECT4DV2_PLG(&obj, getModelPath_CubeTexture(), &vscale, &vpos, &vrot);
         gAllObjects[cube+towerCnt] = obj;
 
     }
-    
+
+    VECTOR4D terScale = {1,1,1,1}, vpos = {0,0,50,1}, vrot = {0,0,0,1};
+    OBJECT4DV2 obj;
+    Load_OBJECT4DV2_PLG(&obj, getFilePath("tank2.plg"), &terScale, &vpos, &vrot);
+    gAllObjects[cubeCnt+towerCnt] = obj;
+
 //  terrain
-    OBJECT4DV2 terrain;
+/*    OBJECT4DV2 terrain;
     GeneratePool(&terrain);
-    gAllObjects[0] = terrain;
+    gAllObjects[0] = terrain;*/
 
     loadLights();
 

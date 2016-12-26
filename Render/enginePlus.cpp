@@ -10,7 +10,7 @@
 #include <iostream>
 #include <string.h>
 #include <stdio.h>
-
+#include "engine.h"
 #include <stdlib.h>
 
 using namespace std;
@@ -86,18 +86,19 @@ void showBmpInforHead(tagBITMAPINFOHEADER pBmpInforHead){
     cout<<"重要颜色数:"<<pBmpInforHead.biClrImportant<<endl;
 }
 
-void LoadMyBitmap(const char *strFile, BITMAP_IMAGE_PTR tex)
+BITMAP_IMAGE_PTR LoadMyBitmap(const char *strFile)
 {
-
+    if(isBitmapLoaded(strFile))
+        return getBitmap(strFile);
     FILE *fpi,*fpw;
-    fpi=fopen(strFile,"rb");
+    fpi=fopen(getFilePath(strFile).c_str(),"rb");
     if(fpi!=NULL){
         //先读取文件类型
         WORD bfType;
         fread(&bfType,1,sizeof(WORD),fpi);
         if(0x4d42!=bfType){
             cout<<"the file is not a bmp file!"<<endl;
-            return;
+            return nullptr;
         }
         //读取bmp文件的文件头和信息头
         fread(&strHead,1,sizeof(tagBITMAPFILEHEADER),fpi);
@@ -105,11 +106,11 @@ void LoadMyBitmap(const char *strFile, BITMAP_IMAGE_PTR tex)
         fread(&strInfo,1,sizeof(tagBITMAPINFOHEADER),fpi);
         showBmpInforHead(strInfo);//显示文件信息头
 
-
+        BITMAP_IMAGE_PTR tex = getNewBitmap();
         tex->height = strInfo.biHeight;
         tex->width = strInfo.biWidth;
         tex->bitCnt = strInfo.biBitCount;
-
+        tex->name = strFile;
         if (strInfo.biBitCount == 8)
         {
             //读取调色板
@@ -158,10 +159,11 @@ void LoadMyBitmap(const char *strFile, BITMAP_IMAGE_PTR tex)
 //        }
 
         fclose(fpi);
+        return tex;
     }
     else{
         cout<<"file open error!"<<endl;
-        return;
+        return nullptr;
     }
 
 
@@ -182,11 +184,11 @@ void GenerateTerrain(OBJECT4DV2_PTR obj)
     obj->curr_frame = 0;
     obj->attr = OBJECT4DV2_ATTR_SINGLE_FRAME;
 
-    BITMAP_IMAGE texture;
+    BITMAP_IMAGE texture = *getNewBitmap();
 #ifdef __APPLE__
-        LoadMyBitmap("/MyFiles/Work/GitProject/Render/Render/earthheightmap03.bmp", &texture);
+        LoadMyBitmap("/MyFiles/Work/GitProject/Render/Render/earthheightmap03.bmp");
 #else
-        LoadMyBitmap("C:\\Users\\Administrator\\Documents\\GitHub\\Render\\Render\\earthheightmap03.bmp",  &texture);
+        LoadMyBitmap("C:\\Users\\Administrator\\Documents\\GitHub\\Render\\Render\\earthheightmap03.bmp");
 #endif
 
     int deltaX = texture.width*0.5*TerrainSizeScale;
@@ -288,12 +290,12 @@ void GeneratePool(OBJECT4DV2_PTR obj)
     obj->num_frames = 1;
     obj->curr_frame = 0;
     obj->attr = OBJECT4DV2_ATTR_SINGLE_FRAME;
-    
+
     obj->num_polys = gridCnt*gridCnt*2;
     obj->num_vertices = (gridCnt+1)*(gridCnt+1);
     Init_OBJECT4DV2(obj, obj->num_vertices, obj->num_polys, obj->num_frames);
     int halfLength = gridLength*gridCnt*.5;
-    
+
     for (int vertex=0; vertex<obj->num_vertices; vertex++)
     {
         int xC = vertex%(gridCnt+1);
@@ -307,13 +309,13 @@ void GeneratePool(OBJECT4DV2_PTR obj)
 //        distance/=3;
         obj->vlist_local[vertex].y = 0.3*poolMaxHeight*cos(distance);
         obj->vlist_local[vertex].w = 1;
-    
+
         SET_BIT(obj->vlist_local[vertex].attr, VERTEX4DTV1_ATTR_POINT);
         
     }
-    
+
     Compute_OBJECT4DV2_Radius(obj);
-    
+
     // v0----v1
     // | \    |
     // |   \  |
@@ -326,16 +328,16 @@ void GeneratePool(OBJECT4DV2_PTR obj)
         v1 = v0 + 1;
         v2 = v1 + gridCnt + 1;
         v3 = v2 - 1;
-        
+
         int polyIdx = poly*2;
         obj->plist[polyIdx].vert[0] = v0;
         obj->plist[polyIdx].vert[1] = v1;
         obj->plist[polyIdx].vert[2] = v2;
-        
+
         obj->plist[polyIdx+1].vert[0] = v0;
         obj->plist[polyIdx+1].vert[1] = v2;
         obj->plist[polyIdx+1].vert[2] = v3;
-        
+
         for (int i=polyIdx; i<=polyIdx+1; i++)
         {
             obj->plist[i].vlist = obj->vlist_local;
@@ -348,14 +350,15 @@ void GeneratePool(OBJECT4DV2_PTR obj)
             int green = 200;
             int blue = 200;
             obj->plist[i].color = RGB24BIT(0,red, green, blue);
+
             SET_BIT(obj->plist[i].attr, POLY4DV2_ATTR_SHADE_MODE_GOURAUD);
         }
 
     }
-    
+
     Compute_OBJECT4DV2_Poly_Normals(obj);
     Compute_OBJECT4DV2_Vertex_Normals(obj);
-    
+
 }
 
 void UpdatePool(float delta, OBJECT4DV2_PTR obj)
@@ -371,7 +374,7 @@ void UpdatePool(float delta, OBJECT4DV2_PTR obj)
         distance *= 0.7;
         obj->vlist_local[vertex].y = 0.3*poolMaxHeight*cos(distance);
         obj->vlist_local[vertex].w = 1;
-        
+
         SET_BIT(obj->vlist_local[vertex].attr, VERTEX4DTV1_ATTR_POINT);
     }
     Compute_OBJECT4DV2_Radius(obj);

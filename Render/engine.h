@@ -4,6 +4,8 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <iostream>
+
 using namespace std;
 typedef unsigned short USHORT;
 typedef unsigned short WORD;
@@ -29,12 +31,13 @@ typedef struct BITMAP_IMAGE_TYP{
     int bpp;
     int bitCnt;
     UCHAR *buffer;
+    string name;
 }BITMAP_IMAGE, *BITMAP_IMAGE_PTR;
 
 typedef struct MATV1_TYP{
     int state;
     int id;
-    char name[64];
+    string name;
     int attr;
     RGBAV1 color;
     float ka, kd, ks, power;
@@ -373,7 +376,7 @@ typedef struct CAM4DV1_TYP{
 
 int Load_OBJECT4DV1_PLG(OBJECT4DV1_PTR obj, char *filename, VECTOR4D_PTR scale, VECTOR4D_PTR pos, VECTOR4D_PTR rot);
 int Load_OBJECT4DV2_PLG(OBJECT4DV2_PTR obj,
-                        const char *filename,
+                        string filename,
                         VECTOR4D_PTR scale,
                         VECTOR4D_PTR pos,
                         VECTOR4D_PTR rot,
@@ -426,7 +429,9 @@ void Perspective_To_Screen_OBJECT4DV1(OBJECT4DV1_PTR obj, CAM4DV1_PTR cam);
 void Perspective_To_Screen_OBJECT4DV2(OBJECT4DV2_PTR obj, CAM4DV1_PTR cam);
 void Perspective_To_Screen_RENDERLIST4DV1(RENDERLIST4DV1_PTR rend_list, CAM4DV1_PTR cam);
 void Perspective_To_Screen_RENDERLIST4DV2(RENDERLIST4DV2_PTR rend_list, CAM4DV1_PTR cam);
+string getFilePath(const char* fileName);
 
+void Init_Materials(void);
 int Init_Light_LIGHTV1(int index,
                        int _state,
                        int _attr,
@@ -461,7 +466,6 @@ void Sort_RENDERLIST4DV1(RENDERLIST4DV1_PTR rend_list, int sort_method);
 void Sort_RENDERLIST4DV2(RENDERLIST4DV2_PTR rend_list, int sort_method);
 void Clip_Polys_RENDERLIST4DV2(RENDERLIST4DV2_PTR rend_list, CAM4DV1_PTR cam, int clip_flags);
 RGBAV1 getTextureColor(BITMAP_IMAGE_PTR tex, POINT2D_PTR pos);
-void loadTexture(const char* filename, BITMAP_IMAGE_PTR tex);
 int Init_OBJECT4DV2(OBJECT4DV2_PTR obj,
                     int _num_vertices,
                     int _num_polys,
@@ -470,4 +474,7 @@ int Init_OBJECT4DV2(OBJECT4DV2_PTR obj,
 float Compute_OBJECT4DV2_Radius(OBJECT4DV2_PTR obj);
 int Compute_OBJECT4DV2_Poly_Normals(OBJECT4DV2_PTR obj);
 int Compute_OBJECT4DV2_Vertex_Normals(OBJECT4DV2_PTR obj);
+bool isBitmapLoaded(string name);
+BITMAP_IMAGE_PTR getNewBitmap(void);
+BITMAP_IMAGE_PTR getBitmap(string name);
 #endif // ENGINE_H_INCLUDED

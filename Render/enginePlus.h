@@ -13,7 +13,7 @@
 #include <math.h>
 #include "engine.h"
 
-void LoadMyBitmap(const char *strFile, BITMAP_IMAGE_PTR tex);
+BITMAP_IMAGE_PTR LoadMyBitmap(const char *strFile);
 void GenerateTerrain(OBJECT4DV2_PTR obj);
 void GeneratePool(OBJECT4DV2_PTR obj);
 void UpdatePool(float delta, OBJECT4DV2_PTR obj);
