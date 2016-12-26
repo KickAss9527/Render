@@ -46,12 +46,12 @@ float keyboardMovingOffset = 2;
 int towerCnt = 0*10;
 int cubeCnt = 0*50;
 bool isBilinearTexFilter = 0;
-
+bool isShowHelpInfo = 1;
+bool isZBuffer = 1;
 #define AMBIENT_LIGHT_INDEX   0 // ambient light index
 #define INFINITE_LIGHT_INDEX  1 // infinite light index
 #define POINT_LIGHT_INDEX     2 // point light index
 #define SPOT_LIGHT_INDEX      3 // spot light index
-
 
 
 string getModelPath_Cube(){return getFilePath("cube1.plg");}
@@ -113,6 +113,7 @@ void writeToZBufferColor(POINT4D_PTR scrPos, RGBAV1_PTR color)
 
 bool testZBuffer(float z, POINT4D_PTR scrPos)
 {
+    if(!isZBuffer)  return true;
     int idx = scrPos->x + scrPos->y*sizeScreen.x;
     
     if (testPointInScreen(scrPos) && z > ZBuffer[idx])
@@ -807,9 +808,39 @@ void loadLights()
                        0,0,1);
 }
 
+void drawLabel(const char *text, int idx)
+{
+    int n = strlen(text);
+    glRasterPos3f(-0.98, 0.95-idx*0.045, 0.0);
+    for (int i = 0; i < n; i++)
+        glutBitmapCharacter(GLUT_BITMAP_9_BY_15, *(text + i));
+}
+void drawLabelInfo()
+{
+    if (!isShowHelpInfo)
+    {
+        return;
+    }
+#define txtCnt 9
+    string texts[txtCnt] = {
+        "Press 'H' To Enable/Disable Help Info",
+        "Press 'B' To Enable/Disable Bilinear Texture Filtering",
+        "Press 'S' To Enable/Disable Polygon Wire Line",
+        "Press 'Z' To Enable/Disable Z-Buffer",
+        "Press '→↑←↓' To Move Camera X/Y",
+        "Press 'End' or 'Home' To Zoom In/Out"
+    };
+    
+
+    for (int i=0; i<txtCnt; i++)
+    {
+        drawLabel(texts[i].c_str(), i);
+    }
+}
 
 void myDisplay ()
 {
+    
     Reset_RENDERLIST4DV2(&gRend_list);
     resetZBuffer();
     for (int i=0; i<1000; i++)
@@ -842,8 +873,10 @@ void myDisplay ()
 
 
     glClear (GL_COLOR_BUFFER_BIT);
+    
     drawPoly2(&gRend_list);
     drawDebugBtn();
+    drawLabelInfo();
     glFlush();
 
 }
@@ -887,9 +920,28 @@ void onTimer(int value)
     glutTimerFunc(refreshFrequency, onTimer, 1);
 }
 
-void keyboardEvt(int key, int x, int y)
+void keyboardEvt(unsigned char key, int x, int y)
 {
+    if (key == 's')
+    {
+        isDrawWireframe = !isDrawWireframe;
+    }
+    else if(key == 'b')
+    {
+        isBilinearTexFilter = !isBilinearTexFilter;
+    }
+    else if(key == 'h')
+    {
+        isShowHelpInfo = !isShowHelpInfo;
+    }
+    else if(key == 'z')
+    {
+        isZBuffer = !isZBuffer;
+    }
+}
 
+void keyboardSpecialEvt(int key, int x ,int y)
+{
     float offset = keyboardMovingOffset;
 
     switch(key)
@@ -918,6 +970,7 @@ void keyboardEvt(int key, int x, int y)
         {
             gCam.pos.z += offset;
         }break;
+
         default:break;
     }
 
@@ -983,7 +1036,8 @@ int main(int argc, char *argv[])
     glutCreateWindow ("hello word!");//¥¥Ω®√˚≥∆Œ™"hello word!"µƒ¥∞ø⁄,¥∞ø⁄¥¥Ω®∫Û≤ªª·¡¢º¥œ‘ æµΩ∆¡ƒª…œ,“™µ˜”√∫Û√ÊµƒglutMainLoop()≤≈ª·œ‘ æ
     glutDisplayFunc(myDisplay);//µ˜”√ªÊ÷∆∫Ø ˝ πÀ¸œ‘ æ‘⁄∏’¥¥Ω®µƒ¥∞ø⁄…œ
    glutTimerFunc(refreshFrequency, onTimer, 1);
-    glutSpecialFunc(keyboardEvt);
+    glutSpecialFunc(keyboardSpecialEvt);
+    glutKeyboardFunc(keyboardEvt);
     glutMouseFunc(myMouse);
     glutMainLoop();//œ˚œ¢—≠ª∑,¥∞ø⁄πÿ±’≤≈ª·∑µªÿ
     return 0;
