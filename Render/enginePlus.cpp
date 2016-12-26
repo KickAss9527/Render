@@ -210,8 +210,8 @@ void GenerateTerrain(OBJECT4DV2_PTR obj)
             POINT3D coord;
             coord.x = p.x*TerrainSizeScale - deltaX;
             coord.z = p.y*TerrainSizeScale - deltaZ;
-            coord.y = TerrainHeightMax*(c.r + c.g + c.b)/(255*3.0);
-//            printf("\n (%.1f, %.1f) : %d, %d, %d", p.x, p.y, c.r,c.g,c.b);
+            int Gray = (c.r*30 + c.g*59 + c.r*11 + 50) / 100;
+            coord.y = TerrainHeightMax*Gray/(255*1.0);
             int coordIdx = x+z*((int)tmpX+1);
             coordArr[coordIdx] = coord;
 
@@ -246,12 +246,12 @@ void GenerateTerrain(OBJECT4DV2_PTR obj)
 
         int polyIdx = poly*2;
         obj->plist[polyIdx].vert[0] = v0;
-        obj->plist[polyIdx].vert[1] = v2;
-        obj->plist[polyIdx].vert[2] = v1;
+        obj->plist[polyIdx].vert[1] = v1;
+        obj->plist[polyIdx].vert[2] = v2;
 
         obj->plist[polyIdx+1].vert[0] = v0;
-        obj->plist[polyIdx+1].vert[1] = v3;
-        obj->plist[polyIdx+1].vert[2] = v2;
+        obj->plist[polyIdx+1].vert[1] = v2;
+        obj->plist[polyIdx+1].vert[2] = v3;
 
         for (int i=polyIdx; i<=polyIdx+1; i++)
         {
@@ -260,6 +260,12 @@ void GenerateTerrain(OBJECT4DV2_PTR obj)
             obj->plist[i].state = POLY4DV2_STATE_ACTIVE;
             obj->plist[i].vlist = obj->vlist_local;
             obj->plist[i].tlist = obj->tlist;
+            SET_BIT(obj->plist[i].attr, POLY4DV2_ATTR_RGB24);
+            int red = 200;
+            int green = 200;
+            int blue = 200;
+            obj->plist[i].color = RGB24BIT(0,red, green, blue);
+            SET_BIT(obj->plist[i].attr, POLY4DV2_ATTR_SHADE_MODE_FLAT);
         }
     }
 
@@ -277,7 +283,7 @@ void GeneratePool(OBJECT4DV2_PTR obj)
     obj->state = OBJECT4DV2_STATE_ACTIVE | OBJECT4DV2_STATE_VISIBLE;
     obj->world_pos.x = 0;
     obj->world_pos.y = 0;
-    obj->world_pos.z = 50;
+    obj->world_pos.z = gridCnt*gridLength*0.5;
     obj->world_pos.w = 1;
     obj->num_frames = 1;
     obj->curr_frame = 0;
@@ -303,6 +309,7 @@ void GeneratePool(OBJECT4DV2_PTR obj)
         obj->vlist_local[vertex].w = 1;
     
         SET_BIT(obj->vlist_local[vertex].attr, VERTEX4DTV1_ATTR_POINT);
+        
     }
     
     Compute_OBJECT4DV2_Radius(obj);
@@ -336,7 +343,14 @@ void GeneratePool(OBJECT4DV2_PTR obj)
             obj->plist[i].state = POLY4DV2_STATE_ACTIVE;
             obj->plist[i].vlist = obj->vlist_local;
             obj->plist[i].tlist = obj->tlist;
+            SET_BIT(obj->plist[i].attr, POLY4DV2_ATTR_RGB24);
+            int red = 200;
+            int green = 200;
+            int blue = 200;
+            obj->plist[i].color = RGB24BIT(0,red, green, blue);
+            SET_BIT(obj->plist[i].attr, POLY4DV2_ATTR_SHADE_MODE_GOURAUD);
         }
+
     }
     
     Compute_OBJECT4DV2_Poly_Normals(obj);
