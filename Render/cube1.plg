@@ -24,7 +24,6 @@ tri 255 8 12
 -5 -5 -5
  5 -5 -5
 
-
 # polygon list
 
 0xcFFFFFF 3 2 1 0
@@ -35,8 +34,8 @@ tri 255 8 12
 0xcFFFFFF 3 5 6 4
 0xcFFFFFF 3 2 6 1
 0xcFFFFFF 3 6 5 1
-0xcFF0000 3 7 6 3
-0xc0000FF 3 6 2 3
+0xacFF0000 3 7 6 3
+0xac0000FF 3 6 2 3
 0xcFFFFFF 3 5 4 0
 0xcFFFFFF 3 1 5 0
 

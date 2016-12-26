@@ -41,11 +41,11 @@ float *ZBuffer;
 RGBAV1 *ZBufferColor;
 bool isDrawWireframe = 0;
 int refreshFrequency = 30;
-bool isRotate = 0;
+bool isRotate = 10;
 float keyboardMovingOffset = 2;
-int towerCnt = 10;
-int cubeCnt = 50;
-
+int towerCnt = 0*10;
+int cubeCnt = 0*50;
+bool isBilinearTexFilter = 0;
 
 #define AMBIENT_LIGHT_INDEX   0 // ambient light index
 #define INFINITE_LIGHT_INDEX  1 // infinite light index
@@ -332,10 +332,36 @@ void drawTranglePlaneTexture(VERTEX4DTV1_PTR pt, VERTEX4DTV1_PTR pm, VERTEX4DTV1
 
             uv.x *= tex->width;
             uv.y *= tex->height;
+            RGBAV1 color;
+            if (isBilinearTexFilter)
+            {
+                int u = (int)uv.x;
+                int v = (int)uv.y;
+                float du = uv.x - u;
+                float dv = uv.y - v;
+                POINT2D uv = {(float)u, (float)v};
+                RGBAV1 color_0 = getTextureColor(tex, &uv);
+                uv = {(float)(u+1), (float)v};
+                RGBAV1 color_1 = getTextureColor(tex, &uv);
+                uv = {(float)(u+1), (float)(v+1)};
+                RGBAV1 color_2 = getTextureColor(tex, &uv);
+                uv = {(float)u, (float)(v+1)};
+                RGBAV1 color_3 = getTextureColor(tex, &uv);
+                float d0 = (1-du)*(1-dv);
+                float d1 = du*(1-dv);
+                float d2 = du*dv;
+                float d3 = (1-du)*dv;
+                color.b = color_0.b*d0 + color_1.b*d1 + color_2.b*d2 + color_3.b*d3;
+                color.g = color_0.g*d0 + color_1.g*d1 + color_2.g*d2 + color_3.g*d3;
+                color.r = color_0.r*d0 + color_1.r*d1 + color_2.r*d2 + color_3.r*d3;
+            }
+            else
+            {
+                uv.x = floor(uv.x);
+                uv.y = floor(uv.y);
+                color = getTextureColor(tex, &uv);
+            }
 
-            uv.x = floor(uv.x);
-            uv.y = floor(uv.y);
-            RGBAV1 color = getTextureColor(tex, &uv);
             color.a = alpha;
             blendWithZBufferColor(&p0, &color);
             writeToZBufferColor(&p0, &color);
@@ -793,7 +819,7 @@ void myDisplay ()
         ro += 0.000001;
         if(isRotate)
         {
-            Rotate_XYZ_OBJECT4DV2(obj, -30, 0, 0);
+            Rotate_XYZ_OBJECT4DV2(obj, -80, 0, 0);
             isRotate = false;
         }
         if (!(obj->state & OBJECT4DV2_STATE_ACTIVE))
@@ -835,7 +861,10 @@ void btnClick(int idx, LIGHTV1_PTR lights)
 //        rgb.rgba = RGB32BIT(0, c, c, c);
 //        li->c_ambient = rgb;
 //    }
-
+    if (idx == 5)
+    {
+        isBilinearTexFilter = !isBilinearTexFilter;
+    }
     myDisplay();
 }
 
@@ -930,7 +959,7 @@ int main(int argc, char *argv[])
         float y = 0 + rand()%40;
 
         VECTOR4D vscale = {scale,scale,scale,scale}, vpos = {x,y,z,1}, vrot = {r,r,r,1};
-        Load_OBJECT4DV2_PLG(&obj, getModelPath_CubeTexture(), &vscale, &vpos, &vrot);
+        Load_OBJECT4DV2_PLG(&obj, getModelPath_Cube(), &vscale, &vpos, &vrot);
         gAllObjects[cube+towerCnt] = obj;
 
     }

@@ -31,6 +31,7 @@
 		051A40FC1DFE5157001DD94C /* metal04.bmp */ = {isa = PBXFileReference; lastKnownFileType = image.bmp; path = metal04.bmp; sourceTree = "<group>"; };
 		051A40FE1DFE55C0001DD94C /* Wood.bmp */ = {isa = PBXFileReference; lastKnownFileType = image.bmp; path = Wood.bmp; sourceTree = "<group>"; };
 		052009401E10BC9C00AF220B /* tank2.plg */ = {isa = PBXFileReference; lastKnownFileType = text; path = tank2.plg; sourceTree = "<group>"; };
+		052009411E10C56E00AF220B /* metal05.bmp */ = {isa = PBXFileReference; lastKnownFileType = image.bmp; path = metal05.bmp; sourceTree = "<group>"; };
 		052FE6661DD94EF200A5E04F /* Render */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = Render; sourceTree = BUILT_PRODUCTS_DIR; };
 		052FE6691DD94EF200A5E04F /* main.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = main.cpp; sourceTree = "<group>"; };
 		052FE6711DD94F1900A5E04F /* OpenGL.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenGL.framework; path = System/Library/Frameworks/OpenGL.framework; sourceTree = SDKROOT; };
@@ -111,6 +112,7 @@
 			children = (
 				0535B20F1E013754000E1704 /* sa.bmp */,
 				0548E0DC1E00D9C10031DAA4 /* Grid.bmp */,
+				052009411E10C56E00AF220B /* metal05.bmp */,
 				051A40FC1DFE5157001DD94C /* metal04.bmp */,
 				051A40FE1DFE55C0001DD94C /* Wood.bmp */,
 				0591DAD71E07709500591DCA /* earthheightmap03.bmp */,

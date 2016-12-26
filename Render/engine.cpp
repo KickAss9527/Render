@@ -1908,7 +1908,7 @@ int Load_OBJECT4DV2_PLG(OBJECT4DV2_PTR obj,
             //one
         }
 
-        if ((poly_surface_desc & PLX_COLOR_MODE_RGB_FLAG))
+        if ((poly_surface_desc & PLX_COLOR_MODE_RGB_FLAG))//1000
         {
             SET_BIT(obj->plist[poly].attr, POLY4DV2_ATTR_RGB24);
             int red = ((poly_surface_desc & 0xff0000) >> 16);
@@ -1931,12 +1931,12 @@ int Load_OBJECT4DV2_PLG(OBJECT4DV2_PTR obj,
                 SET_BIT(obj->plist[poly].attr, POLY4DV2_ATTR_SHADE_MODE_PURE);
             }
                 break;
-            case PLX_SHADE_MODE_FLAT_FLAG://0010 ...
+            case PLX_SHADE_MODE_FLAT_FLAG://0010 ...a
             {
                 SET_BIT(obj->plist[poly].attr, POLY4DV2_ATTR_SHADE_MODE_FLAT);
             }
                 break;
-            case PLX_SHADE_MODE_GOURAUD_FLAG://0100 ...
+            case PLX_SHADE_MODE_GOURAUD_FLAG://0100 ...c
             {
                 SET_BIT(obj->plist[poly].attr, POLY4DV2_ATTR_SHADE_MODE_GOURAUD);
                 SET_BIT(obj->vlist_local[obj->plist[poly].vert[0]].attr, VERTEX4DTV1_ATTR_NORMAL);
@@ -1990,9 +1990,7 @@ int Load_OBJECT4DV2_PLG(OBJECT4DV2_PTR obj,
             obj->plist[poly].text[0] = idx0;
             obj->plist[poly].text[1] = idx1;
             obj->plist[poly].text[2] = idx2;
-    }
-
-
+        }
     }
 
     Compute_OBJECT4DV2_Poly_Normals(obj);
