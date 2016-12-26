@@ -850,7 +850,7 @@ void myDisplay ()
         ro += 0.000001;
         if(isRotate)
         {
-            Rotate_XYZ_OBJECT4DV2(obj, -80, 0, 0);
+            Rotate_XYZ_OBJECT4DV2(obj, -10, 0, 0);
             isRotate = false;
         }
         if (!(obj->state & OBJECT4DV2_STATE_ACTIVE))

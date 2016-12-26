@@ -140,7 +140,6 @@ BITMAP_IMAGE_PTR LoadMyBitmap(const char *strFile)
             int length = tex->width*tex->height*strInfo.biBitCount/8;
             tex->buffer = (UCHAR*)malloc(length);
             fread(tex->buffer,length, 1,fpi);
-
         }
 
         //读出图片的像素数据
